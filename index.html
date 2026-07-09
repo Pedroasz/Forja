@@ -340,7 +340,9 @@
     </div>
   </section>
 
-  <section id="screen-treino" class="screen rise space-y-5">
+  <section id="screen-treino" class="screen rise">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <div class="space-y-5">
 
     <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
       <div class="flex items-center justify-between gap-3 mb-3">
@@ -354,19 +356,49 @@
           </select>
         </div>
       </div>
-      <div class="grid grid-cols-5 gap-2" id="treino-tabs"></div>
+      <div class="grid gap-2" id="treino-tabs"></div>
+    </div>
 
-      <div id="treino-estimativa-calorias" class="mt-3 flex items-center gap-1.5 text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2"></div>
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="font-display font-semibold text-lg">Meu treino</h2>
+        <i data-lucide="list-checks" class="w-5 h-5 text-mute"></i>
+      </div>
+      <div id="treino-estimativa-calorias" class="mb-3 flex items-center gap-1.5 text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2"></div>
+      <div id="treino-exercicios-lista" class="space-y-1.5"></div>
+    </div>
+  </div>
 
-      <div class="mt-3 bg-bg/35 border border-line/50 rounded-xl p-3 space-y-3">
+  <div class="space-y-5">
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between gap-3 mb-3">
         <div>
-          <h3 class="text-sm font-semibold">Biblioteca de exercicios</h3>
-          <p class="text-xs text-mute">Escolha um exercicio para adicionar ao treino ativo.</p>
+          <h2 class="font-display font-semibold text-lg">Biblioteca de exercicios</h2>
+          <p class="text-xs text-mute">Catalogo separado do treino. Clique para adicionar ao treino ativo.</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <i data-lucide="library" class="w-5 h-5 text-mute"></i>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <div>
             <label for="exercicio-busca" class="text-xs text-mute">Buscar exercício</label>
             <input id="exercicio-busca" type="search" placeholder="supino, agachamento, remada..." class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label for="exercicio-grupo" class="text-xs text-mute">Grupo muscular</label>
+            <select id="exercicio-grupo" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+              <option value="">Todos</option>
+              <option value="Peito">Peito</option>
+              <option value="Costas">Costas</option>
+              <option value="Ombros">Ombros</option>
+              <option value="Biceps">Biceps</option>
+              <option value="Triceps">Triceps</option>
+              <option value="Pernas">Pernas</option>
+              <option value="Gluteos">Gluteos</option>
+              <option value="Core">Abdomen</option>
+              <option value="Cardio">Cardio</option>
+            </select>
           </div>
           <div>
             <label for="exercicio-resultados" class="text-xs text-mute">Exercício encontrado</label>
@@ -379,7 +411,6 @@
         </button>
       </div>
 
-      <div id="treino-exercicios-lista" class="mt-4 space-y-1.5"></div>
     </div>
 
     <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
@@ -440,14 +471,15 @@
     </div>
 
     <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
-      <h2 class="font-display font-semibold text-lg mb-3">Histórico recente</h2>
+      <h2 class="font-display font-semibold text-lg mb-3">Historico / Volume semanal</h2>
       <div id="treino-historico" class="space-y-2"></div>
-    </div>
-
-    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="mt-5 pt-4 border-t border-line/50">
       <h2 class="font-display font-semibold text-lg mb-1">Volume (Últimos 7 Dias)</h2>
       <p class="text-xs text-mute mb-4">Soma de séries executadas por grupo muscular na última semana</p>
       <div id="treino-volume-semanal" class="space-y-3"></div>
+    </div>
+    </div>
+  </div>
     </div>
   </section>
 
@@ -2501,7 +2533,7 @@ async function repairWorkoutPlan() {
 
 window.resetWorkoutPlanToEmpty = async function() {
   const divisao = getCurrentWorkoutDivision();
-  const execucoesPreservadas = Array.isArray(state.execucoes);
+  const execucoesAntes = JSON.stringify(state.execucoes || []);
   state.configTreino = saveWorkoutConfig({ divisao });
   state.treinos = createEmptyWorkoutPlan(divisao);
   treinoAtivo = 'A';
@@ -2515,8 +2547,9 @@ window.resetWorkoutPlanToEmpty = async function() {
     reset: true,
     divisao,
     treinosVazios: Object.values(state.treinos).every(treino => Array.isArray(treino.exercicios) && treino.exercicios.length === 0),
-    execucoesPreservadas,
-    passed: true
+    execucoesPreservadas: JSON.stringify(state.execucoes || []) === execucoesAntes,
+    passed: Object.values(state.treinos).every(treino => Array.isArray(treino.exercicios) && treino.exercicios.length === 0)
+      && JSON.stringify(state.execucoes || []) === execucoesAntes
   };
 };
 
@@ -2529,7 +2562,9 @@ window.testWorkoutBuilderUI = async function() {
   };
   const select = document.getElementById('treino-divisao');
   const search = document.getElementById('exercicio-busca');
+  const groupFilter = document.getElementById('exercicio-grupo');
   const previousSearch = search?.value || '';
+  const previousGroup = groupFilter?.value || '';
 
   let divisionSelectorOk = false;
   let abcTabsOk = false;
@@ -2540,7 +2575,9 @@ window.testWorkoutBuilderUI = async function() {
   let libraryHasInitialOptions = false;
   let canStartEmpty = false;
   let addExerciseOk = false;
+  let exerciseAppearsInWorkout = false;
   let selectUpdatesOk = false;
+  let removeExerciseOk = false;
   let noSyncTestNames = false;
   let execucoesPreserved = false;
 
@@ -2550,6 +2587,7 @@ window.testWorkoutBuilderUI = async function() {
     treinoAtivo = 'A';
     state.treinos = createEmptyWorkoutPlan(divisao);
     if (search) search.value = '';
+    if (groupFilter) groupFilter.value = '';
     renderWorkoutEditor({ refreshLibraryControls: true, divisao });
     return Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn')).map(btn => btn.dataset.treino);
   };
@@ -2572,8 +2610,13 @@ window.testWorkoutBuilderUI = async function() {
     const addResult = await adicionarExercicioAoTreinoAtivo(selectedExercise, { persist: false, notify: false });
     addExerciseOk = Boolean(addResult.added)
       && state.treinos[treinoAtivo]?.exercicios?.includes(selectedExercise.nome);
+    exerciseAppearsInWorkout = (document.getElementById('treino-exercicios-lista')?.textContent || '')
+      .includes(selectedExercise.nome);
     selectUpdatesOk = Array.from(document.getElementById('t-exercicio')?.options || [])
       .some(option => option.value === selectedExercise.nome);
+    const removeResult = await removerExercicioDoTreinoAtivo(0, { persist: false, notify: false, divisao: 'ABCDE' });
+    removeExerciseOk = Boolean(removeResult.removed)
+      && !(state.treinos[treinoAtivo]?.exercicios || []).some(nome => normalizeExerciseKey(nome) === selectedExercise.key);
     noSyncTestNames = Object.values(state.treinos)
       .flatMap(treino => treino.exercicios || [])
       .every(nome => !isExerciseTestData(nome));
@@ -2589,7 +2632,9 @@ window.testWorkoutBuilderUI = async function() {
       libraryHasInitialOptions,
       canStartEmpty,
       addExerciseOk,
+      exerciseAppearsInWorkout,
       selectUpdatesOk,
+      removeExerciseOk,
       noSyncTestNames,
       execucoesPreserved,
       passed: divisionSelectorOk
@@ -2601,7 +2646,9 @@ window.testWorkoutBuilderUI = async function() {
         && libraryHasInitialOptions
         && canStartEmpty
         && addExerciseOk
+        && exerciseAppearsInWorkout
         && selectUpdatesOk
+        && removeExerciseOk
         && noSyncTestNames
         && execucoesPreserved
     };
@@ -2617,7 +2664,9 @@ window.testWorkoutBuilderUI = async function() {
       libraryHasInitialOptions,
       canStartEmpty,
       addExerciseOk,
+      exerciseAppearsInWorkout,
       selectUpdatesOk,
+      removeExerciseOk,
       noSyncTestNames,
       execucoesPreserved,
       passed: false
@@ -2628,6 +2677,7 @@ window.testWorkoutBuilderUI = async function() {
     state.execucoes = previousState.execucoes;
     treinoAtivo = previousState.treinoAtivo;
     if (search) search.value = previousSearch;
+    if (groupFilter) groupFilter.value = previousGroup;
     if (select) select.value = getWorkoutDivision();
     renderWorkoutDivisionSelector();
     renderWorkoutEditor({ refreshLibraryControls: true });
@@ -3075,6 +3125,10 @@ function getVisibleWorkoutKeys(divisao = null) {
   return getWorkoutVisibleKeys(divisao);
 }
 
+function getAllWorkoutKeys() {
+  return Object.keys(TREINOS_PADRAO_POR_DIVISAO.ABCDE);
+}
+
 function getCurrentWorkoutDivision() {
   const select = document.getElementById('treino-divisao');
   const divisao = select ? select.value : getWorkoutDivision();
@@ -3091,8 +3145,8 @@ function createDefaultWorkoutForKey(defaults, key) {
 }
 
 function createEmptyWorkoutPlan(divisao = null) {
-  const defaults = cloneWorkoutDefaults(divisao);
-  return Object.keys(defaults).reduce((plan, key) => {
+  const defaults = TREINOS_PADRAO_POR_DIVISAO.ABCDE;
+  return getAllWorkoutKeys().reduce((plan, key) => {
     plan[key] = createDefaultWorkoutForKey(defaults, key);
     return plan;
   }, {});
@@ -3112,8 +3166,8 @@ function isLegacyPresetExerciseList(treinoKey, exercicios = []) {
 
 function cleanWorkoutPlan(treinos, divisao = null) {
   const activeDivision = getWorkoutDivision(divisao);
-  const defaults = cloneWorkoutDefaults(activeDivision);
-  const requiredKeys = Object.keys(defaults);
+  const defaults = TREINOS_PADRAO_POR_DIVISAO.ABCDE;
+  const requiredKeys = getAllWorkoutKeys();
 
   if (!treinos || typeof treinos !== 'object' || Array.isArray(treinos) || Object.keys(treinos).length === 0) {
     return createEmptyWorkoutPlan(activeDivision);
@@ -4060,17 +4114,24 @@ async function saveWorkoutState() {
   });
 }
 
-function getFilteredExerciseLibrary() {
+function filtrarExerciciosBiblioteca() {
   const busca = normalizeExerciseKey(document.getElementById('exercicio-busca')?.value || '');
-  if (!busca) return EXERCISE_LIBRARY.slice(0, 80);
+  const grupoFiltro = normalizeExerciseGroup(document.getElementById('exercicio-grupo')?.value || '');
   return EXERCISE_LIBRARY
     .filter(item => {
-      return item.key.includes(busca)
+      const matchesSearch = !busca
+        || item.key.includes(busca)
         || normalizeExerciseKey(item.grupo).includes(busca)
         || normalizeExerciseKey(item.categoria).includes(busca)
         || normalizeExerciseKey(item.equipamento).includes(busca);
+      const matchesGroup = grupoFiltro === 'Outros' || normalizeExerciseGroup(item.grupo) === grupoFiltro;
+      return matchesSearch && matchesGroup;
     })
     .slice(0, 80);
+}
+
+function getFilteredExerciseLibrary() {
+  return filtrarExerciciosBiblioteca();
 }
 
 function renderExerciseResults() {
@@ -4111,8 +4172,13 @@ function renderExerciseResults() {
       meta.className = 'block text-[11px] text-mute';
       meta.textContent = `${item.grupo} - ${item.equipamento} - ~${item.gastoCalorico} kcal`;
 
+      const action = document.createElement('span');
+      action.className = 'block mt-1 text-[11px] font-semibold text-ember';
+      action.textContent = `+ Adicionar ao ${getWorkoutLabel(getActiveWorkoutKey())}`;
+
       button.appendChild(name);
       button.appendChild(meta);
+      button.appendChild(action);
       button.addEventListener('click', async () => {
         select.value = item.nome;
         await adicionarExercicioAoTreinoAtivo(item);
@@ -4123,6 +4189,10 @@ function renderExerciseResults() {
 }
 
 function renderExerciseLibraryControls() {
+  renderExerciseResults();
+}
+
+function renderBibliotecaExercicios() {
   renderExerciseResults();
 }
 
@@ -4229,7 +4299,7 @@ function renderTreinoTabs(divisao = null) {
   cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       treinoAtivo = btn.dataset.treino;
-      renderWorkoutEditor({ divisao: activeDivision });
+      renderWorkoutEditor({ refreshLibraryControls: true, divisao: activeDivision });
     });
   });
 }
@@ -4284,6 +4354,25 @@ function renderEstimativaCaloriasTreino(divisao = null) {
   if(window.lucide) { lucide.createIcons(); }
 }
 
+async function removerExercicioDoTreinoAtivo(index, options = {}) {
+  const { persist = true, notify = true, divisao = null } = options;
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  const treino = ensureActiveWorkout(activeDivision);
+  const idx = Number(index);
+
+  if (!treino || !Array.isArray(treino.exercicios) || !Number.isInteger(idx) || idx < 0 || idx >= treino.exercicios.length) {
+    return { removed: false, reason: 'invalid-index' };
+  }
+
+  const nomeRemovido = treino.exercicios[idx];
+  treino.exercicios.splice(idx, 1);
+  if (persist) await saveWorkoutState();
+
+  renderWorkoutEditor({ refreshLibraryControls: true, divisao: activeDivision });
+  if (notify) toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
+  return { removed: true, treino: treinoAtivo, exercicio: nomeRemovido };
+}
+
 function renderExerciciosLista(divisao = null) {
   const cont = document.getElementById('treino-exercicios-lista');
   if (!cont) return;
@@ -4300,7 +4389,7 @@ function renderExerciciosLista(divisao = null) {
     const empty = document.createElement('p');
     empty.className = 'text-xs text-mute';
     empty.textContent = `${t.nome} — nenhum exercício adicionado ainda. Use o campo acima para montar sua rotina.`;
-    empty.textContent = 'Adicione exercicios pela biblioteca acima.';
+    empty.textContent = 'Este treino ainda nao possui exercicios. Adicione exercicios pela biblioteca.';
     cont.appendChild(empty);
     return;
   }
@@ -4332,13 +4421,7 @@ function renderExerciciosLista(divisao = null) {
   if(window.lucide) { lucide.createIcons(); }
   cont.querySelectorAll('.del-exercicio').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const idx = Number(btn.dataset.idx);
-      const treino = ensureActiveWorkout();
-      const nomeRemovido = treino.exercicios[idx];
-      treino.exercicios.splice(idx, 1);
-      await saveWorkoutState();
-      renderWorkoutEditor();
-      toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
+      await removerExercicioDoTreinoAtivo(btn.dataset.idx);
     });
   });
 }
@@ -4349,7 +4432,7 @@ function popularSelectExercicios(divisao = null) {
   const t = ensureActiveWorkout(divisao);
   sel.replaceChildren();
   if (!t.exercicios.length) {
-    const emptyOption = new Option('Nenhum exercicio no treino ativo', '');
+    const emptyOption = new Option('Nenhum exercicio adicionado', '');
     emptyOption.disabled = true;
     emptyOption.selected = true;
     sel.appendChild(emptyOption);
@@ -4364,6 +4447,7 @@ function popularSelectExercicios(divisao = null) {
 
 document.getElementById('btn-add-exercicio')?.addEventListener('click', adicionarExercicioDaBiblioteca);
 document.getElementById('exercicio-busca')?.addEventListener('input', renderExerciseResults);
+document.getElementById('exercicio-grupo')?.addEventListener('change', renderExerciseResults);
 document.getElementById('exercicio-busca')?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); adicionarExercicioDaBiblioteca(); }
 });
@@ -4417,7 +4501,7 @@ document.getElementById('btn-add-treino').addEventListener('click', async () => 
   const carga = parseFloat(document.getElementById('t-carga').value);
   const rpe = parseFloat(document.getElementById('t-rpe').value);
 
-  if (!exercicio) { toast('Adicione ao menos um exercício a este treino antes de registrar.'); return; }
+  if (!exercicio) { toast('Adicione exercicios ao treino antes de registrar uma execucao.'); return; }
   if ([series, reps, carga, rpe].some(v => isNaN(v))) { toast('Preencha séries, repetições, carga e RPE.'); return; }
   if (series <= 0) { toast('Séries devem ser um número positivo.'); return; }
   if (reps <= 0) { toast('Repetições devem ser um número positivo.'); return; }
