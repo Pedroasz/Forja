@@ -2461,8 +2461,7 @@ async function testWorkoutCatalogIntegrity() {
 
   try {
     await loadAppState();
-    renderWorkoutDivisionSelector();
-    renderWorkoutEditor({ refreshLibraryControls: true });
+    renderTelaTreino();
     ensureActiveWorkout();
 
     const divisao = getWorkoutDivision();
@@ -2527,7 +2526,7 @@ async function repairWorkoutPlan() {
   state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
   if (!visibleTabs.includes(treinoAtivo)) treinoAtivo = 'A';
   await saveWorkoutState();
-  renderTudo();
+  renderTelaTreino();
 
   const eachWorkoutHasValidExerciseList = visibleTabs.every(key => Array.isArray(state.treinos[key]?.exercicios));
   const syncTestNamesCleaned = visibleTabs.every(key => (state.treinos[key]?.exercicios || []).every(nome => !isExerciseTestData(nome)));
@@ -2549,10 +2548,7 @@ window.resetWorkoutPlanToEmpty = async function() {
   state.treinos = createEmptyWorkoutPlan(divisao);
   treinoAtivo = 'A';
   await saveWorkoutState();
-  renderWorkoutDivisionSelector();
-  renderWorkoutEditor({ refreshLibraryControls: true, divisao });
-  renderTreinoHistorico();
-  renderVolumeSemanal();
+  renderTelaTreino({ divisao });
 
   const hasABCDEBlocks = getAllWorkoutKeys().every(key => Boolean(state.treinos[key]));
   const allBlocksEmpty = getAllWorkoutKeys().every(key => Array.isArray(state.treinos[key]?.exercicios) && state.treinos[key].exercicios.length === 0);
@@ -2604,7 +2600,7 @@ window.testWorkoutBlocksUI = async function() {
     if (select) select.value = divisao;
     if (search) search.value = '';
     if (groupFilter) groupFilter.value = '';
-    renderWorkoutEditor({ refreshLibraryControls: true, divisao });
+    renderTelaTreino({ divisao });
     return getRenderedWorkoutButtons();
   };
   const statusMatches = (activeKeys) => {
@@ -2726,14 +2722,81 @@ window.testWorkoutBlocksUI = async function() {
     if (search) search.value = previousSearch;
     if (groupFilter) groupFilter.value = previousGroup;
     if (select) select.value = getWorkoutDivision();
-    renderWorkoutDivisionSelector();
-    renderWorkoutEditor({ refreshLibraryControls: true });
-    renderTreinoHistorico();
-    renderVolumeSemanal();
+    renderTelaTreino();
   }
 };
 
 window.testWorkoutBuilderUI = window.testWorkoutBlocksUI;
+
+window.testWorkoutInitialRender = async function() {
+  const groupFilter = document.getElementById('exercicio-grupo');
+  const previousGroup = groupFilter?.value || '';
+  let muscleFilterEvents = 0;
+  const trackMuscleFilter = () => { muscleFilterEvents += 1; };
+  if (groupFilter) groupFilter.addEventListener('change', trackMuscleFilter);
+
+  let renderFunctionExists = false;
+  let blocksCardRendered = false;
+  let fiveBlocksRendered = false;
+  let selectedWorkoutRendered = false;
+  let libraryRendered = false;
+  let executionSelectRendered = false;
+  let independentFromMuscleFilter = false;
+
+  try {
+    await loadAppState();
+    renderFunctionExists = typeof renderTelaTreino === 'function';
+    if (renderFunctionExists) renderTelaTreino();
+
+    const section = document.getElementById('screen-treino');
+    const blockButtons = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'));
+    const blockKeys = blockButtons.map(button => button.dataset.treino);
+    const selectedText = document.getElementById('treino-exercicios-lista')?.textContent || '';
+    const libraryList = document.getElementById('exercicio-lista-biblioteca');
+    const exerciseSelect = document.getElementById('t-exercicio');
+
+    blocksCardRendered = Boolean(section) && section.textContent.includes('Blocos de treino');
+    fiveBlocksRendered = blockButtons.length === 5 && ['A', 'B', 'C', 'D', 'E'].every(key => blockKeys.includes(key));
+    selectedWorkoutRendered = selectedText.includes(getWorkoutLabel(getActiveWorkoutKey()));
+    libraryRendered = Boolean(libraryList) && libraryList.children.length > 0;
+    executionSelectRendered = Boolean(exerciseSelect);
+    independentFromMuscleFilter = muscleFilterEvents === 0 && (!groupFilter || groupFilter.value === previousGroup);
+
+    return {
+      renderFunctionExists,
+      blocksCardRendered,
+      fiveBlocksRendered,
+      selectedWorkoutRendered,
+      libraryRendered,
+      executionSelectRendered,
+      independentFromMuscleFilter,
+      passed: renderFunctionExists
+        && blocksCardRendered
+        && fiveBlocksRendered
+        && selectedWorkoutRendered
+        && libraryRendered
+        && executionSelectRendered
+        && independentFromMuscleFilter
+    };
+  } catch (error) {
+    console.warn('testWorkoutInitialRender failed:', error);
+    return {
+      renderFunctionExists,
+      blocksCardRendered,
+      fiveBlocksRendered,
+      selectedWorkoutRendered,
+      libraryRendered,
+      executionSelectRendered,
+      independentFromMuscleFilter,
+      passed: false
+    };
+  } finally {
+    if (groupFilter) {
+      groupFilter.removeEventListener('change', trackMuscleFilter);
+      groupFilter.value = previousGroup;
+    }
+  }
+};
 
 window.testWorkoutDashboardUI = async function() {
   const section = document.getElementById('screen-treino');
@@ -3672,6 +3735,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('screen-' + btn.dataset.screen).classList.add('active');
+    if (btn.dataset.screen === 'treino') renderTelaTreino();
     if (btn.dataset.screen === 'evolucao') renderGraficoEvolucao();
   });
 });
@@ -4259,7 +4323,7 @@ async function adicionarExercicioAoTreinoAtivo(selectedExercise, options = {}) {
   treinoAtivo = targetWorkoutKey;
   if (persist) await saveWorkoutState();
 
-  renderWorkoutEditor({ divisao });
+  renderTelaTreino({ divisao });
   if (notify) toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
   return { added: true, treino: targetWorkoutKey, exercicio: selectedExercise.nome };
 }
@@ -4289,7 +4353,7 @@ function renderWorkoutDivisionSelector() {
     if (!getAllWorkoutKeys().includes(treinoAtivo)) treinoAtivo = 'A';
 
     await saveWorkoutState();
-    renderWorkoutEditor({ refreshLibraryControls: true, divisao: nextDivision });
+    renderTelaTreino({ divisao: nextDivision });
   };
 }
 
@@ -4357,20 +4421,31 @@ function renderTreinoTabs(divisao = null) {
   cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       treinoAtivo = btn.dataset.treino;
-      renderWorkoutEditor({ refreshLibraryControls: true, divisao: activeDivision });
+      renderTelaTreino({ divisao: activeDivision });
     });
   });
 }
 
-function renderWorkoutEditor(options = {}) {
-  const { refreshLibraryControls = false, divisao = null } = options;
+function renderTelaTreino(options = {}) {
+  const { divisao = null } = options;
   const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
   state.configTreino = { divisao: activeDivision };
+  state.treinos = ensureValidWorkoutPlan(state.treinos, activeDivision);
+  if (!getAllWorkoutKeys().includes(treinoAtivo)) treinoAtivo = 'A';
+  renderWorkoutDivisionSelector();
   renderTreinoTabs(activeDivision);
-  if (refreshLibraryControls) renderExerciseLibraryControls();
   renderExerciciosLista(activeDivision);
+  renderBibliotecaExercicios();
   popularSelectExercicios(activeDivision);
   renderEstimativaCaloriasTreino(activeDivision);
+  renderTreinoHistorico();
+  renderVolumeSemanal();
+  if (typeof renderCronometro === 'function') renderCronometro();
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderWorkoutEditor(options = {}) {
+  renderTelaTreino(options);
 }
 
 function calcularKcalExercicio(nome, peso) {
@@ -4426,7 +4501,7 @@ async function removerExercicioDoTreinoAtivo(index, options = {}) {
   treino.exercicios.splice(idx, 1);
   if (persist) await saveWorkoutState();
 
-  renderWorkoutEditor({ refreshLibraryControls: true, divisao: activeDivision });
+  renderTelaTreino({ divisao: activeDivision });
   if (notify) toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
   return { removed: true, treino: treinoAtivo, exercicio: nomeRemovido };
 }
@@ -4706,6 +4781,10 @@ function formatarCronometro(segundos) {
 
 function atualizarDisplayCronometro() {
   document.getElementById('cronometro-display').textContent = formatarCronometro(cronometroRestante);
+}
+
+function renderCronometro() {
+  atualizarDisplayCronometro();
 }
 
 function limparAlarmeCronometro() {
@@ -5016,10 +5095,7 @@ function renderTudo() {
   atualizarLabelDataDieta();
   renderDiarioHoje();
   renderAgua();
-  renderWorkoutDivisionSelector();
-  renderWorkoutEditor({ refreshLibraryControls: true });
-  renderTreinoHistorico();
-  renderVolumeSemanal();
+  renderTelaTreino();
   renderEvolucaoTabela();
   renderGraficoEvolucao();
   renderContadores();
