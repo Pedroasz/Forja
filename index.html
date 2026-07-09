@@ -2369,20 +2369,24 @@ async function testWorkoutPlanIntegrity() {
 async function testWorkoutCatalogIntegrity() {
   let hasABCDE = false;
   let eachWorkoutHasExercises = false;
+  let activeWorkoutHasExercises = false;
   let noSyncTestNames = false;
   let exerciseBaseLargeEnough = false;
   let selectHasOptions = false;
 
   try {
     await loadAppState();
+    ensureActiveWorkout();
     popularSelectExercicios();
 
     const requiredKeys = ['A', 'B', 'C', 'D', 'E'];
     const workouts = state?.treinos || {};
     const allWorkoutExercises = requiredKeys.flatMap(key => workouts[key]?.exercicios || []);
+    const activeWorkout = workouts[treinoAtivo];
 
     hasABCDE = requiredKeys.every(key => Boolean(workouts[key]));
     eachWorkoutHasExercises = requiredKeys.every(key => (workouts[key]?.exercicios || []).length >= 5);
+    activeWorkoutHasExercises = (activeWorkout?.exercicios || []).length > 0;
     noSyncTestNames = allWorkoutExercises.every(nome => !isExerciseTestData(nome));
     exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 60;
     selectHasOptions = (document.getElementById('t-exercicio')?.options.length || 0) > 0;
@@ -2390,22 +2394,44 @@ async function testWorkoutCatalogIntegrity() {
     return {
       hasABCDE,
       eachWorkoutHasExercises,
+      activeWorkoutHasExercises,
       noSyncTestNames,
       exerciseBaseLargeEnough,
       selectHasOptions,
-      passed: hasABCDE && eachWorkoutHasExercises && noSyncTestNames && exerciseBaseLargeEnough && selectHasOptions
+      passed: hasABCDE && eachWorkoutHasExercises && activeWorkoutHasExercises && noSyncTestNames && exerciseBaseLargeEnough && selectHasOptions
     };
   } catch (error) {
     console.warn('testWorkoutCatalogIntegrity failed:', error);
     return {
       hasABCDE,
       eachWorkoutHasExercises,
+      activeWorkoutHasExercises,
       noSyncTestNames,
       exerciseBaseLargeEnough,
       selectHasOptions,
       passed: false
     };
   }
+}
+
+function repairWorkoutPlan() {
+  state.treinos = ensureValidWorkoutPlan(state.treinos);
+  if (!state.treinos[treinoAtivo]) treinoAtivo = 'A';
+  localStorage.setItem(WORKOUTS_KEY, JSON.stringify(state.treinos));
+  renderTudo();
+
+  const requiredKeys = ['A', 'B', 'C', 'D', 'E'];
+  const hasABCDE = requiredKeys.every(key => Boolean(state.treinos[key]));
+  const eachWorkoutHasExercises = requiredKeys.every(key => (state.treinos[key]?.exercicios || []).length >= 5);
+  const activeWorkoutHasExercises = (state.treinos[treinoAtivo]?.exercicios || []).length > 0;
+
+  return {
+    repaired: true,
+    hasABCDE,
+    eachWorkoutHasExercises,
+    activeWorkoutHasExercises,
+    passed: hasABCDE && eachWorkoutHasExercises && activeWorkoutHasExercises
+  };
 }
 
 /**
@@ -2607,6 +2633,7 @@ window.testWorkoutsSync = testWorkoutsSync;
 window.testFullAppSync = testFullAppSync;
 window.testWorkoutPlanIntegrity = testWorkoutPlanIntegrity;
 window.testWorkoutCatalogIntegrity = testWorkoutCatalogIntegrity;
+window.repairWorkoutPlan = repairWorkoutPlan;
 window.testSyncQueue = testSyncQueue;
 window.testHydrationSync = testHydrationSync;
 window.testEvolutionSync = testEvolutionSync;
@@ -2779,18 +2806,23 @@ function cleanWorkoutPlan(treinos) {
     const workout = treinos[key];
     const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
 
-    if (!workout || typeof workout !== 'object' || Array.isArray(workout)) {
+    if (!workout || (typeof workout !== 'object' && !Array.isArray(workout))) {
       cleanedPlan[key] = defaultWorkout;
       return;
     }
 
-    const cleanedExercises = cleanExerciseList(workout.exercicios);
+    const workoutExercises = Array.isArray(workout) ? workout : workout.exercicios;
+    const cleanedExercises = cleanExerciseList(workoutExercises);
+    const completedExercises = cleanExerciseList([
+      ...cleanedExercises,
+      ...(cleanedExercises.length < 5 ? defaultWorkout.exercicios : [])
+    ]);
 
     cleanedPlan[key] = {
       ...defaultWorkout,
-      ...workout,
-      nome: workout.nome || defaultWorkout.nome,
-      exercicios: cleanedExercises.length > 0 ? cleanedExercises : defaultWorkout.exercicios
+      ...(Array.isArray(workout) ? {} : workout),
+      nome: Array.isArray(workout) ? defaultWorkout.nome : (workout.nome || defaultWorkout.nome),
+      exercicios: completedExercises.length > 0 ? completedExercises : defaultWorkout.exercicios
     };
   });
 
@@ -2801,7 +2833,10 @@ function cleanWorkoutPlan(treinos) {
     }
 
     const cleanedExercises = cleanExerciseList(cleanedPlan[key].exercicios);
-    cleanedPlan[key].exercicios = cleanedExercises.length > 0 ? cleanedExercises : defaults[key].exercicios;
+    cleanedPlan[key].exercicios = cleanExerciseList([
+      ...cleanedExercises,
+      ...(cleanedExercises.length < 5 ? defaults[key].exercicios : [])
+    ]);
     cleanedPlan[key].nome = cleanedPlan[key].nome || defaults[key].nome;
   });
 
@@ -3538,8 +3573,17 @@ function popularDatalistExercicios() {
     .join('');
 }
 
+function ensureActiveWorkout() {
+  state.treinos = ensureValidWorkoutPlan(state.treinos);
+  if (!state.treinos[treinoAtivo]) treinoAtivo = 'A';
+  return state.treinos[treinoAtivo];
+}
+
 function renderTreinoTabs() {
   const cont = document.getElementById('treino-tabs');
+  state.treinos = ensureValidWorkoutPlan(state.treinos);
+  if (!state.treinos[treinoAtivo]) treinoAtivo = 'A';
+
   cont.innerHTML = Object.keys(state.treinos).map(k => `
     <button data-treino="${k}" class="treino-tab-btn text-sm font-semibold rounded-lg py-2 ${k === treinoAtivo ? 'bg-ember text-bg' : 'bg-card2 text-mute'}">${k}</button>
   `).join('');
@@ -3578,7 +3622,7 @@ function renderEstimativaCaloriasTreino() {
 
   const pesoCadastrado = state.perfil && state.perfil.peso ? state.perfil.peso : null;
   const peso = pesoCadastrado || 75;
-  const t = state.treinos[treinoAtivo];
+  const t = ensureActiveWorkout();
 
   if (!t || t.exercicios.length === 0) {
     el.innerHTML = `<i data-lucide="flame" class="w-3.5 h-3.5 text-mute shrink-0"></i><span>Estimativa de Gasto (Treino Atual): ~0 kcal</span>`;
@@ -3595,7 +3639,7 @@ function renderEstimativaCaloriasTreino() {
 
 function renderExerciciosLista() {
   const cont = document.getElementById('treino-exercicios-lista');
-  const t = state.treinos[treinoAtivo];
+  const t = ensureActiveWorkout();
 
   if (t.exercicios.length === 0) {
     cont.innerHTML = `<p class="text-xs text-mute">${t.nome} — nenhum exercício adicionado ainda. Use o campo acima para montar sua rotina.</p>`;
@@ -3615,20 +3659,21 @@ function renderExerciciosLista() {
   cont.querySelectorAll('.del-exercicio').forEach(btn => {
     btn.addEventListener('click', async () => {
       const idx = Number(btn.dataset.idx);
-      const nomeRemovido = state.treinos[treinoAtivo].exercicios[idx];
-      state.treinos[treinoAtivo].exercicios.splice(idx, 1);
+      const treino = ensureActiveWorkout();
+      const nomeRemovido = treino.exercicios[idx];
+      treino.exercicios.splice(idx, 1);
       await save(LS.treinos, state.treinos);
       renderExerciciosLista();
       popularSelectExercicios();
       renderEstimativaCaloriasTreino();
-      toast(`"${nomeRemovido}" removido do ${state.treinos[treinoAtivo].nome}.`);
+      toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
     });
   });
 }
 
 function popularSelectExercicios() {
   const sel = document.getElementById('t-exercicio');
-  const t = state.treinos[treinoAtivo];
+  const t = ensureActiveWorkout();
   sel.innerHTML = t.exercicios.map(ex => `<option value="${ex}">${ex}</option>`).join('');
   atualizarSugestaoProgressao();
 }
@@ -3638,7 +3683,7 @@ document.getElementById('btn-add-exercicio').addEventListener('click', async () 
   const nome = input.value.trim();
   if (!nome) { toast('Digite o nome do exercício.'); return; }
 
-  state.treinos[treinoAtivo].exercicios.push(nome);
+  ensureActiveWorkout().exercicios.push(nome);
   await save(LS.treinos, state.treinos);
 
   input.value = '';
