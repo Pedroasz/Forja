@@ -1170,10 +1170,10 @@ const StorageService = (() => {
      * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
      */
     async loadWorkouts() {
-      const cachedTreinos = await read(WORKOUTS_KEY);
+      const cachedTreinos = ensureValidWorkoutPlan(await read(WORKOUTS_KEY));
       const cachedExecutions = await read(WORKOUT_EXECUTIONS_KEY);
       const cachedWorkouts = {
-        treinos: cachedTreinos ?? TREINOS_PADRAO,
+        treinos: cachedTreinos,
         execucoes: cachedExecutions ?? []
       };
 
@@ -1190,16 +1190,14 @@ const StorageService = (() => {
         if (error) throw error;
 
         const mappedWorkouts = DataMapper.workoutsFromSupabase(data || []);
-        const mergedWorkouts = {
-          treinos: cachedTreinos
-            ? { ...(mappedWorkouts.treinos || TREINOS_PADRAO), ...cachedTreinos }
-            : (mappedWorkouts.treinos || TREINOS_PADRAO),
-          execucoes: mappedWorkouts.execucoes || []
+        const loadedWorkouts = {
+          treinos: cachedTreinos,
+          execucoes: Array.isArray(mappedWorkouts.execucoes) ? mappedWorkouts.execucoes : cachedWorkouts.execucoes
         };
 
-        await write(WORKOUTS_KEY, mergedWorkouts.treinos);
-        await write(WORKOUT_EXECUTIONS_KEY, mergedWorkouts.execucoes);
-        return mergedWorkouts;
+        await write(WORKOUTS_KEY, loadedWorkouts.treinos);
+        await write(WORKOUT_EXECUTIONS_KEY, loadedWorkouts.execucoes);
+        return loadedWorkouts;
       } catch (error) {
         console.warn('StorageService workouts sync load failed:', error);
         return cachedWorkouts;
@@ -1212,7 +1210,7 @@ const StorageService = (() => {
      */
     async saveWorkouts(workoutsData, options = {}) {
       const workoutsToSave = {
-        treinos: workoutsData?.treinos || TREINOS_PADRAO,
+        treinos: ensureValidWorkoutPlan(workoutsData?.treinos),
         execucoes: Array.isArray(workoutsData?.execucoes) ? workoutsData.execucoes : []
       };
       const savedWorkouts = await write(WORKOUTS_KEY, workoutsToSave.treinos);
@@ -1627,7 +1625,7 @@ async function loadMealsState() {
 async function loadWorkoutsState() {
   if (workoutsStateLoaded) return { treinos: state.treinos, execucoes: state.execucoes };
   const workoutsData = await StorageService.loadWorkouts();
-  state.treinos = workoutsData?.treinos || TREINOS_PADRAO;
+  state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos);
   state.execucoes = Array.isArray(workoutsData?.execucoes) ? workoutsData.execucoes : [];
   workoutsStateLoaded = true;
   return { treinos: state.treinos, execucoes: state.execucoes };
@@ -1694,15 +1692,13 @@ async function loadAppState() {
 
   try {
     const workoutsData = await StorageService.loadWorkouts();
-    state.treinos = workoutsData?.treinos && typeof workoutsData.treinos === 'object'
-      ? workoutsData.treinos
-      : load(LS.treinos, TREINOS_PADRAO);
+    state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos || load(LS.treinos, TREINOS_PADRAO));
     state.execucoes = Array.isArray(workoutsData?.execucoes)
       ? workoutsData.execucoes
       : load(LS.execucoes, []);
   } catch (error) {
     console.warn('loadAppState workouts failed:', error);
-    state.treinos = load(LS.treinos, TREINOS_PADRAO);
+    state.treinos = ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO));
     state.execucoes = load(LS.execucoes, []);
   }
 
@@ -1856,7 +1852,6 @@ const DataMapper = (() => {
    * Sem linhas remotas, os treinos padrao seguem como fallback.
    */
   function workoutsFromSupabase(rows = []) {
-    const treinos = JSON.parse(JSON.stringify(TREINOS_PADRAO));
     const execucoes = [];
 
     (Array.isArray(rows) ? rows : [])
@@ -1867,10 +1862,6 @@ const DataMapper = (() => {
       })
       .forEach(row => {
         const workoutName = row.name || 'A';
-        if (!treinos[workoutName]) {
-          treinos[workoutName] = { nome: `Treino ${workoutName}`, exercicios: [] };
-        }
-
         const exercises = Array.isArray(row.exercises) ? row.exercises : [];
         exercises.forEach((exercise, index) => {
           const generatedId = Number(`${String(row.workout_date || '').replace(/-/g, '')}${index + 1}`) || Date.now();
@@ -1882,18 +1873,10 @@ const DataMapper = (() => {
           };
 
           execucoes.push(execution);
-
-          if (execution.exercicio && !treinos[execution.treino]) {
-            treinos[execution.treino] = { nome: `Treino ${execution.treino}`, exercicios: [] };
-          }
-
-          if (execution.exercicio && !treinos[execution.treino].exercicios.includes(execution.exercicio)) {
-            treinos[execution.treino].exercicios.push(execution.exercicio);
-          }
         });
       });
 
-    return { treinos, execucoes };
+    return { treinos: ensureValidWorkoutPlan(null), execucoes };
   }
 
   /**
@@ -2303,6 +2286,46 @@ async function testFullAppSync() {
 }
 
 /**
+ * Teste manual da integridade do plano de Treinos. Nao executa automaticamente.
+ * Rode no console: await testWorkoutPlanIntegrity()
+ */
+async function testWorkoutPlanIntegrity() {
+  let hasTreinos = false;
+  let hasABCDE = false;
+  let activeWorkoutHasExercises = false;
+  let execucoesIsArray = false;
+
+  try {
+    await loadAppState();
+
+    const requiredKeys = ['A', 'B', 'C', 'D', 'E'];
+    hasTreinos = Boolean(state?.treinos) && typeof state.treinos === 'object';
+    hasABCDE = hasTreinos && requiredKeys.every(key => Boolean(state.treinos[key]));
+
+    const activeWorkout = state.treinos?.[treinoAtivo] || state.treinos?.A;
+    activeWorkoutHasExercises = Array.isArray(activeWorkout?.exercicios) && activeWorkout.exercicios.length > 0;
+    execucoesIsArray = Array.isArray(state?.execucoes);
+
+    return {
+      hasTreinos,
+      hasABCDE,
+      activeWorkoutHasExercises,
+      execucoesIsArray,
+      passed: hasTreinos && hasABCDE && activeWorkoutHasExercises && execucoesIsArray
+    };
+  } catch (error) {
+    console.warn('testWorkoutPlanIntegrity failed:', error);
+    return {
+      hasTreinos,
+      hasABCDE,
+      activeWorkoutHasExercises,
+      execucoesIsArray,
+      passed: false
+    };
+  }
+}
+
+/**
  * Teste manual da fila de sincronizacao offline. Nao executa automaticamente.
  * Rode no console: await testSyncQueue()
  */
@@ -2499,6 +2522,7 @@ window.testProfileSync = testProfileSync;
 window.testMealsSync = testMealsSync;
 window.testWorkoutsSync = testWorkoutsSync;
 window.testFullAppSync = testFullAppSync;
+window.testWorkoutPlanIntegrity = testWorkoutPlanIntegrity;
 window.testSyncQueue = testSyncQueue;
 window.testHydrationSync = testHydrationSync;
 window.testEvolutionSync = testEvolutionSync;
@@ -2628,6 +2652,42 @@ const TREINOS_PADRAO = {
   D: { nome: "Treino D", exercicios: [] },
   E: { nome: "Treino E", exercicios: [] },
 };
+
+function ensureValidWorkoutPlan(treinos) {
+  const defaults = JSON.parse(JSON.stringify(TREINOS_PADRAO));
+  const requiredKeys = Object.keys(defaults);
+
+  if (!treinos || typeof treinos !== 'object' || Array.isArray(treinos) || Object.keys(treinos).length === 0) {
+    return defaults;
+  }
+
+  const safePlan = { ...defaults };
+
+  Object.keys(treinos).forEach(key => {
+    const workout = treinos[key];
+    const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
+
+    if (!workout || typeof workout !== 'object' || Array.isArray(workout)) {
+      safePlan[key] = defaultWorkout;
+      return;
+    }
+
+    safePlan[key] = {
+      ...defaultWorkout,
+      ...workout,
+      nome: workout.nome || defaultWorkout.nome,
+      exercicios: Array.isArray(workout.exercicios) ? workout.exercicios : defaultWorkout.exercicios
+    };
+  });
+
+  requiredKeys.forEach(key => {
+    if (!safePlan[key] || typeof safePlan[key] !== 'object' || !Array.isArray(safePlan[key].exercicios)) {
+      safePlan[key] = defaults[key];
+    }
+  });
+
+  return safePlan;
+}
 
 const EXERCICIOS_BASE = [
   "Supino Reto com Barra", "Supino Reto com Halteres", "Supino Inclinado com Barra",
