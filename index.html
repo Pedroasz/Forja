@@ -359,6 +359,10 @@
       <div id="treino-estimativa-calorias" class="mt-3 flex items-center gap-1.5 text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2"></div>
 
       <div class="mt-3 bg-bg/35 border border-line/50 rounded-xl p-3 space-y-3">
+        <div>
+          <h3 class="text-sm font-semibold">Biblioteca de exercicios</h3>
+          <p class="text-xs text-mute">Escolha um exercicio para adicionar ao treino ativo.</p>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label for="exercicio-busca" class="text-xs text-mute">Buscar exercício</label>
@@ -369,6 +373,7 @@
             <select id="exercicio-resultados" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
           </div>
         </div>
+        <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1"></div>
         <button id="btn-add-exercicio" type="button" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200 flex items-center justify-center gap-1.5">
           <i data-lucide="plus" class="w-4 h-4"></i> Adicionar exercício
         </button>
@@ -2369,7 +2374,7 @@ async function testWorkoutPlanIntegrity() {
     visibleTabsOk = hasTreinos && requiredKeys.every(key => Boolean(state.treinos[key]));
 
     const activeWorkout = state.treinos?.[treinoAtivo] || state.treinos?.A;
-    activeWorkoutHasExercises = Array.isArray(activeWorkout?.exercicios) && activeWorkout.exercicios.length > 0;
+    activeWorkoutHasExercises = Array.isArray(activeWorkout?.exercicios);
     execucoesIsArray = Array.isArray(state?.execucoes);
 
     return {
@@ -2470,24 +2475,166 @@ async function testWorkoutCatalogIntegrity() {
 }
 
 async function repairWorkoutPlan() {
-  const divisao = getWorkoutDivision();
+  const divisao = getCurrentWorkoutDivision();
   const visibleTabs = getWorkoutVisibleKeys(divisao);
   state.configTreino = saveWorkoutConfig({ divisao });
-  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
-  if (!visibleTabs.includes(treinoAtivo)) treinoAtivo = visibleTabs[0] || 'A';
+  state.treinos = removeLegacyPresetExercisesFromPlan(state.treinos, divisao);
+  treinoAtivo = visibleTabs.includes('A') ? 'A' : (visibleTabs[0] || 'A');
   await saveWorkoutState();
   renderTudo();
 
   const eachWorkoutHasValidExerciseList = visibleTabs.every(key => Array.isArray(state.treinos[key]?.exercicios));
+  const legacyCleaned = visibleTabs.every(key => {
+    const legacyKeys = new Set((LEGACY_PRESET_EXERCISES_BY_DIVISION[divisao]?.[key] || []).map(nome => normalizeExerciseKey(nome)));
+    return (state.treinos[key]?.exercicios || []).every(nome => !legacyKeys.has(normalizeExerciseKey(nome)));
+  });
 
   return {
     repaired: true,
     divisao,
     visibleTabs,
+    legacyCleaned,
     eachWorkoutHasValidExerciseList,
-    passed: WORKOUT_DIVISIONS.includes(divisao) && eachWorkoutHasValidExerciseList
+    passed: WORKOUT_DIVISIONS.includes(divisao) && eachWorkoutHasValidExerciseList && legacyCleaned
   };
 }
+
+window.resetWorkoutPlanToEmpty = async function() {
+  const divisao = getCurrentWorkoutDivision();
+  const execucoesPreservadas = Array.isArray(state.execucoes);
+  state.configTreino = saveWorkoutConfig({ divisao });
+  state.treinos = createEmptyWorkoutPlan(divisao);
+  treinoAtivo = 'A';
+  await saveWorkoutState();
+  renderWorkoutDivisionSelector();
+  renderWorkoutEditor({ refreshLibraryControls: true, divisao });
+  renderTreinoHistorico();
+  renderVolumeSemanal();
+
+  return {
+    reset: true,
+    divisao,
+    treinosVazios: Object.values(state.treinos).every(treino => Array.isArray(treino.exercicios) && treino.exercicios.length === 0),
+    execucoesPreservadas,
+    passed: true
+  };
+};
+
+window.testWorkoutBuilderUI = async function() {
+  const previousState = {
+    configTreino: { ...(state.configTreino || {}) },
+    treinos: JSON.parse(JSON.stringify(state.treinos || {})),
+    execucoes: JSON.parse(JSON.stringify(state.execucoes || [])),
+    treinoAtivo
+  };
+  const select = document.getElementById('treino-divisao');
+  const search = document.getElementById('exercicio-busca');
+  const previousSearch = search?.value || '';
+
+  let divisionSelectorOk = false;
+  let abcTabsOk = false;
+  let abcdTabsOk = false;
+  let abcdeTabsOk = false;
+  let exerciseBaseLargeEnough = false;
+  let libraryVisible = false;
+  let libraryHasInitialOptions = false;
+  let canStartEmpty = false;
+  let addExerciseOk = false;
+  let selectUpdatesOk = false;
+  let noSyncTestNames = false;
+  let execucoesPreserved = false;
+
+  const setDivisionForTest = (divisao) => {
+    state.configTreino = { divisao };
+    if (select) select.value = divisao;
+    treinoAtivo = 'A';
+    state.treinos = createEmptyWorkoutPlan(divisao);
+    if (search) search.value = '';
+    renderWorkoutEditor({ refreshLibraryControls: true, divisao });
+    return Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn')).map(btn => btn.dataset.treino);
+  };
+
+  try {
+    divisionSelectorOk = Boolean(select)
+      && ['ABC', 'ABCD', 'ABCDE'].every(value => Array.from(select.options).some(option => option.value === value));
+
+    abcTabsOk = setDivisionForTest('ABC').join(',') === 'A,B,C';
+    abcdTabsOk = setDivisionForTest('ABCD').join(',') === 'A,B,C,D';
+    abcdeTabsOk = setDivisionForTest('ABCDE').join(',') === 'A,B,C,D,E';
+
+    exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 100;
+    libraryVisible = Boolean(document.getElementById('exercicio-lista-biblioteca'));
+    libraryHasInitialOptions = (document.getElementById('exercicio-resultados')?.options.length || 0) > 0
+      || (document.getElementById('exercicio-lista-biblioteca')?.children.length || 0) > 0;
+    canStartEmpty = Object.values(state.treinos).every(treino => Array.isArray(treino.exercicios) && treino.exercicios.length === 0);
+
+    const selectedExercise = EXERCISE_LIBRARY.find(item => item.key.includes('supino')) || EXERCISE_LIBRARY[0];
+    const addResult = await adicionarExercicioAoTreinoAtivo(selectedExercise, { persist: false, notify: false });
+    addExerciseOk = Boolean(addResult.added)
+      && state.treinos[treinoAtivo]?.exercicios?.includes(selectedExercise.nome);
+    selectUpdatesOk = Array.from(document.getElementById('t-exercicio')?.options || [])
+      .some(option => option.value === selectedExercise.nome);
+    noSyncTestNames = Object.values(state.treinos)
+      .flatMap(treino => treino.exercicios || [])
+      .every(nome => !isExerciseTestData(nome));
+    execucoesPreserved = JSON.stringify(state.execucoes || []) === JSON.stringify(previousState.execucoes);
+
+    return {
+      divisionSelectorOk,
+      abcTabsOk,
+      abcdTabsOk,
+      abcdeTabsOk,
+      exerciseBaseLargeEnough,
+      libraryVisible,
+      libraryHasInitialOptions,
+      canStartEmpty,
+      addExerciseOk,
+      selectUpdatesOk,
+      noSyncTestNames,
+      execucoesPreserved,
+      passed: divisionSelectorOk
+        && abcTabsOk
+        && abcdTabsOk
+        && abcdeTabsOk
+        && exerciseBaseLargeEnough
+        && libraryVisible
+        && libraryHasInitialOptions
+        && canStartEmpty
+        && addExerciseOk
+        && selectUpdatesOk
+        && noSyncTestNames
+        && execucoesPreserved
+    };
+  } catch (error) {
+    console.warn('testWorkoutBuilderUI failed:', error);
+    return {
+      divisionSelectorOk,
+      abcTabsOk,
+      abcdTabsOk,
+      abcdeTabsOk,
+      exerciseBaseLargeEnough,
+      libraryVisible,
+      libraryHasInitialOptions,
+      canStartEmpty,
+      addExerciseOk,
+      selectUpdatesOk,
+      noSyncTestNames,
+      execucoesPreserved,
+      passed: false
+    };
+  } finally {
+    state.configTreino = previousState.configTreino;
+    state.treinos = previousState.treinos;
+    state.execucoes = previousState.execucoes;
+    treinoAtivo = previousState.treinoAtivo;
+    if (search) search.value = previousSearch;
+    if (select) select.value = getWorkoutDivision();
+    renderWorkoutDivisionSelector();
+    renderWorkoutEditor({ refreshLibraryControls: true });
+    renderTreinoHistorico();
+    renderVolumeSemanal();
+  }
+};
 
 /**
  * Teste manual da fila de sincronizacao offline. Nao executa automaticamente.
@@ -2816,26 +2963,47 @@ const DEFAULT_WORKOUT_CONFIG = { divisao: 'ABCDE' };
 
 const TREINOS_PADRAO_POR_DIVISAO = {
   ABC: {
-    A: { nome: "Treino A - Peito, Ombros e Triceps", exercicios: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Desenvolvimento militar", "Elevacao lateral", "Triceps pulley", "Triceps corda"] },
-    B: { nome: "Treino B - Costas e Biceps", exercicios: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo", "Rosca Scott"] },
-    C: { nome: "Treino C - Pernas e Abdomen", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe", "Abdominal supra", "Prancha"] },
+    A: { nome: "Treino A", exercicios: [] },
+    B: { nome: "Treino B", exercicios: [] },
+    C: { nome: "Treino C", exercicios: [] },
   },
   ABCD: {
-    A: { nome: "Treino A - Peito e Triceps", exercicios: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Crossover", "Triceps pulley", "Triceps corda"] },
-    B: { nome: "Treino B - Costas e Biceps", exercicios: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo"] },
-    C: { nome: "Treino C - Pernas", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"] },
-    D: { nome: "Treino D - Ombros e Abdomen", exercicios: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Remada alta", "Abdominal supra", "Prancha"] },
+    A: { nome: "Treino A", exercicios: [] },
+    B: { nome: "Treino B", exercicios: [] },
+    C: { nome: "Treino C", exercicios: [] },
+    D: { nome: "Treino D", exercicios: [] },
   },
   ABCDE: {
-    A: { nome: "Treino A - Peito", exercicios: ["Supino reto", "Supino inclinado", "Supino reto com halteres", "Crucifixo reto", "Crossover", "Peck deck"] },
-    B: { nome: "Treino B - Costas", exercicios: ["Puxada frontal", "Barra fixa", "Remada curvada", "Remada baixa", "Remada unilateral", "Pulldown"] },
-    C: { nome: "Treino C - Pernas", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"] },
-    D: { nome: "Treino D - Ombros e Bracos", exercicios: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Rosca direta", "Rosca martelo", "Triceps pulley", "Triceps corda"] },
-    E: { nome: "Treino E - Gluteos, Abdomen e Cardio", exercicios: ["Elevacao pelvica", "Cadeira abdutora", "Agachamento sumo", "Coice no cabo", "Abdominal supra", "Prancha", "Esteira", "Bicicleta ergometrica"] },
+    A: { nome: "Treino A", exercicios: [] },
+    B: { nome: "Treino B", exercicios: [] },
+    C: { nome: "Treino C", exercicios: [] },
+    D: { nome: "Treino D", exercicios: [] },
+    E: { nome: "Treino E", exercicios: [] },
   }
 };
 
 const TREINOS_PADRAO = TREINOS_PADRAO_POR_DIVISAO.ABCDE;
+
+const LEGACY_PRESET_EXERCISES_BY_DIVISION = {
+  ABC: {
+    A: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Desenvolvimento militar", "Elevacao lateral", "Triceps pulley", "Triceps corda"],
+    B: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo", "Rosca Scott"],
+    C: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe", "Abdominal supra", "Prancha"]
+  },
+  ABCD: {
+    A: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Crossover", "Triceps pulley", "Triceps corda"],
+    B: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo"],
+    C: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"],
+    D: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Remada alta", "Abdominal supra", "Prancha"]
+  },
+  ABCDE: {
+    A: ["Supino reto", "Supino inclinado", "Supino reto com halteres", "Crucifixo reto", "Crossover", "Peck deck"],
+    B: ["Puxada frontal", "Barra fixa", "Remada curvada", "Remada baixa", "Remada unilateral", "Pulldown"],
+    C: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"],
+    D: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Rosca direta", "Rosca martelo", "Triceps pulley", "Triceps corda"],
+    E: ["Elevacao pelvica", "Cadeira abdutora", "Agachamento sumo", "Coice no cabo", "Abdominal supra", "Prancha", "Esteira", "Bicicleta ergometrica"]
+  }
+};
 
 function isExerciseTestData(nome) {
   const normalized = String(nome || '').toLowerCase();
@@ -2913,27 +3081,33 @@ function getCurrentWorkoutDivision() {
   return normalizeWorkoutDivision(divisao);
 }
 
-function removeLegacyCrossWorkoutDefaults(exercicios, treinoKey, defaults) {
-  const currentDefaults = new Set((defaults[treinoKey]?.exercicios || []).map(nome => String(nome).toLowerCase()));
-  const otherDefaults = new Set();
-
-  Object.keys(defaults).forEach(key => {
-    if (key === treinoKey) return;
-    (defaults[key]?.exercicios || []).forEach(nome => otherDefaults.add(String(nome).toLowerCase()));
-  });
-
-  return exercicios.filter(nome => {
-    const key = String(nome).toLowerCase();
-    return currentDefaults.has(key) || !otherDefaults.has(key);
-  });
-}
-
 function createDefaultWorkoutForKey(defaults, key) {
   const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
   return {
     ...defaultWorkout,
-    exercicios: cleanExerciseList(defaultWorkout.exercicios)
+    nome: `Treino ${key}`,
+    exercicios: []
   };
+}
+
+function createEmptyWorkoutPlan(divisao = null) {
+  const defaults = cloneWorkoutDefaults(divisao);
+  return Object.keys(defaults).reduce((plan, key) => {
+    plan[key] = createDefaultWorkoutForKey(defaults, key);
+    return plan;
+  }, {});
+}
+
+function isLegacyPresetExerciseList(treinoKey, exercicios = []) {
+  const normalizedExercises = cleanExerciseList(exercicios).map(nome => normalizeExerciseKey(nome));
+  if (normalizedExercises.length === 0) return false;
+
+  return WORKOUT_DIVISIONS.some(divisao => {
+    const legacyExercises = LEGACY_PRESET_EXERCISES_BY_DIVISION[divisao]?.[treinoKey] || [];
+    const normalizedLegacy = legacyExercises.map(nome => normalizeExerciseKey(nome));
+    return normalizedLegacy.length === normalizedExercises.length
+      && normalizedLegacy.every(nome => normalizedExercises.includes(nome));
+  });
 }
 
 function cleanWorkoutPlan(treinos, divisao = null) {
@@ -2942,47 +3116,36 @@ function cleanWorkoutPlan(treinos, divisao = null) {
   const requiredKeys = Object.keys(defaults);
 
   if (!treinos || typeof treinos !== 'object' || Array.isArray(treinos) || Object.keys(treinos).length === 0) {
-    return defaults;
+    return createEmptyWorkoutPlan(activeDivision);
   }
 
   const cleanedPlan = {};
 
-  Object.keys(treinos).forEach(key => {
+  requiredKeys.forEach(key => {
     const workout = treinos[key];
     const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
 
     if (!workout || (typeof workout !== 'object' && !Array.isArray(workout))) {
-      if (defaults[key]) cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
+      cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
       return;
     }
 
     const hasExerciseList = Array.isArray(workout) || Array.isArray(workout.exercicios);
     if (!hasExerciseList) {
-      if (defaults[key]) cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
+      cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
       return;
     }
 
     const workoutExercises = Array.isArray(workout) ? workout : workout.exercicios;
-    const cleanedExercises = defaults[key]
-      ? removeLegacyCrossWorkoutDefaults(cleanExerciseList(workoutExercises), key, defaults)
-      : cleanExerciseList(workoutExercises);
+    const cleanedExercises = cleanExerciseList(workoutExercises);
+    const workoutExercisesToKeep = isLegacyPresetExerciseList(key, cleanedExercises) ? [] : cleanedExercises;
 
     cleanedPlan[key] = {
       ...defaultWorkout,
       ...(Array.isArray(workout) ? {} : workout),
       nome: Array.isArray(workout) ? defaultWorkout.nome : (workout.nome || defaultWorkout.nome),
-      exercicios: cleanedExercises
+      exercicios: workoutExercisesToKeep
     };
-  });
-
-  requiredKeys.forEach(key => {
-    if (!cleanedPlan[key] || typeof cleanedPlan[key] !== 'object') {
-      cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
-      return;
-    }
-
-    cleanedPlan[key].exercicios = cleanExerciseList(cleanedPlan[key].exercicios);
-    cleanedPlan[key].nome = cleanedPlan[key].nome || defaults[key].nome;
   });
 
   return cleanedPlan;
@@ -2990,6 +3153,20 @@ function cleanWorkoutPlan(treinos, divisao = null) {
 
 function ensureValidWorkoutPlan(treinos, divisao = null) {
   return cleanWorkoutPlan(treinos, divisao);
+}
+
+function removeLegacyPresetExercisesFromPlan(treinos, divisao = null) {
+  const activeDivision = getWorkoutDivision(divisao);
+  const cleanedPlan = ensureValidWorkoutPlan(treinos, activeDivision);
+  const legacy = LEGACY_PRESET_EXERCISES_BY_DIVISION[activeDivision] || {};
+
+  Object.keys(cleanedPlan).forEach(key => {
+    const legacyKeys = new Set((legacy[key] || []).map(nome => normalizeExerciseKey(nome)));
+    cleanedPlan[key].exercicios = cleanExerciseList(cleanedPlan[key].exercicios)
+      .filter(nome => !legacyKeys.has(normalizeExerciseKey(nome)));
+  });
+
+  return cleanedPlan;
 }
 
 const EXERCICIOS_BASE = [
@@ -3874,7 +4051,13 @@ function getActiveWorkoutKey(divisao = null) {
 }
 
 async function saveWorkoutState() {
-  await save(LS.treinos, state.treinos);
+  const divisao = getCurrentWorkoutDivision();
+  state.configTreino = { divisao };
+  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
+  await StorageService.saveWorkouts({
+    treinos: state.treinos,
+    execucoes: state.execucoes
+  });
 }
 
 function getFilteredExerciseLibrary() {
@@ -3892,20 +4075,50 @@ function getFilteredExerciseLibrary() {
 
 function renderExerciseResults() {
   const select = document.getElementById('exercicio-resultados');
+  const list = document.getElementById('exercicio-lista-biblioteca');
   if (!select) return;
   const filtered = getFilteredExerciseLibrary();
   select.replaceChildren();
+  if (list) list.replaceChildren();
 
   if (filtered.length === 0) {
     const emptyOption = new Option('Nenhum exercício encontrado', '');
     emptyOption.disabled = true;
     select.appendChild(emptyOption);
+    if (list) {
+      const empty = document.createElement('p');
+      empty.className = 'text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2';
+      empty.textContent = 'Nenhum exercicio encontrado.';
+      list.appendChild(empty);
+    }
     return;
   }
 
   filtered.forEach(item => {
     const label = `${item.nome} • ${item.equipamento} • ~${item.gastoCalorico} kcal`;
     select.appendChild(new Option(label, item.nome));
+    if (list) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'text-left bg-card2 border border-line rounded-lg px-3 py-2 hover:border-ember/60 hover:bg-ember/10 transition';
+      button.dataset.exercicio = item.nome;
+
+      const name = document.createElement('span');
+      name.className = 'block text-sm font-semibold text-ink';
+      name.textContent = item.nome;
+
+      const meta = document.createElement('span');
+      meta.className = 'block text-[11px] text-mute';
+      meta.textContent = `${item.grupo} - ${item.equipamento} - ~${item.gastoCalorico} kcal`;
+
+      button.appendChild(name);
+      button.appendChild(meta);
+      button.addEventListener('click', async () => {
+        select.value = item.nome;
+        await adicionarExercicioAoTreinoAtivo(item);
+      });
+      list.appendChild(button);
+    }
   });
 }
 
@@ -3913,38 +4126,47 @@ function renderExerciseLibraryControls() {
   renderExerciseResults();
 }
 
-async function adicionarExercicioDaBiblioteca() {
-  const select = document.getElementById('exercicio-resultados');
-  const selectedName = select?.value || '';
-  const selectedExercise = EXERCISE_LIBRARY.find(item => item.nome === selectedName);
-  const targetWorkoutKey = getActiveWorkoutKey();
+function popularDatalistExercicios() {
+  renderExerciseLibraryControls();
+}
 
+async function adicionarExercicioAoTreinoAtivo(selectedExercise, options = {}) {
+  const { persist = true, notify = true } = options;
   if (!selectedExercise) {
-    toast('Selecione um exercício da biblioteca.');
-    return;
+    if (notify) toast('Selecione um exercicio da biblioteca.');
+    return { added: false, reason: 'missing-exercise' };
   }
 
-  const divisao = getWorkoutDivision();
+  const divisao = getCurrentWorkoutDivision();
+  const targetWorkoutKey = getActiveWorkoutKey(divisao);
   state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
   const targetWorkout = state.treinos[targetWorkoutKey];
   if (!targetWorkout) {
-    toast('Selecione um treino válido.');
-    return;
+    if (notify) toast('Selecione um treino valido.');
+    return { added: false, reason: 'invalid-workout' };
   }
 
   const alreadyExists = (targetWorkout.exercicios || [])
     .some(nome => normalizeExerciseKey(nome) === selectedExercise.key);
   if (alreadyExists) {
-    toast(`${selectedExercise.nome} já está no ${getWorkoutLabel(targetWorkoutKey)}.`);
-    return;
+    if (notify) toast(`${selectedExercise.nome} ja esta no ${getWorkoutLabel(targetWorkoutKey)}.`);
+    return { added: false, reason: 'duplicate' };
   }
 
   targetWorkout.exercicios.push(selectedExercise.nome);
   treinoAtivo = targetWorkoutKey;
-  await saveWorkoutState();
+  if (persist) await saveWorkoutState();
 
-  renderWorkoutEditor();
-  toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
+  renderWorkoutEditor({ divisao });
+  if (notify) toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
+  return { added: true, treino: targetWorkoutKey, exercicio: selectedExercise.nome };
+}
+
+async function adicionarExercicioDaBiblioteca() {
+  const select = document.getElementById('exercicio-resultados');
+  const selectedName = select?.value || '';
+  const selectedExercise = EXERCISE_LIBRARY.find(item => item.nome === selectedName);
+  await adicionarExercicioAoTreinoAtivo(selectedExercise);
 }
 
 function renderWorkoutDivisionSelector() {
@@ -3964,7 +4186,7 @@ function renderWorkoutDivisionSelector() {
     if (title) title.textContent = `Divisao de treino (${nextDivision})`;
 
     const visibleKeys = getWorkoutVisibleKeys(nextDivision);
-    if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
+    treinoAtivo = visibleKeys.includes('A') ? 'A' : (visibleKeys[0] || 'A');
 
     await saveWorkoutState();
     renderWorkoutEditor({ refreshLibraryControls: true, divisao: nextDivision });
@@ -4070,9 +4292,15 @@ function renderExerciciosLista(divisao = null) {
   cont.replaceChildren();
 
   if (t.exercicios.length === 0) {
+    const title = document.createElement('p');
+    title.className = 'text-xs text-mute mb-1';
+    title.textContent = t.nome;
+    cont.appendChild(title);
+
     const empty = document.createElement('p');
     empty.className = 'text-xs text-mute';
     empty.textContent = `${t.nome} — nenhum exercício adicionado ainda. Use o campo acima para montar sua rotina.`;
+    empty.textContent = 'Adicione exercicios pela biblioteca acima.';
     cont.appendChild(empty);
     return;
   }
@@ -4120,6 +4348,14 @@ function popularSelectExercicios(divisao = null) {
   if (!sel) return;
   const t = ensureActiveWorkout(divisao);
   sel.replaceChildren();
+  if (!t.exercicios.length) {
+    const emptyOption = new Option('Nenhum exercicio no treino ativo', '');
+    emptyOption.disabled = true;
+    emptyOption.selected = true;
+    sel.appendChild(emptyOption);
+    atualizarSugestaoProgressao();
+    return;
+  }
   t.exercicios.forEach(ex => {
     sel.appendChild(new Option(ex, ex));
   });
