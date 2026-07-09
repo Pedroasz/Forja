@@ -1171,11 +1171,13 @@ const StorageService = (() => {
      */
     async loadWorkouts() {
       const cachedTreinos = ensureValidWorkoutPlan(await read(WORKOUTS_KEY));
-      const cachedExecutions = await read(WORKOUT_EXECUTIONS_KEY);
+      const cachedExecutions = cleanWorkoutExecutions(await read(WORKOUT_EXECUTIONS_KEY));
       const cachedWorkouts = {
         treinos: cachedTreinos,
         execucoes: cachedExecutions ?? []
       };
+      await write(WORKOUTS_KEY, cachedWorkouts.treinos);
+      await write(WORKOUT_EXECUTIONS_KEY, cachedWorkouts.execucoes);
 
       try {
         const user = await getAuthenticatedUser();
@@ -1211,7 +1213,7 @@ const StorageService = (() => {
     async saveWorkouts(workoutsData, options = {}) {
       const workoutsToSave = {
         treinos: ensureValidWorkoutPlan(workoutsData?.treinos),
-        execucoes: Array.isArray(workoutsData?.execucoes) ? workoutsData.execucoes : []
+        execucoes: cleanWorkoutExecutions(workoutsData?.execucoes)
       };
       const savedWorkouts = await write(WORKOUTS_KEY, workoutsToSave.treinos);
       const savedExecutions = await write(WORKOUT_EXECUTIONS_KEY, workoutsToSave.execucoes);
@@ -1626,7 +1628,7 @@ async function loadWorkoutsState() {
   if (workoutsStateLoaded) return { treinos: state.treinos, execucoes: state.execucoes };
   const workoutsData = await StorageService.loadWorkouts();
   state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos);
-  state.execucoes = Array.isArray(workoutsData?.execucoes) ? workoutsData.execucoes : [];
+  state.execucoes = Array.isArray(workoutsData?.execucoes) ? cleanWorkoutExecutions(workoutsData.execucoes) : [];
   workoutsStateLoaded = true;
   return { treinos: state.treinos, execucoes: state.execucoes };
 }
@@ -1694,12 +1696,12 @@ async function loadAppState() {
     const workoutsData = await StorageService.loadWorkouts();
     state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos || load(LS.treinos, TREINOS_PADRAO));
     state.execucoes = Array.isArray(workoutsData?.execucoes)
-      ? workoutsData.execucoes
-      : load(LS.execucoes, []);
+      ? cleanWorkoutExecutions(workoutsData.execucoes)
+      : cleanWorkoutExecutions(load(LS.execucoes, []));
   } catch (error) {
     console.warn('loadAppState workouts failed:', error);
     state.treinos = ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO));
-    state.execucoes = load(LS.execucoes, []);
+    state.execucoes = cleanWorkoutExecutions(load(LS.execucoes, []));
   }
 
   profileStateLoaded = true;
@@ -1813,7 +1815,7 @@ const DataMapper = (() => {
    * Cada grupo vira uma linha com exercises em JSONB e total_volume somado.
    */
   function workoutsToSupabase(workoutsData = {}, userId = null) {
-    const executions = Array.isArray(workoutsData.execucoes) ? workoutsData.execucoes : [];
+    const executions = cleanWorkoutExecutions(workoutsData.execucoes);
     const grouped = executions.reduce((acc, execution) => {
       const workoutDate = execution?.data;
       const workoutName = execution?.treino;
@@ -2159,6 +2161,18 @@ async function testWorkoutsSync() {
   let fieldsOk = false;
   let volumeOk = false;
   let roundTripOk = false;
+  const previousState = {
+    treinos: ensureValidWorkoutPlan(state.treinos || TREINOS_PADRAO),
+    execucoes: cleanWorkoutExecutions(state.execucoes || [])
+  };
+  const hadLocalWorkouts = localStorage.getItem(WORKOUTS_KEY) !== null;
+  const hadLocalExecutions = localStorage.getItem(WORKOUT_EXECUTIONS_KEY) !== null;
+  const previousLocalWorkouts = hadLocalWorkouts
+    ? JSON.stringify(ensureValidWorkoutPlan(load(WORKOUTS_KEY, TREINOS_PADRAO)))
+    : null;
+  const previousLocalExecutions = hadLocalExecutions
+    ? JSON.stringify(cleanWorkoutExecutions(load(WORKOUT_EXECUTIONS_KEY, [])))
+    : null;
 
   try {
     const { data, error } = supabaseClient?.auth
@@ -2171,13 +2185,13 @@ async function testWorkoutsSync() {
     const testWorkouts = {
       treinos: {
         ...TREINOS_PADRAO,
-        A: { nome: 'Treino A', exercicios: ['Supino teste sync', 'Remada teste sync'] },
-        B: { nome: 'Treino B', exercicios: ['Agachamento teste sync'] }
+        A: { nome: 'Treino A - Teste Temporario', exercicios: ['Supino reto', 'Remada baixa'] },
+        B: { nome: 'Treino B - Teste Temporario', exercicios: ['Agachamento livre'] }
       },
       execucoes: [
-        { id: 94001, data: '2026-07-07', treino: 'A', exercicio: 'Supino teste sync', series: 4, reps: 8, carga: 80, rpe: 8, volume: 2560 },
-        { id: 94002, data: '2026-07-07', treino: 'A', exercicio: 'Remada teste sync', series: 3, reps: 10, carga: 60, rpe: 7, volume: 1800 },
-        { id: 94003, data: '2026-07-08', treino: 'B', exercicio: 'Agachamento teste sync', series: 5, reps: 5, carga: 100, rpe: 8.5, volume: 2500 }
+        { id: 94001, data: '2026-07-07', treino: 'A', exercicio: 'Supino reto', series: 4, reps: 8, carga: 80, rpe: 8, volume: 2560 },
+        { id: 94002, data: '2026-07-07', treino: 'A', exercicio: 'Remada baixa', series: 3, reps: 10, carga: 60, rpe: 7, volume: 1800 },
+        { id: 94003, data: '2026-07-08', treino: 'B', exercicio: 'Agachamento livre', series: 5, reps: 5, carga: 100, rpe: 8.5, volume: 2500 }
       ]
     };
 
@@ -2225,6 +2239,29 @@ async function testWorkoutsSync() {
   } catch (error) {
     console.warn('testWorkoutsSync failed:', error);
     return { hasUser, saved, loaded, fieldsOk, volumeOk, roundTripOk, passed: false };
+  } finally {
+    state.treinos = previousState.treinos;
+    state.execucoes = previousState.execucoes;
+
+    if (hasUser && navigator.onLine) {
+      try {
+        await StorageService.saveWorkouts(previousState, { fromSyncQueue: true });
+      } catch (restoreError) {
+        console.warn('testWorkoutsSync restore failed:', restoreError);
+      }
+    }
+
+    if (!hadLocalWorkouts) {
+      localStorage.removeItem(WORKOUTS_KEY);
+    } else {
+      localStorage.setItem(WORKOUTS_KEY, previousLocalWorkouts);
+    }
+
+    if (!hadLocalExecutions) {
+      localStorage.removeItem(WORKOUT_EXECUTIONS_KEY);
+    } else {
+      localStorage.setItem(WORKOUT_EXECUTIONS_KEY, previousLocalExecutions);
+    }
   }
 }
 
@@ -2320,6 +2357,52 @@ async function testWorkoutPlanIntegrity() {
       hasABCDE,
       activeWorkoutHasExercises,
       execucoesIsArray,
+      passed: false
+    };
+  }
+}
+
+/**
+ * Teste manual da base de exercicios e do plano ABCDE. Nao executa automaticamente.
+ * Rode no console: await testWorkoutCatalogIntegrity()
+ */
+async function testWorkoutCatalogIntegrity() {
+  let hasABCDE = false;
+  let eachWorkoutHasExercises = false;
+  let noSyncTestNames = false;
+  let exerciseBaseLargeEnough = false;
+  let selectHasOptions = false;
+
+  try {
+    await loadAppState();
+    popularSelectExercicios();
+
+    const requiredKeys = ['A', 'B', 'C', 'D', 'E'];
+    const workouts = state?.treinos || {};
+    const allWorkoutExercises = requiredKeys.flatMap(key => workouts[key]?.exercicios || []);
+
+    hasABCDE = requiredKeys.every(key => Boolean(workouts[key]));
+    eachWorkoutHasExercises = requiredKeys.every(key => (workouts[key]?.exercicios || []).length >= 5);
+    noSyncTestNames = allWorkoutExercises.every(nome => !isExerciseTestData(nome));
+    exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 60;
+    selectHasOptions = (document.getElementById('t-exercicio')?.options.length || 0) > 0;
+
+    return {
+      hasABCDE,
+      eachWorkoutHasExercises,
+      noSyncTestNames,
+      exerciseBaseLargeEnough,
+      selectHasOptions,
+      passed: hasABCDE && eachWorkoutHasExercises && noSyncTestNames && exerciseBaseLargeEnough && selectHasOptions
+    };
+  } catch (error) {
+    console.warn('testWorkoutCatalogIntegrity failed:', error);
+    return {
+      hasABCDE,
+      eachWorkoutHasExercises,
+      noSyncTestNames,
+      exerciseBaseLargeEnough,
+      selectHasOptions,
       passed: false
     };
   }
@@ -2523,6 +2606,7 @@ window.testMealsSync = testMealsSync;
 window.testWorkoutsSync = testWorkoutsSync;
 window.testFullAppSync = testFullAppSync;
 window.testWorkoutPlanIntegrity = testWorkoutPlanIntegrity;
+window.testWorkoutCatalogIntegrity = testWorkoutCatalogIntegrity;
 window.testSyncQueue = testSyncQueue;
 window.testHydrationSync = testHydrationSync;
 window.testEvolutionSync = testEvolutionSync;
@@ -2646,14 +2730,42 @@ const TACO = [
 ];
 
 const TREINOS_PADRAO = {
-  A: { nome: "Treino A", exercicios: [] },
-  B: { nome: "Treino B", exercicios: [] },
-  C: { nome: "Treino C", exercicios: [] },
-  D: { nome: "Treino D", exercicios: [] },
-  E: { nome: "Treino E", exercicios: [] },
+  A: { nome: "Treino A - Peito e Triceps", exercicios: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Crossover", "Triceps pulley", "Triceps corda"] },
+  B: { nome: "Treino B - Costas e Biceps", exercicios: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo"] },
+  C: { nome: "Treino C - Pernas", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"] },
+  D: { nome: "Treino D - Ombros e Abdomen", exercicios: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Remada alta", "Abdominal supra", "Prancha"] },
+  E: { nome: "Treino E - Gluteos e Cardio", exercicios: ["Elevacao pelvica", "Cadeira abdutora", "Agachamento sumo", "Coice no cabo", "Esteira", "Bicicleta ergometrica"] },
 };
 
-function ensureValidWorkoutPlan(treinos) {
+function isExerciseTestData(nome) {
+  const normalized = String(nome || '').toLowerCase();
+  return normalized.includes('teste sync')
+    || normalized.includes('test sync')
+    || normalized.includes('sync test')
+    || /\bsync\b/.test(normalized);
+}
+
+function cleanExerciseList(exercicios = []) {
+  const cleaned = [];
+  const seen = new Set();
+
+  (Array.isArray(exercicios) ? exercicios : []).forEach(exercicio => {
+    const nome = String(exercicio || '').trim();
+    const key = nome.toLowerCase();
+    if (!nome || isExerciseTestData(nome) || seen.has(key)) return;
+    seen.add(key);
+    cleaned.push(nome);
+  });
+
+  return cleaned;
+}
+
+function cleanWorkoutExecutions(execucoes = []) {
+  return (Array.isArray(execucoes) ? execucoes : [])
+    .filter(execucao => !isExerciseTestData(execucao?.exercicio));
+}
+
+function cleanWorkoutPlan(treinos) {
   const defaults = JSON.parse(JSON.stringify(TREINOS_PADRAO));
   const requiredKeys = Object.keys(defaults);
 
@@ -2661,32 +2773,43 @@ function ensureValidWorkoutPlan(treinos) {
     return defaults;
   }
 
-  const safePlan = { ...defaults };
+  const cleanedPlan = { ...defaults };
 
   Object.keys(treinos).forEach(key => {
     const workout = treinos[key];
     const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
 
     if (!workout || typeof workout !== 'object' || Array.isArray(workout)) {
-      safePlan[key] = defaultWorkout;
+      cleanedPlan[key] = defaultWorkout;
       return;
     }
 
-    safePlan[key] = {
+    const cleanedExercises = cleanExerciseList(workout.exercicios);
+
+    cleanedPlan[key] = {
       ...defaultWorkout,
       ...workout,
       nome: workout.nome || defaultWorkout.nome,
-      exercicios: Array.isArray(workout.exercicios) ? workout.exercicios : defaultWorkout.exercicios
+      exercicios: cleanedExercises.length > 0 ? cleanedExercises : defaultWorkout.exercicios
     };
   });
 
   requiredKeys.forEach(key => {
-    if (!safePlan[key] || typeof safePlan[key] !== 'object' || !Array.isArray(safePlan[key].exercicios)) {
-      safePlan[key] = defaults[key];
+    if (!cleanedPlan[key] || typeof cleanedPlan[key] !== 'object') {
+      cleanedPlan[key] = defaults[key];
+      return;
     }
+
+    const cleanedExercises = cleanExerciseList(cleanedPlan[key].exercicios);
+    cleanedPlan[key].exercicios = cleanedExercises.length > 0 ? cleanedExercises : defaults[key].exercicios;
+    cleanedPlan[key].nome = cleanedPlan[key].nome || defaults[key].nome;
   });
 
-  return safePlan;
+  return cleanedPlan;
+}
+
+function ensureValidWorkoutPlan(treinos) {
+  return cleanWorkoutPlan(treinos);
 }
 
 const EXERCICIOS_BASE = [
@@ -2709,7 +2832,22 @@ const EXERCICIOS_BASE = [
   "Cadeira Abdutora", "Hip Thrust", "Abdominal Supra",
   "Abdominal Infra", "Prancha Abdominal", "Elevação de Pernas",
   "Abdominal na Polia Alta", "Rotação de Tronco (Oblíquo)",
-  "Esteira", "Bicicleta Ergométrica", "Elíptico", "Caminhada Rápida", "Pular Corda"
+  "Esteira", "Bicicleta Ergométrica", "Elíptico", "Caminhada Rápida", "Pular Corda",
+  "Supino reto", "Supino inclinado", "Supino declinado", "Supino reto com halteres",
+  "Supino inclinado com halteres", "Crucifixo reto", "Crucifixo inclinado", "Crossover",
+  "Peck deck", "Flexao de braco", "Paralelas",
+  "Puxada frontal", "Puxada aberta", "Puxada fechada", "Barra fixa",
+  "Remada curvada", "Remada baixa", "Remada unilateral", "Remada cavalinho",
+  "Pulldown", "Desenvolvimento militar", "Desenvolvimento com halteres",
+  "Elevacao lateral", "Elevacao frontal", "Crucifixo inverso", "Encolhimento", "Arnold press",
+  "Rosca direta", "Rosca alternada", "Rosca martelo", "Rosca concentrada",
+  "Rosca no cabo", "Triceps pulley", "Triceps corda", "Triceps testa",
+  "Triceps frances", "Mergulho no banco", "Supino fechado", "Triceps coice",
+  "Agachamento livre", "Agachamento smith", "Hack squat", "Stiff",
+  "Afundo", "Passada", "Panturrilha em pe", "Elevacao pelvica",
+  "Coice no cabo", "Abducao de quadril", "Agachamento sumo", "Passada no smith",
+  "Prancha", "Prancha lateral", "Abdominal maquina", "Abdominal obliquo",
+  "Crunch no cabo", "Bicicleta ergometrica", "Eliptico", "Escada", "Remo ergometrico", "HIIT"
 ];
 
 const MAPA_MUSCULOS = {
@@ -2776,6 +2914,70 @@ const MAPA_MUSCULOS = {
   "Pular Corda": "Cardio",
 };
 
+Object.assign(MAPA_MUSCULOS, {
+  "Supino reto": "Peito",
+  "Supino inclinado": "Peito",
+  "Supino declinado": "Peito",
+  "Supino reto com halteres": "Peito",
+  "Supino inclinado com halteres": "Peito",
+  "Crucifixo reto": "Peito",
+  "Crucifixo inclinado": "Peito",
+  "Crossover": "Peito",
+  "Peck deck": "Peito",
+  "Flexao de braco": "Peito",
+  "Paralelas": "Peito",
+  "Puxada frontal": "Costas",
+  "Puxada aberta": "Costas",
+  "Puxada fechada": "Costas",
+  "Barra fixa": "Costas",
+  "Remada curvada": "Costas",
+  "Remada baixa": "Costas",
+  "Remada unilateral": "Costas",
+  "Remada cavalinho": "Costas",
+  "Pulldown": "Costas",
+  "Desenvolvimento militar": "Ombros",
+  "Desenvolvimento com halteres": "Ombros",
+  "Elevacao lateral": "Ombros",
+  "Elevacao frontal": "Ombros",
+  "Crucifixo inverso": "Ombros",
+  "Encolhimento": "Ombros",
+  "Arnold press": "Ombros",
+  "Rosca direta": "Bíceps",
+  "Rosca alternada": "Bíceps",
+  "Rosca martelo": "Bíceps",
+  "Rosca concentrada": "Bíceps",
+  "Rosca no cabo": "Bíceps",
+  "Triceps pulley": "Tríceps",
+  "Triceps corda": "Tríceps",
+  "Triceps testa": "Tríceps",
+  "Triceps frances": "Tríceps",
+  "Mergulho no banco": "Tríceps",
+  "Supino fechado": "Tríceps",
+  "Triceps coice": "Tríceps",
+  "Agachamento livre": "Pernas",
+  "Agachamento smith": "Pernas",
+  "Hack squat": "Pernas",
+  "Stiff": "Pernas",
+  "Afundo": "Pernas",
+  "Passada": "Pernas",
+  "Panturrilha em pe": "Pernas",
+  "Elevacao pelvica": "Gluteos",
+  "Coice no cabo": "Gluteos",
+  "Abducao de quadril": "Gluteos",
+  "Agachamento sumo": "Gluteos",
+  "Passada no smith": "Gluteos",
+  "Prancha": "Core",
+  "Prancha lateral": "Core",
+  "Abdominal maquina": "Core",
+  "Abdominal obliquo": "Core",
+  "Crunch no cabo": "Core",
+  "Bicicleta ergometrica": "Cardio",
+  "Eliptico": "Cardio",
+  "Escada": "Cardio",
+  "Remo ergometrico": "Cardio",
+  "HIIT": "Cardio"
+});
+
 const LS = {
   perfil:    'forja_perfil',
   diario:    'forja_diario',
@@ -2804,9 +3006,15 @@ async function save(key, value) {
   }
   if (key === WORKOUTS_KEY || key === WORKOUT_EXECUTIONS_KEY) {
     // Treinos migrados: preserva os dois caches locais e sincroniza execucoes agrupadas.
+    const nextWorkouts = {
+      treinos: key === WORKOUTS_KEY ? ensureValidWorkoutPlan(value) : ensureValidWorkoutPlan(state.treinos),
+      execucoes: key === WORKOUT_EXECUTIONS_KEY ? cleanWorkoutExecutions(value) : cleanWorkoutExecutions(state.execucoes)
+    };
+    state.treinos = nextWorkouts.treinos;
+    state.execucoes = nextWorkouts.execucoes;
     await StorageService.saveWorkouts({
-      treinos: key === WORKOUTS_KEY ? value : state.treinos,
-      execucoes: key === WORKOUT_EXECUTIONS_KEY ? value : state.execucoes
+      treinos: state.treinos,
+      execucoes: state.execucoes
     });
     return;
   }
@@ -3543,11 +3751,12 @@ const CORES_MUSCULO = {
   'Bíceps':  'bg-violet-400',
   'Tríceps': 'bg-blue-400',
   'Pernas':  'bg-rose-400',
+  'Gluteos': 'bg-pink-400',
   'Core':    'bg-cyan-400',
   'Cardio':  'bg-orange-300',
   'Outros':  'bg-mute',
 };
-const ORDEM_MUSCULOS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Core', 'Cardio', 'Outros'];
+const ORDEM_MUSCULOS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Gluteos', 'Core', 'Cardio', 'Outros'];
 const META_SERIES_SEMANAL = 20;
 
 function renderVolumeSemanal() {
