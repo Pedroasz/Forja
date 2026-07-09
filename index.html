@@ -1,1 +1,4475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#15141A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiRm9yamEiLCJzaG9ydF9uYW1lIjoiRm9yamEiLCJzdGFydF91cmwiOiIuIiwidGhlbWVfY29sb3IiOiIjMTUxNDFBIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxNTE0MUEiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSdub25lJyBzdHJva2U9JyNGRjdBNDUnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJyUzRSUzQ3BhdGggZD0nTTIgMTJoMjAlMkYlM0UlM0NwYXRoIGQ9J00xMiAydjIwJyUyRiUzRSUzQyUyRnN2ZyUzRSIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+<title>Forja — Dieta, Treino e Evolução</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#15141A',
+          card: '#201E27',
+          card2: '#292631',
+          line: '#39353F',
+          ember: 'var(--color-primary)',
+          ember2: 'var(--color-primary-hover)',
+          mint: '#2DD4BF',
+          ink: '#F2F0EB',
+          mute: '#9C98A6',
+        },
+        fontFamily: {
+          display: ['Sora', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  :root,
+  [data-theme="laranja"] { --color-primary: #FF7A45; --color-primary-hover: #E8632E; }
+  [data-theme="verde"]   { --color-primary: #2DD4BF; --color-primary-hover: #14B8A6; }
+  [data-theme="azul"]    { --color-primary: #38BDF8; --color-primary-hover: #0284C7; }
+  [data-theme="roxo"]    { --color-primary: #A78BFA; --color-primary-hover: #7C3AED; }
 
+  body { background-color: #15141A; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #39353F; border-radius: 3px; }
+  .tab-btn.active { color: var(--color-primary); }
+  .tab-btn.active .tab-icon-wrap { background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+  .glow-ember { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 35%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--color-primary) 35%, transparent); }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .rise { animation: rise .25s ease-out; }
+  .toast { animation: rise .2s ease-out; }
+</style>
+</head>
+<body class="font-body text-ink min-h-screen pb-24">
+
+<div id="tela-auth" class="min-h-screen flex flex-col justify-center items-center px-4 bg-bg">
+  <div class="w-full max-w-md bg-card border border-line/40 rounded-2xl p-6 shadow-2xl shadow-black/40">
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)]">FORJA</h1>
+      <p class="text-xs text-gray-400 mt-1">Seu ecossistema de alta performance</p>
+    </div>
+    <div class="flex flex-col gap-3">
+      <input type="email" id="auth-email" placeholder="E-mail" class="w-full bg-bg/50 border border-line rounded-xl p-3 text-sm text-ink outline-none focus:border-primary transition-all">
+      <input type="password" id="auth-senha" placeholder="Senha" class="w-full bg-bg/50 border border-line rounded-xl p-3 text-sm text-ink outline-none focus:border-primary transition-all">
+      <button type="button" id="btn-entrar" class="w-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-black font-semibold rounded-xl p-3 text-sm active:scale-[0.97] transition-all">Entrar</button>
+      <button type="button" id="btn-cadastrar" class="w-full border border-line hover:border-primary text-ink font-medium rounded-xl p-3 text-sm active:scale-[0.97] transition-all">Criar Conta</button>
+      <button type="button" id="btn-recuperar-senha" class="w-full text-xs text-gray-400 hover:text-primary transition-all underline">Esqueci minha senha</button>
+      <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-line/30"></div>
+        <span class="flex-shrink mx-4 text-gray-500 text-xs uppercase">ou</span>
+        <div class="flex-grow border-t border-line/30"></div>
+      </div>
+      <button type="button" id="btn-offline" class="w-full text-xs text-gray-400 hover:text-primary transition-all underline">Continuar no modo offline (Local)</button>
+    </div>
+    <p id="auth-mensagem" class="text-sm mt-3 text-center hidden"></p>
+  </div>
+</div>
+
+<div id="app-principal" class="hidden">
+
+<header class="sticky top-0 z-30 bg-bg/70 backdrop-blur-xl border-b border-line/50 shadow-sm px-5 pt-6 pb-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-[11px] tracking-[0.2em] text-mute uppercase font-mono">registro pessoal</p>
+      <h1 class="font-display font-bold text-2xl -mt-0.5">Forja</h1>
+    </div>
+    <div class="text-right">
+      <p class="text-[11px] text-mute font-mono" id="header-date"></p>
+      <button type="button" id="btn-logout" class="mt-1 text-[11px] text-mute hover:text-primary transition-all underline">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-md mx-auto px-4 pt-5">
+
+  <section id="screen-dieta" class="screen active rise space-y-5">
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-1">Perfil e metas</h2>
+      <p class="text-xs text-mute mb-4">Fórmula de Mifflin-St Jeor para TMB e Gasto Energético Total</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-mute">Sexo</label>
+          <select id="p-sexo" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option value="m">Masculino</option>
+            <option value="f">Feminino</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-mute">Idade (anos)</label>
+          <input id="p-idade" type="number" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="30">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Peso (kg)</label>
+          <input id="p-peso" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="75.0">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Altura (cm)</label>
+          <input id="p-altura" type="number" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="175">
+        </div>
+        <div class="col-span-2">
+          <label class="text-xs text-mute">Nível de atividade</label>
+          <select id="p-atividade" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option value="1.2">Sedentário (pouco ou nenhum exercício)</option>
+            <option value="1.375">Leve (exercício leve 1-3x/semana)</option>
+            <option value="1.55" selected>Moderado (exercício moderado 3-5x/semana)</option>
+            <option value="1.725">Intenso (exercício pesado 6-7x/semana)</option>
+            <option value="1.9">Muito intenso (atleta / 2x ao dia)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 mt-3">
+        <div>
+          <label class="text-xs text-mute">Objetivo</label>
+          <select id="p-objetivo" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option value="emagrecimento">Emagrecimento (GET −20% · Prot 2.2g/kg · Gord 0.8g/kg)</option>
+            <option value="manutencao" selected>Manutenção (GET normal · Prot 2.0g/kg · Gord 1.0g/kg)</option>
+            <option value="hipertrofia">Hipertrofia (GET +15% · Prot 2.0g/kg · Gord 1.0g/kg)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-mute">Tema do app</label>
+          <select id="p-tema" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option value="laranja">Laranja (padrão)</option>
+            <option value="verde">Verde</option>
+            <option value="azul">Azul</option>
+            <option value="roxo">Roxo</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-calc-perfil" class="mt-4 w-full bg-ember hover:bg-ember2 transition text-bg font-semibold text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Calcular TMB / GET e metas</button>
+
+      <div id="perfil-resultado" class="hidden mt-4 grid grid-cols-2 gap-2 text-center">
+        <div class="bg-card2 rounded-lg py-3">
+          <p class="text-[10px] text-mute uppercase tracking-wide">TMB</p>
+          <p class="font-mono font-semibold text-lg" id="r-tmb">—</p>
+        </div>
+        <div class="bg-card2 rounded-lg py-3">
+          <p class="text-[10px] text-mute uppercase tracking-wide">GET (meta kcal)</p>
+          <p class="font-mono font-semibold text-lg text-ember" id="r-get">—</p>
+        </div>
+        <div class="bg-card2 rounded-lg py-3">
+          <p class="text-[10px] text-mute uppercase tracking-wide">Proteína / dia</p>
+          <p class="font-mono font-semibold text-sm" id="r-prot">—</p>
+        </div>
+        <div class="bg-card2 rounded-lg py-3">
+          <p class="text-[10px] text-mute uppercase tracking-wide">Gordura / dia</p>
+          <p class="font-mono font-semibold text-sm" id="r-gord">—</p>
+        </div>
+        <div class="bg-card2 rounded-lg py-3 col-span-2">
+          <p class="text-[10px] text-mute uppercase tracking-wide">Carboidrato / dia (restante)</p>
+          <p class="font-mono font-semibold text-sm" id="r-carb">—</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-display font-semibold text-lg">Registrar alimento</h2>
+        <span class="text-[10px] font-mono text-mute uppercase">Tabela TACO</span>
+      </div>
+      <p class="text-xs text-mute mb-4">Valores oficiais por 100g — Tabela Brasileira de Composição de Alimentos (UNICAMP)</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs text-mute">Refeição</label>
+          <select id="f-refeicao" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option>Café da Manhã</option>
+            <option>Almoço</option>
+            <option>Lanche</option>
+            <option>Jantar</option>
+            <option>Ceia</option>
+          </select>
+        </div>
+        <div id="busca-padrao-wrap" class="contents">
+          <div class="col-span-2 relative">
+            <label class="text-xs text-mute">Alimento</label>
+            <input id="f-busca" type="text" autocomplete="off" placeholder="Digite para buscar (ex: arroz, banana, ovo...)" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <div id="f-resultados" class="hidden absolute left-0 right-0 mt-1 z-20 bg-card2 border border-line rounded-lg max-h-56 overflow-y-auto shadow-lg"></div>
+          </div>
+          <div id="f-qtd-wrap" class="col-span-2 hidden">
+            <label class="text-xs text-mute" id="f-qtd-label">Quantidade em Gramas?</label>
+            <input id="f-qtd" type="number" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="100">
+          </div>
+          <div class="col-span-2 flex items-end">
+            <button id="btn-add-food" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200">Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-mostrar-custom" type="button" class="mt-3 w-full text-center text-xs text-mute hover:text-ember underline decoration-dotted underline-offset-4 transition">Não achou? Criar alimento customizado</button>
+
+      <div id="form-alimento-custom" class="hidden mt-3 bg-card2 border border-line rounded-xl p-4 space-y-3">
+        <p class="text-xs text-mute uppercase tracking-wide font-semibold">Alimento customizado</p>
+        <div>
+          <label class="text-xs text-mute">Nome do alimento</label>
+          <input id="fc-nome" type="text" placeholder="Ex: Marmita da vovó" class="w-full mt-1 bg-card border border-line rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-mute">Kcal</label>
+            <input id="fc-kcal" type="number" step="0.1" class="w-full mt-1 bg-card border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="350">
+          </div>
+          <div>
+            <label class="text-xs text-mute">Carb (g)</label>
+            <input id="fc-carb" type="number" step="0.1" class="w-full mt-1 bg-card border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="40">
+          </div>
+          <div>
+            <label class="text-xs text-mute">Prot (g)</label>
+            <input id="fc-prot" type="number" step="0.1" class="w-full mt-1 bg-card border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="25">
+          </div>
+          <div>
+            <label class="text-xs text-mute">Gord (g)</label>
+            <input id="fc-gord" type="number" step="0.1" class="w-full mt-1 bg-card border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="10">
+          </div>
+        </div>
+        <p class="text-[10px] text-mute">Informe os valores referentes à porção que você comeu (não por 100g). A refeição selecionada acima também será usada aqui.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-cancelar-custom" type="button" class="w-full border border-line text-mute hover:text-ink hover:border-ink/40 transition text-sm rounded-lg py-2.5">Cancelar</button>
+          <button id="btn-salvar-custom" type="button" class="w-full bg-ember hover:bg-ember2 transition text-bg font-semibold text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Salvar alimento</button>
+        </div>
+      </div>
+
+      <div id="food-preview" class="hidden mt-3 grid grid-cols-4 gap-2 text-center text-xs font-mono bg-card2 rounded-lg py-2">
+        <div><p class="text-mute">kcal</p><p id="fp-kcal">—</p></div>
+        <div><p class="text-mute">carb</p><p id="fp-carb">—</p></div>
+        <div><p class="text-mute">prot</p><p id="fp-prot">—</p></div>
+        <div><p class="text-mute">gord</p><p id="fp-gord">—</p></div>
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between mb-3">
+        <button id="btn-dia-anterior" type="button" title="Dia anterior" class="w-9 h-9 flex items-center justify-center rounded-lg bg-card2 border border-line text-mute hover:text-ink hover:border-ink/40 transition">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>
+        <h2 class="font-display font-semibold text-lg text-center" id="label-data-dieta">Hoje</h2>
+        <button id="btn-dia-seguinte" type="button" title="Próximo dia" class="w-9 h-9 flex items-center justify-center rounded-lg bg-card2 border border-line text-mute hover:text-ink hover:border-ink/40 transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-mute disabled:hover:border-line">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div id="diario-hoje" class="space-y-4"></div>
+
+      <div class="mt-4 pt-4 border-t border-line space-y-3">
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-mute">Calorias</span>
+            <span class="font-mono font-semibold text-ember" id="bar-kcal-label">0 / 0 kcal</span>
+          </div>
+          <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+            <div id="bar-kcal" class="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-mute">Proteína</span>
+            <span class="font-mono font-semibold text-mint" id="bar-prot-label">0g / 0g</span>
+          </div>
+          <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+            <div id="bar-prot" class="h-full bg-gradient-to-r from-teal-500 to-mint rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-mute">Carboidrato</span>
+            <span class="font-mono font-semibold text-amber-400" id="bar-carb-label">0g / 0g</span>
+          </div>
+          <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+            <div id="bar-carb" class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="text-mute">Gordura</span>
+            <span class="font-mono font-semibold text-violet-400" id="bar-gord-label">0g / 0g</span>
+          </div>
+          <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+            <div id="bar-gord" class="h-full bg-gradient-to-r from-violet-500 to-violet-400 rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display font-semibold text-lg flex items-center gap-2">
+          <i data-lucide="droplets" class="w-5 h-5 text-blue-400"></i> Hidratação
+        </h2>
+        <button id="btn-desfazer-agua" type="button" class="text-xs text-mute hover:text-ink transition flex items-center gap-1">
+          <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Desfazer
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between text-xs mb-1">
+        <span class="text-mute">Água</span>
+        <span class="font-mono font-semibold text-blue-400" id="bar-agua-label">0ml / 0ml</span>
+      </div>
+      <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+        <div id="bar-agua" class="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        <button id="btn-agua-250" type="button" class="bg-card2 border border-blue-500/40 text-blue-400 font-semibold text-sm rounded-lg py-2.5 hover:bg-blue-500 hover:text-bg transition active:scale-[0.97] duration-200">+250ml (copo)</button>
+        <button id="btn-agua-500" type="button" class="bg-card2 border border-blue-500/40 text-blue-400 font-semibold text-sm rounded-lg py-2.5 hover:bg-blue-500 hover:text-bg transition active:scale-[0.97] duration-200">+500ml (garrafa)</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-treino" class="screen rise space-y-5">
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 id="treino-divisao-titulo" class="font-display font-semibold text-lg">Divisao de treino</h2>
+        <div class="flex items-center gap-2">
+          <label for="treino-divisao" class="text-xs text-mute">Divisao</label>
+          <select id="treino-divisao" class="bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+            <option value="ABC">ABC</option>
+            <option value="ABCD">ABCD</option>
+            <option value="ABCDE">ABCDE</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-5 gap-2" id="treino-tabs"></div>
+
+      <div id="treino-estimativa-calorias" class="mt-3 flex items-center gap-1.5 text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2"></div>
+
+      <div class="flex items-center gap-2 mt-3">
+        <input id="novo-exercicio-nome" type="text" list="lista-exercicios" placeholder="Novo exercício para este treino..." class="flex-1 min-w-0 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+        <datalist id="lista-exercicios"></datalist>
+        <button id="btn-add-exercicio" title="Adicionar exercício" class="shrink-0 w-10 h-10 flex items-center justify-center bg-card2 border border-ember/50 text-ember rounded-lg hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="treino-exercicios-lista" class="mt-4 space-y-1.5"></div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-1">Registrar execução</h2>
+      <p class="text-xs text-mute mb-4">Séries × Repetições × Carga = Volume total</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <label class="text-xs text-mute">Exercício</label>
+          <select id="t-exercicio" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
+        </div>
+        <div class="col-span-2 -mt-1">
+          <button id="btn-repetir-execucao" type="button" class="hidden w-full text-xs text-mint border border-mint/40 bg-mint/10 hover:bg-mint/20 transition rounded-lg py-2 flex items-center justify-center gap-1.5">
+            <i data-lucide="repeat" class="w-3.5 h-3.5"></i> Repetir última execução
+          </button>
+        </div>
+        <div>
+          <label class="text-xs text-mute">Séries</label>
+          <input id="t-series" type="number" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="4">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Repetições</label>
+          <input id="t-reps" type="number" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="10">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Carga (kg)</label>
+          <input id="t-carga" type="number" step="0.5" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="40">
+        </div>
+        <div>
+          <label class="text-xs text-mute">RPE (1-10)</label>
+          <input id="t-rpe" type="number" min="1" max="10" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono" placeholder="8">
+        </div>
+      </div>
+
+      <div id="sugestao-progressao" class="hidden mt-3 bg-mint/10 border border-mint/40 rounded-lg px-3 py-2 text-xs text-mint"></div>
+
+      <button id="btn-add-treino" class="mt-4 w-full bg-ember hover:bg-ember2 transition text-bg font-semibold text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Salvar execução</button>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display font-semibold text-lg">Cronômetro de descanso</h2>
+        <i data-lucide="timer" class="w-5 h-5 text-mute"></i>
+      </div>
+      <div class="flex flex-col items-center">
+        <p id="cronometro-display" class="font-mono font-bold text-5xl tracking-wider text-ink transition-colors duration-200">00:00</p>
+        <div class="grid grid-cols-4 gap-2 w-full mt-4">
+          <button data-add="30" class="cronometro-add bg-card2 border border-line rounded-lg py-2 text-xs font-mono text-mute hover:text-ink hover:border-ink/40 transition active:scale-[0.97] duration-200">+30s</button>
+          <button data-add="60" class="cronometro-add bg-card2 border border-line rounded-lg py-2 text-xs font-mono text-mute hover:text-ink hover:border-ink/40 transition active:scale-[0.97] duration-200">+60s</button>
+          <button data-add="90" class="cronometro-add bg-card2 border border-line rounded-lg py-2 text-xs font-mono text-mute hover:text-ink hover:border-ink/40 transition active:scale-[0.97] duration-200">+90s</button>
+          <button data-add="120" class="cronometro-add bg-card2 border border-line rounded-lg py-2 text-xs font-mono text-mute hover:text-ink hover:border-ink/40 transition active:scale-[0.97] duration-200">+120s</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 w-full mt-3">
+          <button id="btn-cronometro-toggle" class="bg-ember hover:bg-ember2 transition text-bg font-semibold text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Iniciar</button>
+          <button id="btn-cronometro-zerar" class="border border-line text-mute hover:text-ink hover:border-ink/40 transition text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Zerar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-3">Histórico recente</h2>
+      <div id="treino-historico" class="space-y-2"></div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-1">Volume (Últimos 7 Dias)</h2>
+      <p class="text-xs text-mute mb-4">Soma de séries executadas por grupo muscular na última semana</p>
+      <div id="treino-volume-semanal" class="space-y-3"></div>
+    </div>
+  </section>
+
+  <section id="screen-evolucao" class="screen rise space-y-5">
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-1">Novo registro</h2>
+      <p class="text-xs text-mute mb-4">Peso e medidas antropométricas</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-mute">Data</label>
+          <input id="e-data" type="date" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Peso (kg)</label>
+          <input id="e-peso" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Cintura (cm)</label>
+          <input id="e-cintura" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Quadril (cm)</label>
+          <input id="e-quadril" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Braço (cm)</label>
+          <input id="e-braco" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-mute">Coxa (cm)</label>
+          <input id="e-coxa" type="number" step="0.1" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm font-mono">
+        </div>
+      </div>
+      <button id="btn-add-evolucao" class="mt-4 w-full bg-ember hover:bg-ember2 transition text-bg font-semibold text-sm rounded-lg py-2.5 active:scale-[0.97] duration-200">Salvar registro</button>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-3">Curva de peso</h2>
+      <div class="relative" style="height:220px;">
+        <canvas id="grafico-peso"></canvas>
+        <p id="grafico-peso-vazio" class="hidden absolute inset-0 flex items-center justify-center text-center text-xs text-mute px-6">Registre ao menos um peso para ver o gráfico de evolução.</p>
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+      <h2 class="font-display font-semibold text-lg mb-3">Histórico</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs font-mono" id="tabela-evolucao">
+          <thead>
+            <tr class="text-mute text-left border-b border-line">
+              <th class="py-2 pr-2">Data</th>
+              <th class="py-2 pr-2">Peso</th>
+              <th class="py-2 pr-2">Delta</th>
+              <th class="py-2 pr-2">IMC</th>
+              <th class="py-2 pr-2">Cint.</th>
+              <th class="py-2 pr-2">Quad.</th>
+              <th class="py-2 pr-2">Braço</th>
+              <th class="py-2">Coxa</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-evolucao"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-exportar" class="screen rise">
+    <div class="bg-card border border-line rounded-2xl p-6 text-center mt-5">
+      <div class="w-14 h-14 rounded-full bg-ember/10 flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="download" class="text-ember w-6 h-6"></i>
+      </div>
+      <h2 class="font-display font-semibold text-xl mb-1">Exportar planilha</h2>
+      <p class="text-sm text-mute mb-6 max-w-xs mx-auto">Gera um arquivo .xlsx real com 3 abas: Evolução, Diário de Dieta e Histórico de Treinos — com fórmulas prontas no Excel.</p>
+      <button id="btn-export" class="w-full glow-ember bg-ember hover:bg-ember2 transition text-bg font-semibold rounded-xl py-3.5 active:scale-[0.97] duration-200">Exportar para Excel (.xlsx)</button>
+      <p class="text-[11px] text-mute mt-4">Os dados continuam salvos neste navegador mesmo após exportar.</p>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 mt-5 shadow-lg shadow-black/20">
+      <h3 class="font-display font-semibold text-sm mb-1">Segurança de dados</h3>
+      <p class="text-xs text-mute mb-4">Faça backup completo do seu perfil, dieta, treinos e evolução — ou restaure um backup salvo anteriormente.</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-backup-salvar" class="w-full bg-card2 border border-mint/40 text-mint font-semibold text-xs rounded-lg py-2.5 hover:bg-mint hover:text-bg transition flex items-center justify-center gap-1.5">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Salvar Backup (JSON)
+        </button>
+        <button id="btn-backup-restaurar" class="w-full bg-card2 border border-line text-mute hover:text-ink hover:border-ink/40 transition text-xs rounded-lg py-2.5 flex items-center justify-center gap-1.5">
+          <i data-lucide="upload" class="w-3.5 h-3.5"></i> Restaurar Backup
+        </button>
+        <input type="file" id="input-backup-restaurar" accept=".json" class="hidden">
+      </div>
+    </div>
+
+    <div class="bg-card border border-line/40 rounded-2xl p-5 mt-5 shadow-lg shadow-black/20">
+      <h3 class="font-display font-semibold text-sm mb-3">Dados salvos localmente</h3>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="bg-card2 rounded-lg py-3"><p class="font-mono font-semibold text-lg" id="count-diario">0</p><p class="text-mute text-[10px]">refeições</p></div>
+        <div class="bg-card2 rounded-lg py-3"><p class="font-mono font-semibold text-lg" id="count-treino">0</p><p class="text-mute text-[10px]">execuções</p></div>
+        <div class="bg-card2 rounded-lg py-3"><p class="font-mono font-semibold text-lg" id="count-evolucao">0</p><p class="text-mute text-[10px]">registros</p></div>
+      </div>
+      <button id="btn-reset" class="mt-4 w-full border border-line text-mute hover:text-ink hover:border-ink/40 transition text-xs rounded-lg py-2">Apagar todos os dados</button>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-card2 border border-ember/40 text-sm px-4 py-2.5 rounded-xl z-50 shadow-lg"></div>
+
+<nav class="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-xl border-t border-white/5 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] z-40">
+  <div class="max-w-md mx-auto grid grid-cols-4">
+    <button class="tab-btn active flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="dieta">
+      <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="utensils" class="w-[18px] h-[18px]"></i></span>
+      Dieta
+    </button>
+    <button class="tab-btn flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="treino">
+      <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="dumbbell" class="w-[18px] h-[18px]"></i></span>
+      Treino
+    </button>
+    <button class="tab-btn flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="evolucao">
+      <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="trending-up" class="w-[18px] h-[18px]"></i></span>
+      Evolução
+    </button>
+    <button class="tab-btn flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="exportar">
+      <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="download" class="w-[18px] h-[18px]"></i></span>
+      Exportar
+    </button>
+  </div>
+</nav>
+
+</div>
+
+<script>
+/* ============================================================
+   SUPABASE - CONEXAO E AUTENTICACAO
+   ============================================================ */
+const SUPABASE_URL = "https://yncintjylzmvzcadjfqa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluY2ludGp5bHptdnpjYWRqZnFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0NDUzNzYsImV4cCI6MjA5OTAyMTM3Nn0.k1oEwGRgSAd6vXzQKqoJ7w0OIV5lYKyeUUSzRCLVVeA";
+
+let supabaseClient = null;
+let currentSession = null;
+let appJaRenderizado = false;
+let appInicializando = null;
+let authListener = null;
+
+const authButtonLabels = {
+  entrar: 'Entrar',
+  cadastrar: 'Criar Conta',
+  recuperar: 'Esqueci minha senha'
+};
+
+try {
+  if (window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (err) {
+  console.error('Erro no Supabase:', err);
+}
+
+function authEl(id) {
+  return document.getElementById(id);
+}
+
+function showAuthMessage(message, type = 'error') {
+  const msgEl = authEl('auth-mensagem');
+  if (!msgEl) return;
+
+  const colorClass = {
+    error: 'text-red-400',
+    success: 'text-green-400',
+    warning: 'text-amber-400',
+    info: 'text-amber-400'
+  }[type] || 'text-red-400';
+
+  msgEl.innerText = message;
+  msgEl.className = `${colorClass} text-sm mt-3 text-center block`;
+  msgEl.classList.remove('hidden');
+}
+
+function clearAuthMessage() {
+  const msgEl = authEl('auth-mensagem');
+  if (!msgEl) return;
+  msgEl.innerText = '';
+  msgEl.className = 'text-sm mt-3 text-center hidden';
+}
+
+function setAuthLoading(action, isLoading) {
+  const entrar = authEl('btn-entrar');
+  const cadastrar = authEl('btn-cadastrar');
+  const recuperar = authEl('btn-recuperar-senha');
+  const offline = authEl('btn-offline');
+  const buttons = [entrar, cadastrar, recuperar, offline].filter(Boolean);
+
+  buttons.forEach(btn => {
+    btn.disabled = isLoading;
+    btn.classList.toggle('opacity-60', isLoading);
+    btn.classList.toggle('cursor-not-allowed', isLoading);
+  });
+
+  if (entrar) entrar.innerText = isLoading && action === 'login' ? 'Entrando...' : authButtonLabels.entrar;
+  if (cadastrar) cadastrar.innerText = isLoading && action === 'register' ? 'Criando conta...' : authButtonLabels.cadastrar;
+  if (recuperar) recuperar.innerText = isLoading && action === 'recover' ? 'Enviando...' : authButtonLabels.recuperar;
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getAuthCredentials(requirePassword = true) {
+  const email = authEl('auth-email')?.value.trim() || '';
+  const senha = authEl('auth-senha')?.value || '';
+
+  if (!email) {
+    showAuthMessage('Informe seu e-mail.', 'error');
+    return null;
+  }
+
+  if (!isValidEmail(email)) {
+    showAuthMessage('Digite um e-mail válido.', 'error');
+    return null;
+  }
+
+  if (requirePassword && !senha) {
+    showAuthMessage('Informe sua senha.', 'error');
+    return null;
+  }
+
+  if (requirePassword && senha.length < 6) {
+    showAuthMessage('A senha deve ter pelo menos 6 caracteres.', 'error');
+    return null;
+  }
+
+  return { email, senha };
+}
+
+function getAuthErrorMessage(error, fallback = 'Erro inesperado. Tente novamente.') {
+  if (!navigator.onLine) return 'Sem internet. Verifique sua conexão e tente novamente.';
+  if (!error) return fallback;
+
+  const message = String(error.message || '').toLowerCase();
+  const status = error.status;
+
+  if (message.includes('failed to fetch') || message.includes('network') || message.includes('fetch')) {
+    return 'Sem internet. Verifique sua conexão e tente novamente.';
+  }
+  if (message.includes('invalid login credentials') || message.includes('invalid credentials')) {
+    return 'E-mail ou senha incorretos.';
+  }
+  if (message.includes('user not found')) {
+    return 'Usuário não encontrado. Confira o e-mail ou crie uma conta.';
+  }
+  if (message.includes('email') && (message.includes('invalid') || message.includes('not valid'))) {
+    return 'Digite um e-mail válido.';
+  }
+  if (message.includes('already registered') || message.includes('already exists') || message.includes('user already registered') || status === 422) {
+    return 'Este e-mail já está cadastrado. Entre com sua senha ou recupere o acesso.';
+  }
+  if (message.includes('password')) {
+    return 'Senha inválida. Use pelo menos 6 caracteres.';
+  }
+  if (message.includes('email rate limit') || status === 429) {
+    return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+  }
+
+  return fallback;
+}
+
+function showLogin(message = '') {
+  const telaAuth = authEl('tela-auth');
+  const appPrincipal = authEl('app-principal');
+
+  if (appPrincipal) appPrincipal.classList.add('hidden');
+  if (telaAuth) telaAuth.style.display = 'flex';
+  appJaRenderizado = false;
+
+  if (message) showAuthMessage(message, 'info');
+}
+
+async function showApp() {
+  const telaAuth = authEl('tela-auth');
+  const appPrincipal = authEl('app-principal');
+
+  if (!appJaRenderizado) {
+    if (!appInicializando) {
+      appInicializando = (async () => {
+        await loadAppState();
+        renderTudo();
+        appJaRenderizado = true;
+      })();
+    }
+
+    try {
+      await appInicializando;
+    } catch (error) {
+      console.warn('App state initialization failed:', error);
+    } finally {
+      appInicializando = null;
+    }
+  }
+
+  if (telaAuth) telaAuth.style.display = 'none';
+  if (appPrincipal) appPrincipal.classList.remove('hidden');
+  clearAuthMessage();
+}
+
+async function checkSession() {
+  if (!supabaseClient) {
+    showLogin('Não foi possível conectar ao servidor. Você ainda pode usar o modo offline.');
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+
+    currentSession = data?.session || null;
+    if (currentSession) {
+      await showApp();
+    } else {
+      showLogin();
+    }
+
+    return currentSession;
+  } catch (error) {
+    currentSession = null;
+    showLogin(getAuthErrorMessage(error, 'Não foi possível verificar sua sessão. Tente entrar novamente.'));
+    return null;
+  }
+}
+
+async function login() {
+  const credentials = getAuthCredentials(true);
+  if (!credentials) return;
+  if (!supabaseClient) {
+    showAuthMessage('Não foi possível conectar ao servidor. Use o modo offline ou tente novamente.', 'warning');
+    return;
+  }
+
+  setAuthLoading('login', true);
+  showAuthMessage('Entrando...', 'info');
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.senha
+    });
+    if (error) throw error;
+
+    currentSession = data?.session || null;
+    showAuthMessage('Login realizado com sucesso.', 'success');
+    await showApp();
+  } catch (error) {
+    showAuthMessage(getAuthErrorMessage(error, 'Não foi possível entrar. Confira seus dados e tente novamente.'), 'error');
+  } finally {
+    setAuthLoading('login', false);
+  }
+}
+
+async function register() {
+  const credentials = getAuthCredentials(true);
+  if (!credentials) return;
+  if (!supabaseClient) {
+    showAuthMessage('Não foi possível conectar ao servidor. Use o modo offline ou tente novamente.', 'warning');
+    return;
+  }
+
+  setAuthLoading('register', true);
+  showAuthMessage('Criando sua conta...', 'info');
+
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: credentials.email,
+      password: credentials.senha
+    });
+    if (error) throw error;
+
+    currentSession = data?.session || null;
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      showAuthMessage('Este e-mail já está cadastrado. Entre com sua senha ou recupere o acesso.', 'error');
+      return;
+    }
+
+    if (currentSession) {
+      showAuthMessage('Conta criada com sucesso.', 'success');
+      await showApp();
+      return;
+    }
+
+    showAuthMessage('Conta criada. Verifique seu e-mail para confirmar o cadastro antes de entrar.', 'success');
+  } catch (error) {
+    showAuthMessage(getAuthErrorMessage(error, 'Não foi possível criar sua conta. Tente novamente.'), 'error');
+  } finally {
+    setAuthLoading('register', false);
+  }
+}
+
+async function recoverPassword() {
+  const credentials = getAuthCredentials(false);
+  if (!credentials) return;
+  if (!supabaseClient) {
+    showAuthMessage('Não foi possível conectar ao servidor. Tente novamente mais tarde.', 'warning');
+    return;
+  }
+
+  setAuthLoading('recover', true);
+  showAuthMessage('Enviando e-mail de recuperação...', 'info');
+
+  try {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(credentials.email, {
+      redirectTo: window.location.href.split('#')[0]
+    });
+    if (error) throw error;
+
+    showAuthMessage('Enviamos as instruções de recuperação para o seu e-mail.', 'success');
+  } catch (error) {
+    showAuthMessage(getAuthErrorMessage(error, 'Não foi possível enviar a recuperação de senha. Tente novamente.'), 'error');
+  } finally {
+    setAuthLoading('recover', false);
+  }
+}
+
+async function logout() {
+  if (!supabaseClient) {
+    currentSession = null;
+    showLogin();
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+  } catch (error) {
+    toast(getAuthErrorMessage(error, 'Não foi possível sair. Tente novamente.'));
+  } finally {
+    currentSession = null;
+    showLogin();
+  }
+}
+
+function setupAuthListener() {
+  if (!supabaseClient || authListener) return;
+
+  const { data } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    currentSession = session || null;
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      await showApp();
+      return;
+    }
+
+    if (event === 'SIGNED_OUT') {
+      showLogin();
+    }
+  });
+
+  authListener = data?.subscription || null;
+}
+
+authEl('btn-offline')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  currentSession = null;
+  await showApp();
+});
+
+authEl('btn-cadastrar')?.addEventListener('click', register);
+authEl('btn-entrar')?.addEventListener('click', login);
+authEl('btn-recuperar-senha')?.addEventListener('click', recoverPassword);
+authEl('btn-logout')?.addEventListener('click', logout);
+
+authEl('auth-senha')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') login();
+});
+
+setupAuthListener();
+
+/* ============================================================
+   STORAGE SERVICE - CAMADA DE ACESSO A DADOS LOCAL
+   ============================================================ */
+const PROFILE_KEY = 'forja_perfil';
+const MEALS_KEY = 'forja_diario';
+const WORKOUTS_KEY = 'forja_treinos_def';
+const WORKOUT_EXECUTIONS_KEY = 'forja_execucoes';
+const WORKOUT_CONFIG_KEY = 'forja_config_treino';
+const HYDRATION_KEY = 'forja_agua';
+const EVOLUTION_KEY = 'forja_evolucao';
+const SETTINGS_KEY = 'forja_settings_v2';
+const SYNC_QUEUE_KEY = 'forja_sync_queue';
+const DEFAULT_PROFILE = { tema: 'laranja' };
+let profileStateLoaded = false;
+let mealsStateLoaded = false;
+let workoutsStateLoaded = false;
+let hydrationStateLoaded = false;
+let evolutionStateLoaded = false;
+
+const StorageService = (() => {
+  /**
+   * Le uma chave do localStorage e converte o conteudo JSON em objeto JavaScript.
+   * Retorna null quando a chave nao existe ou quando o conteudo esta invalido.
+   */
+  async function read(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      console.error('StorageService read error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Salva dados em uma chave do localStorage usando serializacao JSON.
+   * Retorna true em caso de sucesso e false quando a gravacao falha.
+   */
+  async function write(key, data) {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('StorageService write error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Remove uma chave do localStorage sem propagar erros para a interface.
+   * Retorna true em caso de sucesso e false quando a remocao falha.
+   */
+  async function remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.error('StorageService remove error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verifica se uma chave existe no localStorage.
+   * Retorna false se houver erro de acesso ao armazenamento local.
+   */
+  async function exists(key) {
+    try {
+      return localStorage.getItem(key) !== null;
+    } catch (error) {
+      console.error('StorageService exists error:', error);
+      return false;
+    }
+  }
+  /**
+   * Retorna o usuario autenticado atual sem propagar falhas para a interface.
+   */
+  async function getAuthenticatedUser() {
+    try {
+      if (!supabaseClient?.auth) return null;
+      const { data, error } = await supabaseClient.auth.getUser();
+      if (error) throw error;
+      return data?.user || null;
+    } catch (error) {
+      console.warn('StorageService profile auth check failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Mescla dados relacionais do Supabase com o cache local sem perder campos internos.
+   */
+  function mergeProfileFromSupabase(localProfile, supabaseProfile) {
+    return {
+      ...(localProfile || { ...DEFAULT_PROFILE }),
+      sexo: supabaseProfile.sexo || localProfile?.sexo || '',
+      altura: supabaseProfile.altura ?? localProfile?.altura ?? null,
+      objetivo: supabaseProfile.objetivo || localProfile?.objetivo || '',
+      tema: supabaseProfile.tema || localProfile?.tema || DEFAULT_PROFILE.tema
+    };
+  }
+
+  function markSyncPending(moduleName, options = {}) {
+    if (options?.fromSyncQueue) return;
+    SyncQueue.markPending(moduleName);
+  }
+
+  function clearSyncPending(moduleName) {
+    SyncQueue.clearPending(moduleName);
+  }
+
+  return {
+    /**
+     * Carrega o perfil com estrategia offline-first.
+     * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
+     */
+    async loadProfile() {
+      const cachedProfile = await read(PROFILE_KEY) ?? { ...DEFAULT_PROFILE };
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (!user || !navigator.onLine) return cachedProfile;
+
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!data) return cachedProfile;
+
+        const mappedProfile = DataMapper.profileFromSupabase(data);
+        const mergedProfile = mergeProfileFromSupabase(cachedProfile, mappedProfile);
+        await write(PROFILE_KEY, mergedProfile);
+        return mergedProfile;
+      } catch (error) {
+        console.warn('StorageService profile sync load failed:', error);
+        return cachedProfile;
+      }
+    },
+
+    /**
+     * Salva o perfil primeiro no cache local e sincroniza com Supabase quando possivel.
+     * Falhas de sincronizacao nao quebram a interface nem removem o cache local.
+     */
+    async saveProfile(profile, options = {}) {
+      const profileToSave = profile || { ...DEFAULT_PROFILE };
+      const localSaved = await write(PROFILE_KEY, profileToSave);
+
+      try {
+        if (!navigator.onLine) {
+          markSyncPending('profile', options);
+          return options?.fromSyncQueue ? false : localSaved;
+        }
+
+        const user = await getAuthenticatedUser();
+        if (!user) return options?.fromSyncQueue ? false : localSaved;
+
+        const payload = DataMapper.profileToSupabase(profileToSave, user);
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .upsert(payload, { onConflict: 'user_id' })
+          .select('*')
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedProfile = DataMapper.profileFromSupabase(data);
+          const mergedProfile = mergeProfileFromSupabase(profileToSave, mappedProfile);
+          await write(PROFILE_KEY, mergedProfile);
+        }
+
+        clearSyncPending('profile');
+        return options?.fromSyncQueue ? true : localSaved;
+      } catch (error) {
+        markSyncPending('profile', options);
+        console.warn('StorageService profile sync save failed:', error);
+        return options?.fromSyncQueue ? false : localSaved;
+      }
+    },
+
+    /**
+     * Carrega refeicoes com estrategia offline-first.
+     * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
+     */
+    async loadMeals() {
+      const cachedMeals = await read(MEALS_KEY) ?? [];
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (!user || !navigator.onLine) return cachedMeals;
+
+        const { data, error } = await supabaseClient
+          .from('meals')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('meal_date', { ascending: true });
+
+        if (error) throw error;
+
+        const mappedMeals = DataMapper.mealsFromSupabaseRows(data || []);
+        await write(MEALS_KEY, mappedMeals);
+        return mappedMeals;
+      } catch (error) {
+        console.warn('StorageService meals sync load failed:', error);
+        return cachedMeals;
+      }
+    },
+
+    /**
+     * Salva refeicoes primeiro no cache local e sincroniza com Supabase quando possivel.
+     * Dias que nao existem mais no array local sao removidos do Supabase com seguranca.
+     */
+    async saveMeals(meals, options = {}) {
+      const mealsToSave = Array.isArray(meals) ? meals : [];
+      const localSaved = await write(MEALS_KEY, mealsToSave);
+
+      try {
+        if (!navigator.onLine) {
+          markSyncPending('meals', options);
+          return options?.fromSyncQueue ? false : localSaved;
+        }
+
+        const user = await getAuthenticatedUser();
+        if (!user) return options?.fromSyncQueue ? false : localSaved;
+
+        const rowsToUpsert = DataMapper.mealsToSupabaseByDate(mealsToSave, user.id);
+        const localDates = new Set(rowsToUpsert.map(row => row.meal_date));
+
+        const { data: existingRows, error: fetchError } = await supabaseClient
+          .from('meals')
+          .select('meal_date')
+          .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        const datesToDelete = (existingRows || [])
+          .map(row => row.meal_date)
+          .filter(mealDate => !localDates.has(mealDate));
+
+        if (datesToDelete.length > 0) {
+          const { error: deleteError } = await supabaseClient
+            .from('meals')
+            .delete()
+            .eq('user_id', user.id)
+            .in('meal_date', datesToDelete);
+
+          if (deleteError) throw deleteError;
+        }
+
+        if (rowsToUpsert.length > 0) {
+          const { error: upsertError } = await supabaseClient
+            .from('meals')
+            .upsert(rowsToUpsert, { onConflict: 'user_id,meal_date' });
+
+          if (upsertError) throw upsertError;
+        }
+
+        await write(MEALS_KEY, mealsToSave);
+        clearSyncPending('meals');
+        return options?.fromSyncQueue ? true : localSaved;
+      } catch (error) {
+        markSyncPending('meals', options);
+        console.warn('StorageService meals sync save failed:', error);
+        return options?.fromSyncQueue ? false : localSaved;
+      }
+    },
+
+    /**
+     * Carrega treinos e execucoes com estrategia offline-first.
+     * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
+     */
+    async loadWorkouts() {
+      const divisao = getWorkoutDivision();
+      const cachedTreinos = ensureValidWorkoutPlan(await read(WORKOUTS_KEY), divisao);
+      const cachedExecutions = cleanWorkoutExecutions(await read(WORKOUT_EXECUTIONS_KEY));
+      const cachedWorkouts = {
+        treinos: cachedTreinos,
+        execucoes: cachedExecutions ?? []
+      };
+      await write(WORKOUTS_KEY, cachedWorkouts.treinos);
+      await write(WORKOUT_EXECUTIONS_KEY, cachedWorkouts.execucoes);
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (!user || !navigator.onLine) return cachedWorkouts;
+
+        const { data, error } = await supabaseClient
+          .from('workouts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('workout_date', { ascending: true });
+
+        if (error) throw error;
+
+        const mappedWorkouts = DataMapper.workoutsFromSupabase(data || []);
+        const loadedWorkouts = {
+          treinos: cachedTreinos,
+          execucoes: Array.isArray(mappedWorkouts.execucoes) ? mappedWorkouts.execucoes : cachedWorkouts.execucoes
+        };
+
+        await write(WORKOUTS_KEY, loadedWorkouts.treinos);
+        await write(WORKOUT_EXECUTIONS_KEY, loadedWorkouts.execucoes);
+        return loadedWorkouts;
+      } catch (error) {
+        console.warn('StorageService workouts sync load failed:', error);
+        return cachedWorkouts;
+      }
+    },
+
+    /**
+     * Salva treinos e execucoes primeiro no cache local e sincroniza com Supabase quando possivel.
+     * Como a tabela nao tem constraint unica, as datas locais sao removidas e reinseridas agrupadas.
+     */
+    async saveWorkouts(workoutsData, options = {}) {
+      const divisao = getWorkoutDivision();
+      const workoutsToSave = {
+        treinos: ensureValidWorkoutPlan(workoutsData?.treinos, divisao),
+        execucoes: cleanWorkoutExecutions(workoutsData?.execucoes)
+      };
+      const savedWorkouts = await write(WORKOUTS_KEY, workoutsToSave.treinos);
+      const savedExecutions = await write(WORKOUT_EXECUTIONS_KEY, workoutsToSave.execucoes);
+      const localSaved = savedWorkouts && savedExecutions;
+
+      try {
+        if (!navigator.onLine) {
+          markSyncPending('workouts', options);
+          return options?.fromSyncQueue ? false : localSaved;
+        }
+
+        const user = await getAuthenticatedUser();
+        if (!user) return options?.fromSyncQueue ? false : localSaved;
+
+        const rowsToInsert = DataMapper.workoutsToSupabase(workoutsToSave, user.id);
+        const localKeys = new Set(rowsToInsert.map(row => `${row.workout_date}::${row.name}`));
+        const localDates = new Set(rowsToInsert.map(row => row.workout_date));
+
+        const { data: existingRows, error: fetchError } = await supabaseClient
+          .from('workouts')
+          .select('workout_date,name')
+          .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        const datesToDelete = Array.from(new Set((existingRows || [])
+          .filter(row => localDates.has(row.workout_date) || !localKeys.has(`${row.workout_date}::${row.name}`))
+          .map(row => row.workout_date)
+          .filter(Boolean)));
+
+        if (datesToDelete.length > 0) {
+          const { error: deleteError } = await supabaseClient
+            .from('workouts')
+            .delete()
+            .eq('user_id', user.id)
+            .in('workout_date', datesToDelete);
+
+          if (deleteError) throw deleteError;
+        }
+
+        if (rowsToInsert.length > 0) {
+          const { error: insertError } = await supabaseClient
+            .from('workouts')
+            .insert(rowsToInsert);
+
+          if (insertError) throw insertError;
+        }
+
+        await write(WORKOUTS_KEY, workoutsToSave.treinos);
+        await write(WORKOUT_EXECUTIONS_KEY, workoutsToSave.execucoes);
+        clearSyncPending('workouts');
+        return options?.fromSyncQueue ? true : localSaved;
+      } catch (error) {
+        markSyncPending('workouts', options);
+        console.warn('StorageService workouts sync save failed:', error);
+        return options?.fromSyncQueue ? false : localSaved;
+      }
+    },
+
+    /**
+     * Carrega hidratacao com estrategia offline-first.
+     * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
+     */
+    async loadHydration() {
+      const cachedHydration = await read(HYDRATION_KEY) ?? [];
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (!user || !navigator.onLine) return cachedHydration;
+
+        const { data, error } = await supabaseClient
+          .from('hydration')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('hydration_date', { ascending: true });
+
+        if (error) throw error;
+
+        const mappedHydration = DataMapper.hydrationFromSupabase(data || []);
+        await write(HYDRATION_KEY, mappedHydration);
+        return mappedHydration;
+      } catch (error) {
+        console.warn('StorageService hydration sync load failed:', error);
+        return cachedHydration;
+      }
+    },
+
+    /**
+     * Salva hidratacao primeiro no cache local e sincroniza com Supabase quando possivel.
+     * Dias que nao existem mais no array local sao removidos do Supabase com seguranca.
+     */
+    async saveHydration(hydration, options = {}) {
+      const hydrationToSave = Array.isArray(hydration) ? hydration : [];
+      const localSaved = await write(HYDRATION_KEY, hydrationToSave);
+
+      try {
+        if (!navigator.onLine) {
+          markSyncPending('hydration', options);
+          return options?.fromSyncQueue ? false : localSaved;
+        }
+
+        const user = await getAuthenticatedUser();
+        if (!user) return options?.fromSyncQueue ? false : localSaved;
+
+        const rowsToUpsert = DataMapper.hydrationToSupabase(hydrationToSave, user.id);
+        const localDates = new Set(rowsToUpsert.map(row => row.hydration_date));
+
+        const { data: existingRows, error: fetchError } = await supabaseClient
+          .from('hydration')
+          .select('hydration_date')
+          .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        const datesToDelete = (existingRows || [])
+          .map(row => row.hydration_date)
+          .filter(hydrationDate => !localDates.has(hydrationDate));
+
+        if (datesToDelete.length > 0) {
+          const { error: deleteError } = await supabaseClient
+            .from('hydration')
+            .delete()
+            .eq('user_id', user.id)
+            .in('hydration_date', datesToDelete);
+
+          if (deleteError) throw deleteError;
+        }
+
+        if (rowsToUpsert.length > 0) {
+          const { error: upsertError } = await supabaseClient
+            .from('hydration')
+            .upsert(rowsToUpsert, { onConflict: 'user_id,hydration_date' });
+
+          if (upsertError) throw upsertError;
+        }
+
+        await write(HYDRATION_KEY, hydrationToSave);
+        clearSyncPending('hydration');
+        return options?.fromSyncQueue ? true : localSaved;
+      } catch (error) {
+        markSyncPending('hydration', options);
+        console.warn('StorageService hydration sync save failed:', error);
+        return options?.fromSyncQueue ? false : localSaved;
+      }
+    },
+
+    /**
+     * Carrega evolucao fisica com estrategia offline-first.
+     * Usa Supabase quando ha usuario autenticado e internet; caso contrario usa cache local.
+     */
+    async loadEvolution() {
+      const cachedEvolution = await read(EVOLUTION_KEY) ?? [];
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (!user || !navigator.onLine) return cachedEvolution;
+
+        const { data, error } = await supabaseClient
+          .from('evolution')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('record_date', { ascending: true });
+
+        if (error) throw error;
+
+        const mappedEvolution = DataMapper.evolutionFromSupabase(data || []);
+        await write(EVOLUTION_KEY, mappedEvolution);
+        return mappedEvolution;
+      } catch (error) {
+        console.warn('StorageService evolution sync load failed:', error);
+        return cachedEvolution;
+      }
+    },
+
+    /**
+     * Salva evolucao primeiro no cache local e sincroniza com Supabase quando possivel.
+     * Datas que nao existem mais no array local sao removidas do Supabase com seguranca.
+     */
+    async saveEvolution(evolution, options = {}) {
+      const evolutionToSave = Array.isArray(evolution) ? evolution : [];
+      const localSaved = await write(EVOLUTION_KEY, evolutionToSave);
+
+      try {
+        if (!navigator.onLine) {
+          markSyncPending('evolution', options);
+          return options?.fromSyncQueue ? false : localSaved;
+        }
+
+        const user = await getAuthenticatedUser();
+        if (!user) return options?.fromSyncQueue ? false : localSaved;
+
+        const rowsToUpsert = DataMapper.evolutionToSupabase(evolutionToSave, user.id);
+        const localDates = new Set(rowsToUpsert.map(row => row.record_date));
+
+        const { data: existingRows, error: fetchError } = await supabaseClient
+          .from('evolution')
+          .select('record_date')
+          .eq('user_id', user.id);
+
+        if (fetchError) throw fetchError;
+
+        const datesToDelete = (existingRows || [])
+          .map(row => row.record_date)
+          .filter(recordDate => !localDates.has(recordDate));
+
+        if (datesToDelete.length > 0) {
+          const { error: deleteError } = await supabaseClient
+            .from('evolution')
+            .delete()
+            .eq('user_id', user.id)
+            .in('record_date', datesToDelete);
+
+          if (deleteError) throw deleteError;
+        }
+
+        if (rowsToUpsert.length > 0) {
+          const { error: upsertError } = await supabaseClient
+            .from('evolution')
+            .upsert(rowsToUpsert, { onConflict: 'user_id,record_date' });
+
+          if (upsertError) throw upsertError;
+        }
+
+        await write(EVOLUTION_KEY, evolutionToSave);
+        clearSyncPending('evolution');
+        return options?.fromSyncQueue ? true : localSaved;
+      } catch (error) {
+        markSyncPending('evolution', options);
+        console.warn('StorageService evolution sync save failed:', error);
+        return options?.fromSyncQueue ? false : localSaved;
+      }
+    }
+  };
+})();
+
+const SyncQueue = (() => {
+  const modules = ['profile', 'meals', 'hydration', 'evolution', 'workouts'];
+  let isSyncingPending = false;
+
+  function createEmptyQueue() {
+    return {
+      profile: false,
+      meals: false,
+      hydration: false,
+      evolution: false,
+      workouts: false,
+      updated_at: null
+    };
+  }
+
+  function normalizeQueue(queue = {}) {
+    const normalized = createEmptyQueue();
+    modules.forEach(moduleName => {
+      normalized[moduleName] = Boolean(queue?.[moduleName]);
+    });
+    normalized.updated_at = queue?.updated_at || null;
+    return normalized;
+  }
+
+  function readLocal(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  async function getUserForSync() {
+    try {
+      if (!supabaseClient?.auth) return null;
+      const { data, error } = await supabaseClient.auth.getUser();
+      if (error) throw error;
+      return data?.user || null;
+    } catch (error) {
+      console.warn('SyncQueue auth check failed:', error);
+      return null;
+    }
+  }
+
+  async function syncModule(moduleName) {
+    const options = { fromSyncQueue: true };
+
+    if (moduleName === 'profile') {
+      return await StorageService.saveProfile(readLocal(PROFILE_KEY, { ...DEFAULT_PROFILE }), options);
+    }
+
+    if (moduleName === 'meals') {
+      return await StorageService.saveMeals(readLocal(MEALS_KEY, []), options);
+    }
+
+    if (moduleName === 'hydration') {
+      return await StorageService.saveHydration(readLocal(HYDRATION_KEY, []), options);
+    }
+
+    if (moduleName === 'evolution') {
+      return await StorageService.saveEvolution(readLocal(EVOLUTION_KEY, []), options);
+    }
+
+    if (moduleName === 'workouts') {
+      return await StorageService.saveWorkouts({
+        treinos: readLocal(WORKOUTS_KEY, TREINOS_PADRAO),
+        execucoes: readLocal(WORKOUT_EXECUTIONS_KEY, [])
+      }, options);
+    }
+
+    return false;
+  }
+
+  return {
+    load() {
+      return normalizeQueue(readLocal(SYNC_QUEUE_KEY, createEmptyQueue()));
+    },
+
+    save(queue) {
+      const normalized = normalizeQueue(queue);
+      normalized.updated_at = new Date().toISOString();
+
+      try {
+        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(normalized));
+        return true;
+      } catch (error) {
+        console.warn('SyncQueue save failed:', error);
+        return false;
+      }
+    },
+
+    markPending(moduleName) {
+      if (!modules.includes(moduleName)) return false;
+      const queue = this.load();
+      queue[moduleName] = true;
+      return this.save(queue);
+    },
+
+    clearPending(moduleName) {
+      if (!modules.includes(moduleName)) return false;
+      const queue = this.load();
+      queue[moduleName] = false;
+      return this.save(queue);
+    },
+
+    hasPending() {
+      const queue = this.load();
+      return modules.some(moduleName => queue[moduleName]);
+    },
+
+    getPendingModules() {
+      const queue = this.load();
+      return modules.filter(moduleName => queue[moduleName]);
+    },
+
+    async syncPending() {
+      if (isSyncingPending || !this.hasPending() || !navigator.onLine) return false;
+
+      const user = await getUserForSync();
+      if (!user) return false;
+
+      isSyncingPending = true;
+      let executed = false;
+
+      try {
+        const pendingModules = this.getPendingModules();
+
+        for (const moduleName of pendingModules) {
+          try {
+            const synced = await syncModule(moduleName);
+            executed = true;
+
+            if (synced) {
+              this.clearPending(moduleName);
+            }
+          } catch (error) {
+            console.warn(`SyncQueue ${moduleName} sync failed:`, error);
+          }
+        }
+
+        return executed;
+      } finally {
+        isSyncingPending = false;
+      }
+    }
+  };
+})();
+
+/**
+ * Migra o carregamento do Perfil para o StorageService mantendo o formato atual dos dados.
+ * O estado recebe um perfil padrao quando nao existe registro salvo.
+ */
+async function loadProfileState() {
+  if (profileStateLoaded) return state.perfil;
+  state.perfil = await StorageService.loadProfile();
+  profileStateLoaded = true;
+  return state.perfil;
+}
+
+/**
+ * Migra o carregamento de Refeicoes para o StorageService mantendo o array original.
+ * O estado recebe uma lista vazia quando nao existem refeicoes salvas.
+ */
+async function loadMealsState() {
+  if (mealsStateLoaded) return state.diario;
+  state.diario = await StorageService.loadMeals();
+  mealsStateLoaded = true;
+  return state.diario;
+}
+
+/**
+ * Migra o carregamento de Treinos para o StorageService mantendo os formatos originais.
+ * O estado recebe treinos padrao e lista vazia de execucoes quando nao existem dados salvos.
+ */
+async function loadWorkoutsState() {
+  if (workoutsStateLoaded) return { treinos: state.treinos, execucoes: state.execucoes };
+  state.configTreino = loadWorkoutConfig();
+  const workoutsData = await StorageService.loadWorkouts();
+  state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos, state.configTreino.divisao);
+  state.execucoes = Array.isArray(workoutsData?.execucoes) ? cleanWorkoutExecutions(workoutsData.execucoes) : [];
+  workoutsStateLoaded = true;
+  return { treinos: state.treinos, execucoes: state.execucoes };
+}
+
+/**
+ * Migra o carregamento de Hidratacao para o StorageService mantendo o array original.
+ * O estado recebe uma lista vazia quando nao existem registros salvos.
+ */
+async function loadHydrationState() {
+  if (hydrationStateLoaded) return state.agua;
+  state.agua = await StorageService.loadHydration();
+  hydrationStateLoaded = true;
+  return state.agua;
+}
+
+/**
+ * Migra o carregamento de Evolucao para o StorageService mantendo o array original.
+ * O estado recebe uma lista vazia quando nao existem registros salvos.
+ */
+async function loadEvolutionState() {
+  if (evolutionStateLoaded) return state.evolucao;
+  state.evolucao = await StorageService.loadEvolution();
+  evolutionStateLoaded = true;
+  return state.evolucao;
+}
+
+/**
+ * Carrega todo o estado do aplicativo antes da primeira renderizacao.
+ * Cada modulo falha de forma isolada e usa cache local seguro como fallback.
+ */
+async function loadAppState() {
+  state.configTreino = loadWorkoutConfig();
+
+  try {
+    const profile = await StorageService.loadProfile();
+    state.perfil = profile && typeof profile === 'object' ? profile : { ...DEFAULT_PROFILE };
+  } catch (error) {
+    console.warn('loadAppState profile failed:', error);
+    state.perfil = load(LS.perfil, { ...DEFAULT_PROFILE }) ?? { ...DEFAULT_PROFILE };
+  }
+
+  try {
+    const meals = await StorageService.loadMeals();
+    state.diario = Array.isArray(meals) ? meals : load(LS.diario, []);
+  } catch (error) {
+    console.warn('loadAppState meals failed:', error);
+    state.diario = load(LS.diario, []);
+  }
+
+  try {
+    const hydration = await StorageService.loadHydration();
+    state.agua = Array.isArray(hydration) ? hydration : load(LS.agua, []);
+  } catch (error) {
+    console.warn('loadAppState hydration failed:', error);
+    state.agua = load(LS.agua, []);
+  }
+
+  try {
+    const evolution = await StorageService.loadEvolution();
+    state.evolucao = Array.isArray(evolution) ? evolution : load(LS.evolucao, []);
+  } catch (error) {
+    console.warn('loadAppState evolution failed:', error);
+    state.evolucao = load(LS.evolucao, []);
+  }
+
+  try {
+    const workoutsData = await StorageService.loadWorkouts();
+    state.treinos = ensureValidWorkoutPlan(workoutsData?.treinos || load(LS.treinos, TREINOS_PADRAO), state.configTreino.divisao);
+    state.execucoes = Array.isArray(workoutsData?.execucoes)
+      ? cleanWorkoutExecutions(workoutsData.execucoes)
+      : cleanWorkoutExecutions(load(LS.execucoes, []));
+  } catch (error) {
+    console.warn('loadAppState workouts failed:', error);
+    state.treinos = ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO), state.configTreino.divisao);
+    state.execucoes = cleanWorkoutExecutions(load(LS.execucoes, []));
+  }
+
+  profileStateLoaded = true;
+  mealsStateLoaded = true;
+  workoutsStateLoaded = true;
+  hydrationStateLoaded = true;
+  evolutionStateLoaded = true;
+
+  return state;
+}
+
+/* ============================================================
+   DATA MAPPER - CONVERSAO ENTRE APP E SUPABASE
+   ============================================================ */
+const DataMapper = (() => {
+  /**
+   * Normaliza valores numericos para evitar NaN nos payloads de banco.
+   */
+  function numberOrNull(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  /**
+   * Soma um campo numerico da lista mantendo duas casas decimais.
+   */
+  function sumField(items, field) {
+    return +items.reduce((total, item) => total + (Number(item[field]) || 0), 0).toFixed(2);
+  }
+
+  /**
+   * Converte o perfil interno atual para o formato da tabela profiles.
+   * A idade permanece no formato interno e sera tratada em etapa futura,
+   * pois a tabela relacional usa birth_date.
+   */
+  function profileToSupabase(profile = {}, user = {}) {
+    return {
+      user_id: user.id || user.user_id || null,
+      name: user.user_metadata?.name || user.user_metadata?.full_name || null,
+      email: user.email || null,
+      gender: profile.sexo || null,
+      birth_date: null,
+      height: numberOrNull(profile.altura),
+      weight_goal: null,
+      goal: profile.objetivo || null,
+      theme: profile.tema || 'laranja'
+    };
+  }
+
+  /**
+   * Converte uma linha da tabela profiles para o formato de perfil usado pelo app.
+   * Campos calculados atuais continuam ausentes quando nao existem no banco.
+   */
+  function profileFromSupabase(row = {}) {
+    return {
+      sexo: row.gender || '',
+      idade: null,
+      peso: null,
+      altura: numberOrNull(row.height),
+      atividade: null,
+      objetivo: row.goal || '',
+      metaProtKg: null,
+      metaGordKg: null,
+      tmb: null,
+      getBase: null,
+      get: null,
+      tema: row.theme || 'laranja'
+    };
+  }
+
+  /**
+   * Agrupa a lista interna de refeicoes por data para gerar linhas da tabela meals.
+   * Cada data vira uma linha; items preserva a lista original daquele dia.
+   */
+  function mealsToSupabaseByDate(meals = [], userId = null) {
+    const grouped = meals.reduce((acc, meal) => {
+      const mealDate = meal.data;
+      if (!mealDate) return acc;
+      if (!acc[mealDate]) acc[mealDate] = [];
+      acc[mealDate].push({ ...meal });
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).sort().map(mealDate => {
+      const items = grouped[mealDate];
+      return {
+        user_id: userId,
+        meal_date: mealDate,
+        items,
+        total_calories: sumField(items, 'kcal'),
+        total_protein: sumField(items, 'prot'),
+        total_carbs: sumField(items, 'carb'),
+        total_fat: sumField(items, 'gord')
+      };
+    });
+  }
+
+  /**
+   * Reconstroi a lista interna de refeicoes a partir das linhas da tabela meals.
+   * O conteudo de items e preservado sem alterar o formato dos alimentos.
+   */
+  function mealsFromSupabaseRows(rows = []) {
+    return rows
+      .slice()
+      .sort((a, b) => String(a.meal_date || '').localeCompare(String(b.meal_date || '')))
+      .flatMap(row => Array.isArray(row.items) ? row.items.map(item => ({ ...item })) : []);
+  }
+
+  /**
+   * Agrupa execucoes por data e treino para gerar linhas da tabela workouts.
+   * Cada grupo vira uma linha com exercises em JSONB e total_volume somado.
+   */
+  function workoutsToSupabase(workoutsData = {}, userId = null) {
+    const executions = cleanWorkoutExecutions(workoutsData.execucoes);
+    const grouped = executions.reduce((acc, execution) => {
+      const workoutDate = execution?.data;
+      const workoutName = execution?.treino;
+      if (!workoutDate || !workoutName) return acc;
+
+      const key = `${workoutDate}::${workoutName}`;
+      if (!acc[key]) {
+        acc[key] = {
+          workout_date: workoutDate,
+          name: workoutName,
+          exercises: []
+        };
+      }
+
+      acc[key].exercises.push({ ...execution });
+      return acc;
+    }, {});
+
+    return Object.values(grouped)
+      .sort((a, b) => {
+        const byDate = String(a.workout_date || '').localeCompare(String(b.workout_date || ''));
+        return byDate || String(a.name || '').localeCompare(String(b.name || ''));
+      })
+      .map(group => ({
+        user_id: userId,
+        workout_date: group.workout_date,
+        name: group.name,
+        exercises: group.exercises,
+        total_volume: sumField(group.exercises, 'volume'),
+        duration_minutes: null
+      }));
+  }
+
+  /**
+   * Reconstroi treinos e execucoes internas a partir das linhas da tabela workouts.
+   * Sem linhas remotas, os treinos padrao seguem como fallback.
+   */
+  function workoutsFromSupabase(rows = []) {
+    const execucoes = [];
+
+    (Array.isArray(rows) ? rows : [])
+      .slice()
+      .sort((a, b) => {
+        const byDate = String(a.workout_date || '').localeCompare(String(b.workout_date || ''));
+        return byDate || String(a.name || '').localeCompare(String(b.name || ''));
+      })
+      .forEach(row => {
+        const workoutName = row.name || 'A';
+        const exercises = Array.isArray(row.exercises) ? row.exercises : [];
+        exercises.forEach((exercise, index) => {
+          const generatedId = Number(`${String(row.workout_date || '').replace(/-/g, '')}${index + 1}`) || Date.now();
+          const execution = {
+            ...exercise,
+            id: exercise.id ?? generatedId,
+            data: exercise.data || row.workout_date,
+            treino: exercise.treino || workoutName
+          };
+
+          execucoes.push(execution);
+        });
+      });
+
+    return { treinos: ensureValidWorkoutPlan(null), execucoes };
+  }
+
+  /**
+   * Agrupa registros internos de hidratacao por data para gerar linhas da tabela hydration.
+   * Cada data vira uma linha com total_ml somado.
+   */
+  function hydrationToSupabase(hydration = [], userId = null) {
+    const grouped = hydration.reduce((acc, item) => {
+      const hydrationDate = item.data;
+      if (!hydrationDate) return acc;
+      acc[hydrationDate] = (acc[hydrationDate] || 0) + (Number(item.ml) || 0);
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).sort().map(hydrationDate => ({
+      user_id: userId,
+      hydration_date: hydrationDate,
+      total_ml: grouped[hydrationDate]
+    }));
+  }
+
+  /**
+   * Converte linhas da tabela hydration para o formato interno do app.
+   * Cada dia volta como um registro unico com id estavel derivado da data.
+   */
+  function hydrationFromSupabase(rows = []) {
+    return rows
+      .slice()
+      .sort((a, b) => String(a.hydration_date || '').localeCompare(String(b.hydration_date || '')))
+      .map(row => ({
+        id: Number(String(row.hydration_date || '').replace(/-/g, '')) || Date.now(),
+        data: row.hydration_date,
+        ml: Number(row.total_ml) || 0
+      }));
+  }
+
+  /**
+   * Converte a evolucao interna atual para a tabela evolution.
+   * Quando ha mais de um registro na mesma data, o ultimo registro local sobrescreve o anterior.
+   */
+  function evolutionToSupabase(evolution = [], userId = null) {
+    const rowsByDate = new Map();
+
+    (Array.isArray(evolution) ? evolution : []).forEach(item => {
+      const recordDate = item?.data;
+      if (!recordDate) return;
+
+      rowsByDate.set(recordDate, {
+        user_id: userId,
+        record_date: recordDate,
+        weight: numberOrNull(item.peso),
+        body_fat: null,
+        waist: numberOrNull(item.cintura),
+        hip: numberOrNull(item.quadril),
+        chest: null,
+        left_arm: numberOrNull(item.braco),
+        right_arm: null,
+        left_thigh: numberOrNull(item.coxa),
+        right_thigh: null,
+        notes: null
+      });
+    });
+
+    return Array.from(rowsByDate.values())
+      .sort((a, b) => String(a.record_date || '').localeCompare(String(b.record_date || '')));
+  }
+
+  /**
+   * Converte linhas da tabela evolution para o formato interno usado pelo app.
+   * Campos internos sem coluna equivalente permanecem presentes com valor null.
+   */
+  function evolutionFromSupabase(rows = []) {
+    return (Array.isArray(rows) ? rows : [])
+      .slice()
+      .sort((a, b) => String(a.record_date || '').localeCompare(String(b.record_date || '')))
+      .map(row => ({
+        id: Number(String(row.record_date || '').replace(/-/g, '')) || Date.now(),
+        data: row.record_date,
+        peso: numberOrNull(row.weight),
+        altura: null,
+        imc: null,
+        cintura: numberOrNull(row.waist),
+        quadril: numberOrNull(row.hip),
+        braco: numberOrNull(row.left_arm),
+        coxa: numberOrNull(row.left_thigh)
+      }));
+  }
+
+  return {
+    profileToSupabase,
+    profileFromSupabase,
+    mealsToSupabaseByDate,
+    mealsFromSupabaseRows,
+    workoutsToSupabase,
+    workoutsFromSupabase,
+    hydrationToSupabase,
+    hydrationFromSupabase,
+    evolutionToSupabase,
+    evolutionFromSupabase
+  };
+})();
+
+/**
+ * Teste manual do DataMapper. Nao executa automaticamente.
+ * Rode no console: testDataMapper()
+ */
+function testDataMapper() {
+  const mockUser = {
+    id: '00000000-0000-0000-0000-000000000001',
+    email: 'teste@forja.app',
+    user_metadata: { name: 'Usuário Teste' }
+  };
+
+  const mockProfile = {
+    sexo: 'm',
+    idade: 30,
+    peso: 82,
+    altura: 178,
+    atividade: 1.55,
+    objetivo: 'hipertrofia',
+    metaProtKg: 2,
+    metaGordKg: 1,
+    tmb: 1800,
+    getBase: 2790,
+    get: 3208.5,
+    tema: 'azul'
+  };
+
+  const profileRow = DataMapper.profileToSupabase(mockProfile, mockUser);
+  const profileBack = DataMapper.profileFromSupabase(profileRow);
+
+  const mockMeals = [
+    { id: 1, data: '2026-07-07', refeicao: 'Almoço', alimento: 'Arroz', gramas: 100, kcal: 128, carb: 28.1, prot: 2.5, gord: 0.2 },
+    { id: 2, data: '2026-07-07', refeicao: 'Almoço', alimento: 'Frango', gramas: 150, kcal: 238.5, carb: 0, prot: 48, gord: 3.8 },
+    { id: 3, data: '2026-07-08', refeicao: 'Café da Manhã', alimento: 'Banana', gramas: 85, kcal: 98, carb: 26, prot: 1.3, gord: 0.3 }
+  ];
+
+  const mealRows = DataMapper.mealsToSupabaseByDate(mockMeals, mockUser.id);
+  const mealsBack = DataMapper.mealsFromSupabaseRows(mealRows);
+
+  const firstDay = mealRows.find(row => row.meal_date === '2026-07-07');
+  const secondDay = mealRows.find(row => row.meal_date === '2026-07-08');
+  const results = {
+    profileToSupabaseOk: profileRow.user_id === mockUser.id && profileRow.gender === 'm' && profileRow.theme === 'azul',
+    profileFromSupabaseOk: profileBack.sexo === 'm' && profileBack.altura === 178 && profileBack.tema === 'azul',
+    groupedByDateOk: mealRows.length === 2,
+    firstDayTotalsOk: firstDay?.total_calories === 366.5 && firstDay?.total_protein === 50.5 && firstDay?.total_carbs === 28.1 && firstDay?.total_fat === 4,
+    secondDayTotalsOk: secondDay?.total_calories === 98 && secondDay?.total_protein === 1.3 && secondDay?.total_carbs === 26 && secondDay?.total_fat === 0.3,
+    roundTripItemsOk: JSON.stringify(mealsBack) === JSON.stringify(mockMeals)
+  };
+
+  const passed = Object.values(results).every(Boolean);
+  const output = { passed, results, profileRow, profileBack, mealRows, mealsBack };
+  console.table(results);
+  return output;
+}
+
+/**
+ * Teste manual da sincronizacao de Perfil. Nao executa automaticamente.
+ * Rode no console: await testProfileSync()
+ */
+async function testProfileSync() {
+  let hasUser = false;
+  let saved = false;
+  let loaded = false;
+  let fieldsOk = false;
+
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    const user = data?.user || null;
+    hasUser = Boolean(user);
+
+    const testProfile = {
+      sexo: 'm',
+      idade: 33,
+      peso: 88,
+      altura: 181,
+      atividade: 1.55,
+      objetivo: 'manutencao',
+      metaProtKg: 2,
+      metaGordKg: 1,
+      tmb: 1900,
+      getBase: 2945,
+      get: 2945,
+      tema: 'verde'
+    };
+
+    saved = await StorageService.saveProfile(testProfile);
+    const loadedProfile = await StorageService.loadProfile();
+    loaded = Boolean(loadedProfile);
+    fieldsOk = loadedProfile?.sexo === testProfile.sexo
+      && Number(loadedProfile?.altura) === testProfile.altura
+      && loadedProfile?.objetivo === testProfile.objetivo
+      && loadedProfile?.tema === testProfile.tema;
+
+    return {
+      hasUser,
+      saved,
+      loaded,
+      fieldsOk,
+      passed: hasUser && saved && loaded && fieldsOk
+    };
+  } catch (error) {
+    console.warn('testProfileSync failed:', error);
+    return { hasUser, saved, loaded, fieldsOk, passed: false };
+  }
+}
+
+/**
+ * Teste manual da sincronizacao de Refeicoes. Nao executa automaticamente.
+ * Rode no console: await testMealsSync()
+ */
+async function testMealsSync() {
+  let hasUser = false;
+  let saved = false;
+  let loaded = false;
+  let groupingOk = false;
+  let totalsOk = false;
+  let roundTripOk = false;
+
+  try {
+    const { data, error } = supabaseClient?.auth
+      ? await supabaseClient.auth.getUser()
+      : { data: { user: null }, error: null };
+    if (error) throw error;
+    const user = data?.user || null;
+    hasUser = Boolean(user);
+
+    const testMeals = [
+      { id: 91001, data: '2026-07-07', refeicao: 'Almoço', alimento: 'Arroz teste', gramas: 100, kcal: 128, carb: 28.1, prot: 2.5, gord: 0.2 },
+      { id: 91002, data: '2026-07-07', refeicao: 'Jantar', alimento: 'Frango teste', gramas: 150, kcal: 238.5, carb: 0, prot: 48, gord: 3.8 },
+      { id: 91003, data: '2026-07-08', refeicao: 'Café da Manhã', alimento: 'Banana teste', gramas: 85, kcal: 98, carb: 26, prot: 1.3, gord: 0.3 }
+    ];
+
+    saved = await StorageService.saveMeals(testMeals);
+    const loadedMeals = await StorageService.loadMeals();
+    loaded = Array.isArray(loadedMeals);
+
+    const groupedRows = DataMapper.mealsToSupabaseByDate(testMeals, user?.id || null);
+    const firstDay = groupedRows.find(row => row.meal_date === '2026-07-07');
+    const secondDay = groupedRows.find(row => row.meal_date === '2026-07-08');
+
+    groupingOk = groupedRows.length === 2;
+    totalsOk = firstDay?.total_calories === 366.5
+      && firstDay?.total_protein === 50.5
+      && firstDay?.total_carbs === 28.1
+      && firstDay?.total_fat === 4
+      && secondDay?.total_calories === 98
+      && secondDay?.total_protein === 1.3
+      && secondDay?.total_carbs === 26
+      && secondDay?.total_fat === 0.3;
+
+    const loadedTestMeals = loadedMeals.filter(meal => [91001, 91002, 91003].includes(meal.id));
+    roundTripOk = JSON.stringify(loadedTestMeals) === JSON.stringify(testMeals);
+
+    return {
+      hasUser,
+      saved,
+      loaded,
+      groupingOk,
+      totalsOk,
+      roundTripOk,
+      passed: hasUser && saved && loaded && groupingOk && totalsOk && roundTripOk
+    };
+  } catch (error) {
+    console.warn('testMealsSync failed:', error);
+    return { hasUser, saved, loaded, groupingOk, totalsOk, roundTripOk, passed: false };
+  }
+}
+
+/**
+ * Teste manual da sincronizacao de Treinos. Nao executa automaticamente.
+ * Rode no console: await testWorkoutsSync()
+ */
+async function testWorkoutsSync() {
+  let hasUser = false;
+  let saved = false;
+  let loaded = false;
+  let fieldsOk = false;
+  let volumeOk = false;
+  let roundTripOk = false;
+  const divisao = getWorkoutDivision();
+  const previousState = {
+    treinos: ensureValidWorkoutPlan(state.treinos || TREINOS_PADRAO, divisao),
+    execucoes: cleanWorkoutExecutions(state.execucoes || [])
+  };
+  const hadLocalWorkouts = localStorage.getItem(WORKOUTS_KEY) !== null;
+  const hadLocalExecutions = localStorage.getItem(WORKOUT_EXECUTIONS_KEY) !== null;
+  const previousLocalWorkouts = hadLocalWorkouts
+    ? JSON.stringify(ensureValidWorkoutPlan(load(WORKOUTS_KEY, TREINOS_PADRAO), divisao))
+    : null;
+  const previousLocalExecutions = hadLocalExecutions
+    ? JSON.stringify(cleanWorkoutExecutions(load(WORKOUT_EXECUTIONS_KEY, [])))
+    : null;
+
+  try {
+    const { data, error } = supabaseClient?.auth
+      ? await supabaseClient.auth.getUser()
+      : { data: { user: null }, error: null };
+    if (error) throw error;
+    const user = data?.user || null;
+    hasUser = Boolean(user);
+
+    const testWorkouts = {
+      treinos: {
+        ...TREINOS_PADRAO,
+        A: { nome: 'Treino A - Teste Temporario', exercicios: ['Supino reto', 'Remada baixa'] },
+        B: { nome: 'Treino B - Teste Temporario', exercicios: ['Agachamento livre'] }
+      },
+      execucoes: [
+        { id: 94001, data: '2026-07-07', treino: 'A', exercicio: 'Supino reto', series: 4, reps: 8, carga: 80, rpe: 8, volume: 2560 },
+        { id: 94002, data: '2026-07-07', treino: 'A', exercicio: 'Remada baixa', series: 3, reps: 10, carga: 60, rpe: 7, volume: 1800 },
+        { id: 94003, data: '2026-07-08', treino: 'B', exercicio: 'Agachamento livre', series: 5, reps: 5, carga: 100, rpe: 8.5, volume: 2500 }
+      ]
+    };
+
+    saved = await StorageService.saveWorkouts(testWorkouts);
+    const loadedWorkouts = await StorageService.loadWorkouts();
+    loaded = Boolean(loadedWorkouts)
+      && Boolean(loadedWorkouts.treinos)
+      && Array.isArray(loadedWorkouts.execucoes);
+
+    const rows = DataMapper.workoutsToSupabase(testWorkouts, user?.id || null);
+    const firstDay = rows.find(row => row.workout_date === '2026-07-07' && row.name === 'A');
+    const secondDay = rows.find(row => row.workout_date === '2026-07-08' && row.name === 'B');
+    volumeOk = firstDay?.total_volume === 4360 && secondDay?.total_volume === 2500;
+
+    const expectedById = new Map(testWorkouts.execucoes.map(item => [item.id, item]));
+    const loadedTestExecutions = (loadedWorkouts.execucoes || [])
+      .filter(item => expectedById.has(item.id))
+      .sort((a, b) => a.id - b.id);
+
+    fieldsOk = loadedTestExecutions.length === testWorkouts.execucoes.length
+      && loadedTestExecutions.every(item => {
+        const expected = expectedById.get(item.id);
+        return item.treino === expected.treino
+          && item.exercicio === expected.exercicio
+          && Number(item.series) === expected.series
+          && Number(item.reps) === expected.reps
+          && Number(item.carga) === expected.carga
+          && Number(item.rpe) === expected.rpe
+          && Number(item.volume) === expected.volume;
+      });
+
+    roundTripOk = fieldsOk
+      && loadedTestExecutions.every(item => ['id', 'data', 'treino', 'exercicio', 'series', 'reps', 'carga', 'rpe', 'volume']
+        .every(field => Object.prototype.hasOwnProperty.call(item, field)));
+
+    return {
+      hasUser,
+      saved,
+      loaded,
+      fieldsOk,
+      volumeOk,
+      roundTripOk,
+      passed: hasUser && saved && loaded && fieldsOk && volumeOk && roundTripOk
+    };
+  } catch (error) {
+    console.warn('testWorkoutsSync failed:', error);
+    return { hasUser, saved, loaded, fieldsOk, volumeOk, roundTripOk, passed: false };
+  } finally {
+    state.treinos = previousState.treinos;
+    state.execucoes = previousState.execucoes;
+
+    if (hasUser && navigator.onLine) {
+      try {
+        await StorageService.saveWorkouts(previousState, { fromSyncQueue: true });
+      } catch (restoreError) {
+        console.warn('testWorkoutsSync restore failed:', restoreError);
+      }
+    }
+
+    if (!hadLocalWorkouts) {
+      localStorage.removeItem(WORKOUTS_KEY);
+    } else {
+      localStorage.setItem(WORKOUTS_KEY, previousLocalWorkouts);
+    }
+
+    if (!hadLocalExecutions) {
+      localStorage.removeItem(WORKOUT_EXECUTIONS_KEY);
+    } else {
+      localStorage.setItem(WORKOUT_EXECUTIONS_KEY, previousLocalExecutions);
+    }
+  }
+}
+
+/**
+ * Teste manual do carregamento completo do estado do app. Nao executa automaticamente.
+ * Rode no console: await testFullAppSync()
+ */
+async function testFullAppSync() {
+  let hasUser = false;
+  let profileOk = false;
+  let mealsOk = false;
+  let hydrationOk = false;
+  let evolutionOk = false;
+  let workoutsOk = false;
+  let stateOk = false;
+
+  try {
+    try {
+      if (supabaseClient?.auth) {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (!error) hasUser = Boolean(data?.user);
+      }
+    } catch (authError) {
+      hasUser = false;
+    }
+
+    await loadAppState();
+
+    profileOk = Boolean(state?.perfil) && typeof state.perfil === 'object';
+    mealsOk = Array.isArray(state?.diario);
+    hydrationOk = Array.isArray(state?.agua);
+    evolutionOk = Array.isArray(state?.evolucao);
+    workoutsOk = Boolean(state?.treinos)
+      && typeof state.treinos === 'object'
+      && Array.isArray(state?.execucoes);
+
+    stateOk = Boolean(state)
+      && Object.prototype.hasOwnProperty.call(state, 'perfil')
+      && Object.prototype.hasOwnProperty.call(state, 'diario')
+      && Object.prototype.hasOwnProperty.call(state, 'agua')
+      && Object.prototype.hasOwnProperty.call(state, 'evolucao')
+      && Object.prototype.hasOwnProperty.call(state, 'treinos')
+      && Object.prototype.hasOwnProperty.call(state, 'execucoes');
+
+    return {
+      hasUser,
+      profileOk,
+      mealsOk,
+      hydrationOk,
+      evolutionOk,
+      workoutsOk,
+      stateOk,
+      passed: profileOk && mealsOk && hydrationOk && evolutionOk && workoutsOk && stateOk
+    };
+  } catch (error) {
+    console.warn('testFullAppSync failed:', error);
+    return { hasUser, profileOk, mealsOk, hydrationOk, evolutionOk, workoutsOk, stateOk, passed: false };
+  }
+}
+
+/**
+ * Teste manual da integridade do plano de Treinos. Nao executa automaticamente.
+ * Rode no console: await testWorkoutPlanIntegrity()
+ */
+async function testWorkoutPlanIntegrity() {
+  let hasTreinos = false;
+  let divisionOk = false;
+  let visibleTabsOk = false;
+  let activeWorkoutHasExercises = false;
+  let execucoesIsArray = false;
+
+  try {
+    await loadAppState();
+    ensureActiveWorkout();
+
+    const divisao = getWorkoutDivision();
+    const requiredKeys = getWorkoutVisibleKeys(divisao);
+    hasTreinos = Boolean(state?.treinos) && typeof state.treinos === 'object';
+    divisionOk = WORKOUT_DIVISIONS.includes(divisao);
+    visibleTabsOk = hasTreinos && requiredKeys.every(key => Boolean(state.treinos[key]));
+
+    const activeWorkout = state.treinos?.[treinoAtivo] || state.treinos?.A;
+    activeWorkoutHasExercises = Array.isArray(activeWorkout?.exercicios) && activeWorkout.exercicios.length > 0;
+    execucoesIsArray = Array.isArray(state?.execucoes);
+
+    return {
+      hasTreinos,
+      divisionOk,
+      visibleTabsOk,
+      activeWorkoutHasExercises,
+      execucoesIsArray,
+      passed: hasTreinos && divisionOk && visibleTabsOk && activeWorkoutHasExercises && execucoesIsArray
+    };
+  } catch (error) {
+    console.warn('testWorkoutPlanIntegrity failed:', error);
+    return {
+      hasTreinos,
+      divisionOk,
+      visibleTabsOk,
+      activeWorkoutHasExercises,
+      execucoesIsArray,
+      passed: false
+    };
+  }
+}
+
+/**
+ * Teste manual da base de exercicios e do plano ABCDE. Nao executa automaticamente.
+ * Rode no console: await testWorkoutCatalogIntegrity()
+ */
+async function testWorkoutCatalogIntegrity() {
+  let hasDivisionSelector = false;
+  let divisionOk = false;
+  let visibleTabsOk = false;
+  let eachWorkoutHasExercises = false;
+  let noSyncTestNames = false;
+  let exerciseBaseLargeEnough = false;
+  let muscleMapOk = false;
+  let selectHasOptions = false;
+  let datalistLargeEnough = false;
+
+  try {
+    await loadAppState();
+    renderWorkoutDivisionSelector();
+    renderTreinoTabs();
+    ensureActiveWorkout();
+    popularDatalistExercicios();
+    popularSelectExercicios();
+
+    const divisao = getWorkoutDivision();
+    const requiredKeys = getWorkoutVisibleKeys(divisao);
+    const workouts = state?.treinos || {};
+    const allWorkoutExercises = requiredKeys.flatMap(key => workouts[key]?.exercicios || []);
+    const visibleTabs = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'))
+      .map(btn => btn.dataset.treino);
+
+    hasDivisionSelector = Boolean(document.getElementById('treino-divisao'));
+    divisionOk = WORKOUT_DIVISIONS.includes(divisao);
+    visibleTabsOk = visibleTabs.length === requiredKeys.length
+      && requiredKeys.every((key, index) => visibleTabs[index] === key);
+    eachWorkoutHasExercises = requiredKeys.every(key => (workouts[key]?.exercicios || []).length >= 5);
+    noSyncTestNames = allWorkoutExercises.every(nome => !isExerciseTestData(nome));
+    exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 100;
+    muscleMapOk = EXERCICIOS_BASE.every(nome => Boolean(MAPA_MUSCULOS[nome]));
+    selectHasOptions = (document.getElementById('t-exercicio')?.options.length || 0) > 0;
+    datalistLargeEnough = (document.getElementById('lista-exercicios')?.options.length || 0) >= 100;
+
+    return {
+      hasDivisionSelector,
+      divisionOk,
+      visibleTabsOk,
+      eachWorkoutHasExercises,
+      noSyncTestNames,
+      exerciseBaseLargeEnough,
+      muscleMapOk,
+      selectHasOptions,
+      datalistLargeEnough,
+      passed: hasDivisionSelector
+        && divisionOk
+        && visibleTabsOk
+        && eachWorkoutHasExercises
+        && noSyncTestNames
+        && exerciseBaseLargeEnough
+        && muscleMapOk
+        && selectHasOptions
+        && datalistLargeEnough
+    };
+  } catch (error) {
+    console.warn('testWorkoutCatalogIntegrity failed:', error);
+    return {
+      hasDivisionSelector,
+      divisionOk,
+      visibleTabsOk,
+      eachWorkoutHasExercises,
+      noSyncTestNames,
+      exerciseBaseLargeEnough,
+      muscleMapOk,
+      selectHasOptions,
+      datalistLargeEnough,
+      passed: false
+    };
+  }
+}
+
+function repairWorkoutPlan() {
+  const divisao = getWorkoutDivision();
+  const visibleTabs = getWorkoutVisibleKeys(divisao);
+  state.configTreino = saveWorkoutConfig({ divisao });
+  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
+  if (!visibleTabs.includes(treinoAtivo)) treinoAtivo = visibleTabs[0] || 'A';
+  try {
+    localStorage.setItem(WORKOUTS_KEY, JSON.stringify(state.treinos));
+  } catch (error) {
+    console.warn('Workout plan repair cache save failed:', error);
+  }
+  renderTudo();
+
+  const eachWorkoutHasExercises = visibleTabs.every(key => (state.treinos[key]?.exercicios || []).length >= 5);
+
+  return {
+    repaired: true,
+    divisao,
+    visibleTabs,
+    eachWorkoutHasExercises,
+    passed: WORKOUT_DIVISIONS.includes(divisao) && eachWorkoutHasExercises
+  };
+}
+
+/**
+ * Teste manual da fila de sincronizacao offline. Nao executa automaticamente.
+ * Rode no console: await testSyncQueue()
+ */
+async function testSyncQueue() {
+  let queueCreated = false;
+  let markPendingOk = false;
+  let listPendingOk = false;
+  let syncExecuted = false;
+  let queueClearedOrPreservedCorrectly = false;
+
+  try {
+    SyncQueue.save({
+      profile: false,
+      meals: false,
+      hydration: false,
+      evolution: false,
+      workouts: false
+    });
+
+    queueCreated = Boolean(SyncQueue.load());
+
+    SyncQueue.markPending('profile');
+    SyncQueue.markPending('meals');
+    SyncQueue.markPending('workouts');
+
+    markPendingOk = SyncQueue.hasPending();
+
+    const pendingBeforeSync = SyncQueue.getPendingModules();
+    listPendingOk = ['profile', 'meals', 'workouts']
+      .every(moduleName => pendingBeforeSync.includes(moduleName));
+
+    let hasUser = false;
+    try {
+      if (supabaseClient?.auth) {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (!error) hasUser = Boolean(data?.user);
+      }
+    } catch (authError) {
+      hasUser = false;
+    }
+
+    syncExecuted = await SyncQueue.syncPending();
+
+    const pendingAfterSync = SyncQueue.getPendingModules();
+    queueClearedOrPreservedCorrectly = hasUser && navigator.onLine
+      ? pendingAfterSync.length === 0
+      : ['profile', 'meals', 'workouts'].every(moduleName => pendingAfterSync.includes(moduleName));
+
+    return {
+      queueCreated,
+      markPendingOk,
+      listPendingOk,
+      syncExecuted,
+      queueClearedOrPreservedCorrectly,
+      passed: queueCreated && markPendingOk && listPendingOk && queueClearedOrPreservedCorrectly
+    };
+  } catch (error) {
+    console.warn('testSyncQueue failed:', error);
+    return {
+      queueCreated,
+      markPendingOk,
+      listPendingOk,
+      syncExecuted,
+      queueClearedOrPreservedCorrectly,
+      passed: false
+    };
+  }
+}
+
+/**
+ * Teste manual da sincronizacao de Hidratacao. Nao executa automaticamente.
+ * Rode no console: await testHydrationSync()
+ */
+async function testHydrationSync() {
+  let hasUser = false;
+  let saved = false;
+  let loaded = false;
+  let groupingOk = false;
+  let totalsOk = false;
+  let roundTripOk = false;
+
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    const user = data?.user || null;
+    hasUser = Boolean(user);
+
+    const testHydration = [
+      { id: 92001, data: '2026-07-07', ml: 250 },
+      { id: 92002, data: '2026-07-07', ml: 500 },
+      { id: 92003, data: '2026-07-08', ml: 750 }
+    ];
+
+    saved = await StorageService.saveHydration(testHydration);
+    const loadedHydration = await StorageService.loadHydration();
+    loaded = Array.isArray(loadedHydration);
+
+    const groupedRows = DataMapper.hydrationToSupabase(testHydration, user?.id || null);
+    const firstDay = groupedRows.find(row => row.hydration_date === '2026-07-07');
+    const secondDay = groupedRows.find(row => row.hydration_date === '2026-07-08');
+
+    groupingOk = groupedRows.length === 2;
+    totalsOk = firstDay?.total_ml === 750 && secondDay?.total_ml === 750;
+
+    const loadedTestDates = loadedHydration.filter(item => ['2026-07-07', '2026-07-08'].includes(item.data));
+    roundTripOk = loadedTestDates.length === 2
+      && loadedTestDates.some(item => item.data === '2026-07-07' && item.ml === 750)
+      && loadedTestDates.some(item => item.data === '2026-07-08' && item.ml === 750);
+
+    return {
+      hasUser,
+      saved,
+      loaded,
+      groupingOk,
+      totalsOk,
+      roundTripOk,
+      passed: hasUser && saved && loaded && groupingOk && totalsOk && roundTripOk
+    };
+  } catch (error) {
+    console.warn('testHydrationSync failed:', error);
+    return { hasUser, saved, loaded, groupingOk, totalsOk, roundTripOk, passed: false };
+  }
+}
+
+/**
+ * Teste manual da sincronizacao de Evolucao. Nao executa automaticamente.
+ * Rode no console: await testEvolutionSync()
+ */
+async function testEvolutionSync() {
+  let hasUser = false;
+  let saved = false;
+  let loaded = false;
+  let fieldsOk = false;
+  let roundTripOk = false;
+
+  try {
+    let user = null;
+    try {
+      if (supabaseClient?.auth) {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (!error) user = data?.user || null;
+      }
+    } catch (authError) {
+      user = null;
+    }
+    hasUser = Boolean(user);
+
+    const testEvolution = [
+      { id: 93001, data: '2026-07-07', peso: 82.4, altura: 180, imc: 25.4, cintura: 88, quadril: 101, braco: 36.5, coxa: 58.2 },
+      { id: 93002, data: '2026-07-08', peso: 82.1, altura: 180, imc: 25.3, cintura: 87.5, quadril: 100.5, braco: 36.8, coxa: 58.6 }
+    ];
+
+    saved = await StorageService.saveEvolution(testEvolution);
+    const loadedEvolution = await StorageService.loadEvolution();
+    loaded = Array.isArray(loadedEvolution);
+
+    const expectedByDate = new Map(testEvolution.map(item => [item.data, item]));
+    const loadedTestDates = (loadedEvolution || [])
+      .filter(item => expectedByDate.has(item.data))
+      .sort((a, b) => String(a.data || '').localeCompare(String(b.data || '')));
+
+    fieldsOk = loadedTestDates.length === testEvolution.length
+      && loadedTestDates.every(item => {
+        const expected = expectedByDate.get(item.data);
+        return Number(item.peso) === expected.peso
+          && Number(item.cintura) === expected.cintura
+          && Number(item.quadril) === expected.quadril
+          && Number(item.braco) === expected.braco
+          && Number(item.coxa) === expected.coxa;
+      });
+
+    roundTripOk = fieldsOk
+      && loadedTestDates.every(item => ['id', 'data', 'peso', 'altura', 'imc', 'cintura', 'quadril', 'braco', 'coxa']
+        .every(field => Object.prototype.hasOwnProperty.call(item, field)));
+
+    return {
+      hasUser,
+      saved,
+      loaded,
+      fieldsOk,
+      roundTripOk,
+      passed: hasUser && saved && loaded && fieldsOk && roundTripOk
+    };
+  } catch (error) {
+    console.warn('testEvolutionSync failed:', error);
+    return { hasUser, saved, loaded, fieldsOk, roundTripOk, passed: false };
+  }
+}
+
+window.SyncQueue = SyncQueue;
+window.DataMapper = DataMapper;
+window.testDataMapper = testDataMapper;
+window.testProfileSync = testProfileSync;
+window.testMealsSync = testMealsSync;
+window.testWorkoutsSync = testWorkoutsSync;
+window.testFullAppSync = testFullAppSync;
+window.testWorkoutPlanIntegrity = testWorkoutPlanIntegrity;
+window.testWorkoutCatalogIntegrity = testWorkoutCatalogIntegrity;
+window.repairWorkoutPlan = repairWorkoutPlan;
+window.testSyncQueue = testSyncQueue;
+window.testHydrationSync = testHydrationSync;
+window.testEvolutionSync = testEvolutionSync;
+
+window.addEventListener('online', async () => {
+  await SyncQueue.syncPending();
+});
+
+/* ============================================================
+   INICIALIZACAO DO APP
+   ============================================================ *//* ============================================================
+   BASE DE DADOS TACO (valores por 100g) — Tabela TACO / UNICAMP
+   ============================================================ */
+const TACO = [
+  // --- CARNES BOVINAS E SUÍNAS ---
+  { nome: "Patinho bovino grelhado",       tipo_medida: "gramas",  kcal: 219, carb: 0,    prot: 35.9, gord: 7.3   },
+  { nome: "Alcatra bovina grelhada",       tipo_medida: "gramas",  kcal: 241, carb: 0,    prot: 31.9, gord: 11.6  },
+  { nome: "Picanha bovina grelhada",       tipo_medida: "gramas",  kcal: 289, carb: 0,    prot: 26.4, gord: 19.5  },
+  { nome: "Coxão mole bovino cozido",      tipo_medida: "gramas",  kcal: 219, carb: 0,    prot: 32.4, gord: 8.9   },
+  { nome: "Carne moída (acém) cozida",     tipo_medida: "gramas",  kcal: 212, carb: 0,    prot: 26.7, gord: 10.9  },
+  { nome: "Músculo bovino cozido",         tipo_medida: "gramas",  kcal: 194, carb: 0,    prot: 31.2, gord: 6.7   },
+  { nome: "Costela bovina assada",         tipo_medida: "gramas",  kcal: 373, carb: 0,    prot: 25.8, gord: 29.2  },
+  { nome: "Carne de sol cozida",           tipo_medida: "gramas",  kcal: 213, carb: 0,    prot: 30.1, gord: 9.3   },
+  { nome: "Lombo suíno assado",            tipo_medida: "gramas",  kcal: 210, carb: 0,    prot: 35.7, gord: 6.1   },
+  { nome: "Bisteca suína grelhada",        tipo_medida: "gramas",  kcal: 280, carb: 0,    prot: 28.0, gord: 18.0  },
+  { nome: "Linguiça calabresa frita",      tipo_medida: "gramas",  kcal: 300, carb: 1.2,  prot: 14.5, gord: 26.5  },
+
+  // --- AVES E PEIXES ---
+  { nome: "Peito de frango grelhado",      tipo_medida: "gramas",  kcal: 159, carb: 0,    prot: 32.0, gord: 2.5   },
+  { nome: "Coxa de frango assada",         tipo_medida: "gramas",  kcal: 215, carb: 0,    prot: 26.0, gord: 11.0  },
+  { nome: "Sobrecoxa de frango assada",    tipo_medida: "gramas",  kcal: 260, carb: 0,    prot: 28.7, gord: 15.2  },
+  { nome: "Coração de frango grelhado",    tipo_medida: "gramas",  kcal: 207, carb: 1.1,  prot: 20.3, gord: 13.1  },
+  { nome: "Tilápia grelhada",              tipo_medida: "gramas",  kcal: 128, carb: 0,    prot: 26.2, gord: 2.6   },
+  { nome: "Salmão grelhado",               tipo_medida: "gramas",  kcal: 228, carb: 0,    prot: 23.9, gord: 14.0  },
+  { nome: "Atum em água (lata)",           tipo_medida: "gramas",  kcal: 116, carb: 0,    prot: 25.5, gord: 0.8   },
+  { nome: "Sardinha em óleo (lata)",       tipo_medida: "gramas",  kcal: 204, carb: 0,    prot: 23.8, gord: 11.4  },
+  { nome: "Merluza cozida",                tipo_medida: "gramas",  kcal: 97,  carb: 0,    prot: 19.2, gord: 1.7   },
+
+  // --- OVOS E LATICÍNIOS ---
+  { nome: "Ovo de galinha cozido",         tipo_medida: "unidade", peso_unidade: 50, kcal: 146, carb: 0.6,  prot: 13.3, gord: 9.5  },
+  { nome: "Ovo de galinha mexido",         tipo_medida: "unidade", peso_unidade: 50, kcal: 165, carb: 1.0,  prot: 11.0, gord: 12.5 },
+  { nome: "Clara de ovo cozida",           tipo_medida: "unidade", peso_unidade: 33, kcal: 52,  carb: 0,    prot: 11.0, gord: 0.1  },
+  { nome: "Gema de ovo cozida",            tipo_medida: "unidade", peso_unidade: 17, kcal: 322, carb: 1.0,  prot: 16.0, gord: 28.0 },
+  { nome: "Leite integral",                tipo_medida: "gramas",  kcal: 61,  carb: 4.7,  prot: 3.2,  gord: 3.2   },
+  { nome: "Leite desnatado",               tipo_medida: "gramas",  kcal: 35,  carb: 5.0,  prot: 3.3,  gord: 0.1   },
+  { nome: "Iogurte natural integral",      tipo_medida: "gramas",  kcal: 61,  carb: 4.7,  prot: 3.9,  gord: 3.0   },
+  { nome: "Iogurte natural desnatado",     tipo_medida: "gramas",  kcal: 41,  carb: 5.8,  prot: 3.8,  gord: 0.3   },
+  { nome: "Queijo mussarela",              tipo_medida: "gramas",  kcal: 330, carb: 3.0,  prot: 22.6, gord: 25.2  },
+  { nome: "Queijo prato",                  tipo_medida: "gramas",  kcal: 360, carb: 2.0,  prot: 22.7, gord: 29.1  },
+  { nome: "Queijo minas frescal",          tipo_medida: "gramas",  kcal: 264, carb: 3.2,  prot: 17.4, gord: 20.2  },
+  { nome: "Queijo coalho",                 tipo_medida: "gramas",  kcal: 327, carb: 2.0,  prot: 22.0, gord: 25.0  },
+  { nome: "Queijo parmesão ralado",        tipo_medida: "gramas",  kcal: 430, carb: 4.0,  prot: 35.0, gord: 30.0  },
+  { nome: "Requeijão cremoso",             tipo_medida: "gramas",  kcal: 257, carb: 2.4,  prot: 9.6,  gord: 23.4  },
+  { nome: "Whey Protein concentrado",      tipo_medida: "gramas",  kcal: 400, carb: 10.0, prot: 75.0, gord: 6.0   },
+
+  // --- CARBOIDRATOS E GRÃOS ---
+  { nome: "Arroz branco cozido",           tipo_medida: "gramas",  kcal: 128, carb: 28.1, prot: 2.5,  gord: 0.2   },
+  { nome: "Arroz integral cozido",         tipo_medida: "gramas",  kcal: 124, carb: 25.8, prot: 2.6,  gord: 1.0   },
+  { nome: "Feijão carioca cozido",         tipo_medida: "gramas",  kcal: 76,  carb: 13.6, prot: 4.8,  gord: 0.5   },
+  { nome: "Feijão preto cozido",           tipo_medida: "gramas",  kcal: 77,  carb: 14.0, prot: 4.5,  gord: 0.5   },
+  { nome: "Feijão fradinho cozido",        tipo_medida: "gramas",  kcal: 78,  carb: 13.7, prot: 5.1,  gord: 0.5   },
+  { nome: "Lentilha cozida",               tipo_medida: "gramas",  kcal: 116, carb: 20.1, prot: 9.0,  gord: 0.4   },
+  { nome: "Grão-de-bico cozido",           tipo_medida: "gramas",  kcal: 164, carb: 27.4, prot: 8.9,  gord: 2.6   },
+  { nome: "Macarrão de trigo cozido",      tipo_medida: "gramas",  kcal: 137, carb: 28.8, prot: 5.8,  gord: 0.3   },
+  { nome: "Batata inglesa cozida",         tipo_medida: "gramas",  kcal: 52,  carb: 11.9, prot: 1.2,  gord: 0.1   },
+  { nome: "Batata doce cozida",            tipo_medida: "gramas",  kcal: 77,  carb: 18.4, prot: 0.6,  gord: 0.1   },
+  { nome: "Mandioca (macaxeira) cozida",   tipo_medida: "gramas",  kcal: 125, carb: 30.1, prot: 0.6,  gord: 0.3   },
+  { nome: "Inhame cozido",                 tipo_medida: "gramas",  kcal: 118, carb: 27.9, prot: 1.5,  gord: 0.2   },
+  { nome: "Tapioca (goma)",                tipo_medida: "gramas",  kcal: 336, carb: 82.0, prot: 0,    gord: 0     },
+  { nome: "Cuscuz de milho cozido",        tipo_medida: "gramas",  kcal: 113, carb: 25.3, prot: 2.2,  gord: 0.7   },
+  { nome: "Aveia em flocos",               tipo_medida: "gramas",  kcal: 394, carb: 66.6, prot: 13.9, gord: 8.5   },
+
+  // --- PÃES E BISCOITOS ---
+  { nome: "Pão francês",                   tipo_medida: "unidade", peso_unidade: 50, kcal: 300, carb: 58.0, prot: 8.0,  gord: 3.1  },
+  { nome: "Pão de forma tradicional",      tipo_medida: "unidade", peso_unidade: 25, kcal: 253, carb: 49.9, prot: 9.4,  gord: 1.5  },
+  { nome: "Pão de forma integral",         tipo_medida: "unidade", peso_unidade: 25, kcal: 244, carb: 44.5, prot: 9.4,  gord: 3.3  },
+  { nome: "Pão de queijo",                 tipo_medida: "unidade", peso_unidade: 25, kcal: 269, carb: 34.0, prot: 5.0,  gord: 12.0 },
+  { nome: "Tapioca pronta (disco)",        tipo_medida: "unidade", peso_unidade: 50, kcal: 336, carb: 82.0, prot: 0,    gord: 0    },
+  { nome: "Biscoito cream cracker",        tipo_medida: "gramas",  kcal: 432, carb: 68.0, prot: 10.0, gord: 14.0  },
+
+  // --- FRUTAS ---
+  { nome: "Banana prata",                  tipo_medida: "unidade", peso_unidade: 85,  kcal: 98,  carb: 26.0, prot: 1.3,  gord: 0.3  },
+  { nome: "Banana nanica",                 tipo_medida: "unidade", peso_unidade: 90,  kcal: 92,  carb: 23.8, prot: 1.4,  gord: 0.1  },
+  { nome: "Maçã fuji",                     tipo_medida: "unidade", peso_unidade: 130, kcal: 56,  carb: 15.2, prot: 0.3,  gord: 0.1  },
+  { nome: "Mamão formosa",                 tipo_medida: "gramas",  kcal: 40,  carb: 10.4, prot: 0.5,  gord: 0.1   },
+  { nome: "Melancia",                      tipo_medida: "gramas",  kcal: 30,  carb: 7.1,  prot: 0.9,  gord: 0     },
+  { nome: "Laranja pera",                  tipo_medida: "unidade", peso_unidade: 140, kcal: 37,  carb: 8.9,  prot: 1.0,  gord: 0.1  },
+  { nome: "Manga tommy",                   tipo_medida: "unidade", peso_unidade: 250, kcal: 60,  carb: 15.0, prot: 0.8,  gord: 0.2  },
+  { nome: "Morango",                       tipo_medida: "gramas",  kcal: 30,  carb: 6.8,  prot: 0.9,  gord: 0.3   },
+  { nome: "Uva itália",                    tipo_medida: "gramas",  kcal: 69,  carb: 17.5, prot: 0.7,  gord: 0.2   },
+  { nome: "Abacaxi",                       tipo_medida: "gramas",  kcal: 48,  carb: 12.3, prot: 0.5,  gord: 0.1   },
+  { nome: "Abacate",                       tipo_medida: "gramas",  kcal: 96,  carb: 6.0,  prot: 1.2,  gord: 8.4   },
+
+  // --- VEGETAIS E LEGUMES ---
+  { nome: "Alface",                        tipo_medida: "gramas",  kcal: 11,  carb: 1.7,  prot: 1.6,  gord: 0.2   },
+  { nome: "Tomate",                        tipo_medida: "unidade", peso_unidade: 120, kcal: 15,  carb: 3.1,  prot: 1.1,  gord: 0.2  },
+  { nome: "Cebola crua",                   tipo_medida: "gramas",  kcal: 39,  carb: 8.9,  prot: 1.7,  gord: 0.1   },
+  { nome: "Cenoura crua",                  tipo_medida: "gramas",  kcal: 41,  carb: 9.3,  prot: 1.3,  gord: 0.2   },
+  { nome: "Cenoura cozida",                tipo_medida: "gramas",  kcal: 32,  carb: 7.7,  prot: 0.9,  gord: 0.2   },
+  { nome: "Brócolis cozido",               tipo_medida: "gramas",  kcal: 25,  carb: 4.4,  prot: 2.1,  gord: 0.2   },
+  { nome: "Couve-flor cozida",             tipo_medida: "gramas",  kcal: 23,  carb: 4.1,  prot: 1.9,  gord: 0.2   },
+  { nome: "Abobrinha cozida",              tipo_medida: "gramas",  kcal: 15,  carb: 3.2,  prot: 1.1,  gord: 0.1   },
+  { nome: "Beterraba cozida",              tipo_medida: "gramas",  kcal: 43,  carb: 9.2,  prot: 1.6,  gord: 0.1   },
+  { nome: "Chuchu cozido",                 tipo_medida: "gramas",  kcal: 19,  carb: 4.1,  prot: 0.6,  gord: 0.1   },
+  { nome: "Couve manteiga crua",           tipo_medida: "gramas",  kcal: 27,  carb: 4.3,  prot: 2.9,  gord: 0.5   },
+
+  // --- GORDURAS, ÓLEOS E OLEAGINOSAS ---
+  { nome: "Azeite de oliva extra virgem",  tipo_medida: "gramas",  kcal: 884, carb: 0,    prot: 0,    gord: 100.0 },
+  { nome: "Manteiga com sal",              tipo_medida: "gramas",  kcal: 717, carb: 0.1,  prot: 0.9,  gord: 81.1  },
+  { nome: "Margarina com sal",             tipo_medida: "gramas",  kcal: 723, carb: 0,    prot: 0,    gord: 81.6  },
+  { nome: "Amendoim torrado",              tipo_medida: "gramas",  kcal: 580, carb: 18.0, prot: 25.0, gord: 50.0  },
+  { nome: "Pasta de amendoim integral",    tipo_medida: "gramas",  kcal: 588, carb: 20.0, prot: 25.0, gord: 50.0  },
+  { nome: "Castanha-do-pará",              tipo_medida: "unidade", peso_unidade: 5,  kcal: 656, carb: 12.0, prot: 14.0, gord: 66.0 },
+  { nome: "Castanha de caju",              tipo_medida: "gramas",  kcal: 581, carb: 30.0, prot: 15.0, gord: 46.0  },
+
+  // --- EXTRAS E DOCES ---
+  { nome: "Mel de abelha",                 tipo_medida: "gramas",  kcal: 304, carb: 82.4, prot: 0.3,  gord: 0     },
+  { nome: "Açúcar refinado",               tipo_medida: "gramas",  kcal: 387, carb: 99.9, prot: 0,    gord: 0     },
+  { nome: "Chocolate ao leite",            tipo_medida: "gramas",  kcal: 535, carb: 59.5, prot: 7.2,  gord: 29.7  },
+  { nome: "Chocolate meio amargo",         tipo_medida: "gramas",  kcal: 494, carb: 53.0, prot: 5.0,  gord: 31.0  }
+];
+
+const WORKOUT_DIVISIONS = ['ABC', 'ABCD', 'ABCDE'];
+const DEFAULT_WORKOUT_CONFIG = { divisao: 'ABCDE' };
+
+const TREINOS_PADRAO_POR_DIVISAO = {
+  ABC: {
+    A: { nome: "Treino A - Peito, Ombros e Triceps", exercicios: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Desenvolvimento militar", "Elevacao lateral", "Triceps pulley", "Triceps corda"] },
+    B: { nome: "Treino B - Costas e Biceps", exercicios: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo", "Rosca Scott"] },
+    C: { nome: "Treino C - Pernas e Abdomen", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe", "Abdominal supra", "Prancha"] },
+  },
+  ABCD: {
+    A: { nome: "Treino A - Peito e Triceps", exercicios: ["Supino reto", "Supino inclinado", "Crucifixo reto", "Crossover", "Triceps pulley", "Triceps corda"] },
+    B: { nome: "Treino B - Costas e Biceps", exercicios: ["Puxada frontal", "Remada curvada", "Remada baixa", "Pulldown", "Rosca direta", "Rosca martelo"] },
+    C: { nome: "Treino C - Pernas", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"] },
+    D: { nome: "Treino D - Ombros e Abdomen", exercicios: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Remada alta", "Abdominal supra", "Prancha"] },
+  },
+  ABCDE: {
+    A: { nome: "Treino A - Peito", exercicios: ["Supino reto", "Supino inclinado", "Supino reto com halteres", "Crucifixo reto", "Crossover", "Peck deck"] },
+    B: { nome: "Treino B - Costas", exercicios: ["Puxada frontal", "Barra fixa", "Remada curvada", "Remada baixa", "Remada unilateral", "Pulldown"] },
+    C: { nome: "Treino C - Pernas", exercicios: ["Agachamento livre", "Leg press 45", "Cadeira extensora", "Mesa flexora", "Stiff", "Panturrilha em pe"] },
+    D: { nome: "Treino D - Ombros e Bracos", exercicios: ["Desenvolvimento militar", "Elevacao lateral", "Crucifixo inverso", "Rosca direta", "Rosca martelo", "Triceps pulley", "Triceps corda"] },
+    E: { nome: "Treino E - Gluteos, Abdomen e Cardio", exercicios: ["Elevacao pelvica", "Cadeira abdutora", "Agachamento sumo", "Coice no cabo", "Abdominal supra", "Prancha", "Esteira", "Bicicleta ergometrica"] },
+  }
+};
+
+const TREINOS_PADRAO = TREINOS_PADRAO_POR_DIVISAO.ABCDE;
+
+function isExerciseTestData(nome) {
+  const normalized = String(nome || '').toLowerCase();
+  return normalized.includes('teste sync')
+    || normalized.includes('test sync')
+    || normalized.includes('sync test')
+    || /\bsync\b/.test(normalized);
+}
+
+function cleanExerciseList(exercicios = []) {
+  const cleaned = [];
+  const seen = new Set();
+
+  (Array.isArray(exercicios) ? exercicios : []).forEach(exercicio => {
+    const nome = String(exercicio || '').trim();
+    const key = nome.toLowerCase();
+    if (!nome || isExerciseTestData(nome) || seen.has(key)) return;
+    seen.add(key);
+    cleaned.push(nome);
+  });
+
+  return cleaned;
+}
+
+function cleanWorkoutExecutions(execucoes = []) {
+  return (Array.isArray(execucoes) ? execucoes : [])
+    .filter(execucao => !isExerciseTestData(execucao?.exercicio));
+}
+
+function normalizeWorkoutDivision(divisao) {
+  const normalized = String(divisao || '').toUpperCase();
+  return WORKOUT_DIVISIONS.includes(normalized) ? normalized : DEFAULT_WORKOUT_CONFIG.divisao;
+}
+
+function loadWorkoutConfig() {
+  try {
+    const raw = localStorage.getItem(WORKOUT_CONFIG_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    return { divisao: normalizeWorkoutDivision(saved?.divisao) };
+  } catch (error) {
+    return { ...DEFAULT_WORKOUT_CONFIG };
+  }
+}
+
+function saveWorkoutConfig(config = {}) {
+  const nextConfig = { divisao: normalizeWorkoutDivision(config.divisao) };
+  try {
+    localStorage.setItem(WORKOUT_CONFIG_KEY, JSON.stringify(nextConfig));
+  } catch (error) {
+    console.warn('Workout config save failed:', error);
+  }
+  return nextConfig;
+}
+
+function getWorkoutDivision(divisao = null) {
+  if (divisao) return normalizeWorkoutDivision(divisao);
+  return normalizeWorkoutDivision(state?.configTreino?.divisao || loadWorkoutConfig().divisao);
+}
+
+function cloneWorkoutDefaults(divisao = null) {
+  return JSON.parse(JSON.stringify(TREINOS_PADRAO_POR_DIVISAO[getWorkoutDivision(divisao)] || TREINOS_PADRAO));
+}
+
+function getWorkoutVisibleKeys(divisao = null) {
+  return Object.keys(cloneWorkoutDefaults(divisao));
+}
+
+function removeLegacyCrossWorkoutDefaults(exercicios, treinoKey, defaults) {
+  const currentDefaults = new Set((defaults[treinoKey]?.exercicios || []).map(nome => String(nome).toLowerCase()));
+  const otherDefaults = new Set();
+
+  Object.keys(defaults).forEach(key => {
+    if (key === treinoKey) return;
+    (defaults[key]?.exercicios || []).forEach(nome => otherDefaults.add(String(nome).toLowerCase()));
+  });
+
+  return exercicios.filter(nome => {
+    const key = String(nome).toLowerCase();
+    return currentDefaults.has(key) || !otherDefaults.has(key);
+  });
+}
+
+function cleanWorkoutPlan(treinos, divisao = null) {
+  const activeDivision = getWorkoutDivision(divisao);
+  const defaults = cloneWorkoutDefaults(activeDivision);
+  const requiredKeys = Object.keys(defaults);
+
+  if (!treinos || typeof treinos !== 'object' || Array.isArray(treinos) || Object.keys(treinos).length === 0) {
+    return defaults;
+  }
+
+  const cleanedPlan = {};
+
+  Object.keys(treinos).forEach(key => {
+    const workout = treinos[key];
+    const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
+
+    if (!workout || (typeof workout !== 'object' && !Array.isArray(workout))) {
+      if (defaults[key]) cleanedPlan[key] = defaultWorkout;
+      return;
+    }
+
+    const workoutExercises = Array.isArray(workout) ? workout : workout.exercicios;
+    const cleanedExercises = defaults[key]
+      ? removeLegacyCrossWorkoutDefaults(cleanExerciseList(workoutExercises), key, defaults)
+      : cleanExerciseList(workoutExercises);
+    const completedExercises = cleanExerciseList([
+      ...cleanedExercises,
+      ...(cleanedExercises.length < 5 ? defaultWorkout.exercicios : [])
+    ]);
+
+    cleanedPlan[key] = {
+      ...defaultWorkout,
+      ...(Array.isArray(workout) ? {} : workout),
+      nome: Array.isArray(workout) ? defaultWorkout.nome : (workout.nome || defaultWorkout.nome),
+      exercicios: completedExercises.length > 0 ? completedExercises : defaultWorkout.exercicios
+    };
+  });
+
+  requiredKeys.forEach(key => {
+    if (!cleanedPlan[key] || typeof cleanedPlan[key] !== 'object') {
+      cleanedPlan[key] = defaults[key];
+      return;
+    }
+
+    const cleanedExercises = cleanExerciseList(cleanedPlan[key].exercicios);
+    cleanedPlan[key].exercicios = cleanExerciseList([
+      ...cleanedExercises,
+      ...(cleanedExercises.length < 5 ? defaults[key].exercicios : [])
+    ]);
+    cleanedPlan[key].nome = cleanedPlan[key].nome || defaults[key].nome;
+  });
+
+  return cleanedPlan;
+}
+
+function ensureValidWorkoutPlan(treinos, divisao = null) {
+  return cleanWorkoutPlan(treinos, divisao);
+}
+
+const EXERCICIOS_BASE = [
+  "Supino Reto com Barra", "Supino Reto com Halteres", "Supino Inclinado com Barra",
+  "Supino Inclinado com Halteres", "Supino Declinado", "Crucifixo com Halteres",
+  "Crucifixo na Polia (Cross-over)", "Peck Deck (Voador)", "Flexão de Braço",
+  "Desenvolvimento Militar com Barra", "Desenvolvimento com Halteres", "Elevação Lateral com Halteres",
+  "Elevação Frontal com Halteres", "Elevação Posterior com Halteres", "Remada Alta",
+  "Encolhimento de Ombros (Trapézio)", "Puxada Frontal (Pulley)", "Puxada Atrás da Nuca",
+  "Remada Curvada com Barra", "Remada Cavalinho (T-Bar)", "Remada Unilateral com Halter",
+  "Remada Baixa na Polia", "Barra Fixa (Pull-up)", "Levantamento Terra",
+  "Tríceps Testa com Barra W", "Tríceps Corda na Polia", "Tríceps Francês com Halter",
+  "Tríceps Coice com Halter", "Mergulho no Banco (Dips)", "Rosca Direta com Barra",
+  "Rosca Alternada com Halteres", "Rosca Martelo", "Rosca Scott",
+  "Rosca Concentrada", "Rosca 21", "Agachamento Livre com Barra",
+  "Agachamento Frontal", "Agachamento Búlgaro", "Leg Press 45",
+  "Cadeira Extensora", "Mesa Flexora", "Cadeira Flexora",
+  "Stiff com Barra", "Levantamento Terra Romeno", "Panturrilha em Pé",
+  "Panturrilha Sentado", "Afundo com Halteres", "Cadeira Adutora",
+  "Cadeira Abdutora", "Hip Thrust", "Abdominal Supra",
+  "Abdominal Infra", "Prancha Abdominal", "Elevação de Pernas",
+  "Abdominal na Polia Alta", "Rotação de Tronco (Oblíquo)",
+  "Esteira", "Bicicleta Ergométrica", "Elíptico", "Caminhada Rápida", "Pular Corda",
+  "Supino reto", "Supino inclinado", "Supino declinado", "Supino reto com halteres",
+  "Supino inclinado com halteres", "Crucifixo reto", "Crucifixo inclinado", "Crossover",
+  "Peck deck", "Flexao de braco", "Paralelas",
+  "Puxada frontal", "Puxada aberta", "Puxada fechada", "Barra fixa",
+  "Remada curvada", "Remada baixa", "Remada unilateral", "Remada cavalinho",
+  "Pulldown", "Desenvolvimento militar", "Desenvolvimento com halteres",
+  "Elevacao lateral", "Elevacao frontal", "Crucifixo inverso", "Encolhimento", "Arnold press",
+  "Rosca direta", "Rosca alternada", "Rosca martelo", "Rosca concentrada",
+  "Rosca no cabo", "Triceps pulley", "Triceps corda", "Triceps testa",
+  "Triceps frances", "Mergulho no banco", "Supino fechado", "Triceps coice",
+  "Agachamento livre", "Agachamento smith", "Hack squat", "Stiff",
+  "Afundo", "Passada", "Panturrilha em pe", "Elevacao pelvica",
+  "Coice no cabo", "Abducao de quadril", "Agachamento sumo", "Passada no smith",
+  "Prancha", "Prancha lateral", "Abdominal maquina", "Abdominal obliquo",
+  "Crunch no cabo", "Bicicleta ergometrica", "Eliptico", "Escada", "Remo ergometrico", "HIIT"
+];
+
+const MAPA_MUSCULOS = {
+  "Supino Reto com Barra": "Peito",
+  "Supino Reto com Halteres": "Peito",
+  "Supino Inclinado com Barra": "Peito",
+  "Supino Inclinado com Halteres": "Peito",
+  "Supino Declinado": "Peito",
+  "Crucifixo com Halteres": "Peito",
+  "Crucifixo na Polia (Cross-over)": "Peito",
+  "Peck Deck (Voador)": "Peito",
+  "Flexão de Braço": "Peito",
+  "Desenvolvimento Militar com Barra": "Ombros",
+  "Desenvolvimento com Halteres": "Ombros",
+  "Elevação Lateral com Halteres": "Ombros",
+  "Elevação Frontal com Halteres": "Ombros",
+  "Elevação Posterior com Halteres": "Ombros",
+  "Remada Alta": "Ombros",
+  "Encolhimento de Ombros (Trapézio)": "Ombros",
+  "Puxada Frontal (Pulley)": "Costas",
+  "Puxada Atrás da Nuca": "Costas",
+  "Remada Curvada com Barra": "Costas",
+  "Remada Cavalinho (T-Bar)": "Costas",
+  "Remada Unilateral com Halter": "Costas",
+  "Remada Baixa na Polia": "Costas",
+  "Barra Fixa (Pull-up)": "Costas",
+  "Levantamento Terra": "Costas",
+  "Tríceps Testa com Barra W": "Tríceps",
+  "Tríceps Corda na Polia": "Tríceps",
+  "Tríceps Francês com Halter": "Tríceps",
+  "Tríceps Coice com Halter": "Tríceps",
+  "Mergulho no Banco (Dips)": "Tríceps",
+  "Rosca Direta com Barra": "Bíceps",
+  "Rosca Alternada com Halteres": "Bíceps",
+  "Rosca Martelo": "Bíceps",
+  "Rosca Scott": "Bíceps",
+  "Rosca Concentrada": "Bíceps",
+  "Rosca 21": "Bíceps",
+  "Agachamento Livre com Barra": "Pernas",
+  "Agachamento Frontal": "Pernas",
+  "Agachamento Búlgaro": "Pernas",
+  "Leg Press 45": "Pernas",
+  "Cadeira Extensora": "Pernas",
+  "Mesa Flexora": "Pernas",
+  "Cadeira Flexora": "Pernas",
+  "Stiff com Barra": "Pernas",
+  "Levantamento Terra Romeno": "Pernas",
+  "Panturrilha em Pé": "Pernas",
+  "Panturrilha Sentado": "Pernas",
+  "Afundo com Halteres": "Pernas",
+  "Cadeira Adutora": "Pernas",
+  "Cadeira Abdutora": "Pernas",
+  "Hip Thrust": "Pernas",
+  "Abdominal Supra": "Core",
+  "Abdominal Infra": "Core",
+  "Prancha Abdominal": "Core",
+  "Elevação de Pernas": "Core",
+  "Abdominal na Polia Alta": "Core",
+  "Rotação de Tronco (Oblíquo)": "Core",
+  "Esteira": "Cardio",
+  "Bicicleta Ergométrica": "Cardio",
+  "Elíptico": "Cardio",
+  "Caminhada Rápida": "Cardio",
+  "Pular Corda": "Cardio",
+};
+
+Object.assign(MAPA_MUSCULOS, {
+  "Supino reto": "Peito",
+  "Supino inclinado": "Peito",
+  "Supino declinado": "Peito",
+  "Supino reto com halteres": "Peito",
+  "Supino inclinado com halteres": "Peito",
+  "Crucifixo reto": "Peito",
+  "Crucifixo inclinado": "Peito",
+  "Crossover": "Peito",
+  "Peck deck": "Peito",
+  "Flexao de braco": "Peito",
+  "Paralelas": "Peito",
+  "Puxada frontal": "Costas",
+  "Puxada aberta": "Costas",
+  "Puxada fechada": "Costas",
+  "Barra fixa": "Costas",
+  "Remada curvada": "Costas",
+  "Remada baixa": "Costas",
+  "Remada unilateral": "Costas",
+  "Remada cavalinho": "Costas",
+  "Pulldown": "Costas",
+  "Desenvolvimento militar": "Ombros",
+  "Desenvolvimento com halteres": "Ombros",
+  "Elevacao lateral": "Ombros",
+  "Elevacao frontal": "Ombros",
+  "Crucifixo inverso": "Ombros",
+  "Encolhimento": "Ombros",
+  "Arnold press": "Ombros",
+  "Rosca direta": "Bíceps",
+  "Rosca alternada": "Bíceps",
+  "Rosca martelo": "Bíceps",
+  "Rosca concentrada": "Bíceps",
+  "Rosca no cabo": "Bíceps",
+  "Triceps pulley": "Tríceps",
+  "Triceps corda": "Tríceps",
+  "Triceps testa": "Tríceps",
+  "Triceps frances": "Tríceps",
+  "Mergulho no banco": "Tríceps",
+  "Supino fechado": "Tríceps",
+  "Triceps coice": "Tríceps",
+  "Agachamento livre": "Pernas",
+  "Agachamento smith": "Pernas",
+  "Hack squat": "Pernas",
+  "Stiff": "Pernas",
+  "Afundo": "Pernas",
+  "Passada": "Pernas",
+  "Panturrilha em pe": "Pernas",
+  "Elevacao pelvica": "Gluteos",
+  "Coice no cabo": "Gluteos",
+  "Abducao de quadril": "Gluteos",
+  "Agachamento sumo": "Gluteos",
+  "Passada no smith": "Gluteos",
+  "Prancha": "Core",
+  "Prancha lateral": "Core",
+  "Abdominal maquina": "Core",
+  "Abdominal obliquo": "Core",
+  "Crunch no cabo": "Core",
+  "Bicicleta ergometrica": "Cardio",
+  "Eliptico": "Cardio",
+  "Escada": "Cardio",
+  "Remo ergometrico": "Cardio",
+  "HIIT": "Cardio"
+});
+
+const EXERCICIOS_BASE_COMPLEMENTARES = {
+  Peito: [
+    "Supino reto", "Supino inclinado", "Supino declinado", "Supino reto com halteres",
+    "Supino inclinado com halteres", "Crucifixo reto", "Crucifixo inclinado", "Crossover",
+    "Peck deck", "Flexao de braco", "Paralelas"
+  ],
+  Costas: [
+    "Puxada frontal", "Puxada aberta", "Puxada fechada", "Barra fixa", "Remada curvada",
+    "Remada baixa", "Remada unilateral", "Remada cavalinho", "Pulldown", "Levantamento terra",
+    "Hiperextensao lombar"
+  ],
+  Ombros: [
+    "Desenvolvimento militar", "Desenvolvimento com halteres", "Arnold press", "Elevacao lateral",
+    "Elevacao frontal", "Crucifixo inverso", "Remada alta", "Encolhimento"
+  ],
+  "Bíceps": [
+    "Rosca direta", "Rosca alternada", "Rosca martelo", "Rosca concentrada", "Rosca Scott",
+    "Rosca no cabo", "Rosca 21"
+  ],
+  "Tríceps": [
+    "Triceps pulley", "Triceps corda", "Triceps testa", "Triceps frances", "Mergulho no banco",
+    "Supino fechado", "Triceps coice"
+  ],
+  Pernas: [
+    "Agachamento livre", "Agachamento smith", "Hack squat", "Leg press 45", "Cadeira extensora",
+    "Mesa flexora", "Cadeira flexora", "Stiff", "Levantamento terra romeno", "Afundo", "Passada",
+    "Cadeira abdutora", "Cadeira adutora", "Panturrilha em pe", "Panturrilha sentado"
+  ],
+  Gluteos: [
+    "Elevacao pelvica", "Hip thrust", "Coice no cabo", "Abducao de quadril", "Agachamento sumo",
+    "Passada no smith", "Gluteo maquina"
+  ],
+  Core: [
+    "Abdominal supra", "Abdominal infra", "Prancha", "Prancha lateral", "Abdominal maquina",
+    "Elevacao de pernas", "Abdominal obliquo", "Crunch no cabo"
+  ],
+  Cardio: [
+    "Esteira", "Bicicleta ergometrica", "Eliptico", "Escada", "Remo ergometrico", "HIIT",
+    "Corrida intervalada", "Caminhada inclinada"
+  ]
+};
+
+function normalizeExerciseKey(nome) {
+  return String(nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+Object.entries(EXERCICIOS_BASE_COMPLEMENTARES).forEach(([musculo, exercicios]) => {
+  exercicios.forEach(nome => {
+    if (!EXERCICIOS_BASE.some(item => normalizeExerciseKey(item) === normalizeExerciseKey(nome))) {
+      EXERCICIOS_BASE.push(nome);
+    }
+    MAPA_MUSCULOS[nome] = musculo;
+  });
+});
+
+const muscleByNormalizedExercise = new Map(
+  Object.entries(MAPA_MUSCULOS).map(([nome, musculo]) => [normalizeExerciseKey(nome), musculo])
+);
+EXERCICIOS_BASE.forEach(nome => {
+  if (!MAPA_MUSCULOS[nome]) {
+    MAPA_MUSCULOS[nome] = muscleByNormalizedExercise.get(normalizeExerciseKey(nome)) || 'Outros';
+  }
+});
+
+const LS = {
+  perfil:    'forja_perfil',
+  diario:    'forja_diario',
+  treinos:   'forja_treinos_def',
+  execucoes: 'forja_execucoes',
+  evolucao:  'forja_evolucao',
+  agua:      'forja_agua',
+};
+
+function load(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
+}
+async function save(key, value) {
+  if (key === PROFILE_KEY) {
+    // Perfil migrado: qualquer gravação genérica também passa pelo StorageService.
+    await StorageService.saveProfile(value);
+    return;
+  }
+  if (key === MEALS_KEY) {
+    // Refeições migradas: qualquer gravação genérica também passa pelo StorageService.
+    await StorageService.saveMeals(value);
+    return;
+  }
+  if (key === WORKOUTS_KEY || key === WORKOUT_EXECUTIONS_KEY) {
+    // Treinos migrados: preserva os dois caches locais e sincroniza execucoes agrupadas.
+    const divisao = getWorkoutDivision();
+    const nextWorkouts = {
+      treinos: key === WORKOUTS_KEY ? ensureValidWorkoutPlan(value, divisao) : ensureValidWorkoutPlan(state.treinos, divisao),
+      execucoes: key === WORKOUT_EXECUTIONS_KEY ? cleanWorkoutExecutions(value) : cleanWorkoutExecutions(state.execucoes)
+    };
+    state.treinos = nextWorkouts.treinos;
+    state.execucoes = nextWorkouts.execucoes;
+    await StorageService.saveWorkouts({
+      treinos: state.treinos,
+      execucoes: state.execucoes
+    });
+    return;
+  }
+  if (key === EVOLUTION_KEY) {
+    // Evolucao migrada: qualquer gravacao generica tambem passa pelo StorageService.
+    await StorageService.saveEvolution(value);
+    return;
+  }
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+const initialWorkoutConfig = loadWorkoutConfig();
+
+let state = {
+  perfil:    { ...DEFAULT_PROFILE },
+  diario:    [],
+  treinos:   ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO), initialWorkoutConfig.divisao),
+  execucoes: load(LS.execucoes, []),
+  evolucao:  load(LS.evolucao, []),
+  agua:      [],
+  configTreino: initialWorkoutConfig,
+};
+
+let treinoAtivo = 'A';
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDataBR = (iso) => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
+
+let dataDietaAtiva = todayISO();
+
+function somarDias(iso, delta) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  return d.toISOString().slice(0,10);
+}
+
+function formatarDataDieta(iso) {
+  if (iso === todayISO()) return 'Hoje';
+  if (iso === somarDias(todayISO(), -1)) return 'Ontem';
+  return fmtDataBR(iso);
+}
+
+function atualizarLabelDataDieta() {
+  document.getElementById('label-data-dieta').textContent = formatarDataDieta(dataDietaAtiva);
+  document.getElementById('btn-dia-seguinte').disabled = (dataDietaAtiva >= todayISO());
+}
+
+function mudarDiaDieta(delta) {
+  const novaData = somarDias(dataDietaAtiva, delta);
+  if (novaData > todayISO()) return;
+  dataDietaAtiva = novaData;
+  atualizarLabelDataDieta();
+  renderDiarioHoje();
+  renderAgua();
+}
+document.getElementById('btn-dia-anterior').addEventListener('click', () => mudarDiaDieta(-1));
+document.getElementById('btn-dia-seguinte').addEventListener('click', () => mudarDiaDieta(1));
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('screen-' + btn.dataset.screen).classList.add('active');
+    if (btn.dataset.screen === 'evolucao') renderGraficoEvolucao();
+  });
+});
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+
+document.getElementById('header-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+function initPerfilForm() {
+  if (!state.perfil || state.perfil.tmb === undefined) return;
+  const p = state.perfil;
+  document.getElementById('p-sexo').value = p.sexo;
+  document.getElementById('p-idade').value = p.idade;
+  document.getElementById('p-peso').value = p.peso;
+  document.getElementById('p-altura').value = p.altura;
+  document.getElementById('p-atividade').value = p.atividade;
+  document.getElementById('p-objetivo').value = p.objetivo;
+  renderPerfilResultado();
+}
+
+function aplicarTema(tema) {
+  document.documentElement.setAttribute('data-theme', tema);
+}
+
+function initTema() {
+  const tema = (state.perfil && state.perfil.tema) || 'laranja';
+  document.getElementById('p-tema').value = tema;
+  aplicarTema(tema);
+}
+
+document.getElementById('p-tema').addEventListener('change', async (e) => {
+  const tema = e.target.value;
+  aplicarTema(tema);
+  if (!state.perfil) {
+    state.perfil = { tema };
+  } else {
+    state.perfil.tema = tema;
+  }
+  // Perfil migrado: grava somente pelo StorageService.
+  await StorageService.saveProfile(state.perfil);
+  toast('Tema atualizado.');
+});
+
+const REGRAS_OBJETIVO = {
+  emagrecimento: { fatorGet: 0.80, protKg: 2.2, gordKg: 0.8 },
+  manutencao:    { fatorGet: 1.00, protKg: 2.0, gordKg: 1.0 },
+  hipertrofia:   { fatorGet: 1.15, protKg: 2.0, gordKg: 1.0 },
+};
+
+async function calcularPerfil() {
+  const sexo = document.getElementById('p-sexo').value;
+  const idade = parseFloat(document.getElementById('p-idade').value);
+  const peso = parseFloat(document.getElementById('p-peso').value);
+  const altura = parseFloat(document.getElementById('p-altura').value);
+  const atividade = parseFloat(document.getElementById('p-atividade').value);
+  const objetivo = document.getElementById('p-objetivo').value;
+
+  if ([idade, peso, altura, atividade].some(v => isNaN(v))) {
+    toast('Preencha todos os campos do perfil.');
+    return;
+  }
+
+  let tmb = 10 * peso + 6.25 * altura - 5 * idade;
+  tmb += (sexo === 'm') ? 5 : -161;
+  const getBase = tmb * atividade;
+
+  const regra = REGRAS_OBJETIVO[objetivo];
+  const get = getBase * regra.fatorGet;
+  const metaProtKg = regra.protKg;
+  const metaGordKg = regra.gordKg;
+
+  const temaAtual = (state.perfil && state.perfil.tema) || document.getElementById('p-tema').value;
+
+  state.perfil = { sexo, idade, peso, altura, atividade, objetivo, metaProtKg, metaGordKg, tmb, getBase, get, tema: temaAtual };
+  // Perfil migrado: grava somente pelo StorageService, preservando o formato dos dados.
+  await StorageService.saveProfile(state.perfil);
+  renderPerfilResultado();
+  renderEstimativaCaloriasTreino();
+  toast('Metas calculadas com base no seu perfil e objetivo.');
+}
+
+function renderPerfilResultado() {
+  const p = state.perfil;
+  if (!p) return;
+  document.getElementById('perfil-resultado').classList.remove('hidden');
+  document.getElementById('r-tmb').textContent = Math.round(p.tmb) + ' kcal';
+  document.getElementById('r-get').textContent = Math.round(p.get) + ' kcal';
+
+  const protG = p.metaProtKg * p.peso;
+  const gordG = p.metaGordKg * p.peso;
+  const kcalProt = protG * 4;
+  const kcalGord = gordG * 9;
+  const kcalCarb = Math.max(p.get - kcalProt - kcalGord, 0);
+  const carbG = kcalCarb / 4;
+
+  document.getElementById('r-prot').textContent = protG.toFixed(0) + ' g';
+  document.getElementById('r-gord').textContent = gordG.toFixed(0) + ' g';
+  document.getElementById('r-carb').textContent = carbG.toFixed(0) + ' g';
+
+  renderDiarioTotais();
+}
+
+document.getElementById('btn-calc-perfil').addEventListener('click', calcularPerfil);
+
+let alimentoSelecionado = null;
+
+function normalizar(txt) {
+  return txt.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function resetBuscaAlimento() {
+  alimentoSelecionado = null;
+  const busca = document.getElementById('f-busca');
+  const resultados = document.getElementById('f-resultados');
+  const qtdWrap = document.getElementById('f-qtd-wrap');
+  const preview = document.getElementById('food-preview');
+  if (busca) busca.value = '';
+  if (resultados) { resultados.innerHTML = ''; resultados.classList.add('hidden'); }
+  if (qtdWrap) qtdWrap.classList.add('hidden');
+  if (preview) preview.classList.add('hidden');
+  const qtdInput = document.getElementById('f-qtd');
+  if (qtdInput) qtdInput.value = '';
+}
+
+function renderResultadosBusca(termo) {
+  const resultados = document.getElementById('f-resultados');
+  const termoNorm = normalizar(termo).trim();
+  if (!termoNorm) { resultados.classList.add('hidden'); resultados.innerHTML = ''; return; }
+
+  const encontrados = TACO.filter(a => normalizar(a.nome).includes(termoNorm)).slice(0, 8);
+  if (encontrados.length === 0) {
+    resultados.innerHTML = `<div class="px-3 py-2 text-xs text-mute">Nenhum alimento encontrado.</div>`;
+    resultados.classList.remove('hidden');
+    return;
+  }
+
+  resultados.innerHTML = encontrados.map((a, i) => `
+    <button type="button" data-idx="${TACO.indexOf(a)}" class="opcao-alimento w-full text-left px-3 py-2 text-sm hover:bg-card border-b border-line/60 last:border-b-0">
+      ${a.nome} <span class="text-[10px] text-mute font-mono">${a.tipo_medida === 'unidade' ? '(por unidade)' : '(por grama)'}</span>
+    </button>
+  `).join('');
+  resultados.classList.remove('hidden');
+
+  resultados.querySelectorAll('.opcao-alimento').forEach(btn => {
+    btn.addEventListener('click', () => selecionarAlimento(TACO[Number(btn.dataset.idx)]));
+  });
+}
+
+function selecionarAlimento(alimento) {
+  alimentoSelecionado = alimento;
+  document.getElementById('f-busca').value = alimento.nome;
+  document.getElementById('f-resultados').classList.add('hidden');
+
+  const qtdWrap = document.getElementById('f-qtd-wrap');
+  const qtdLabel = document.getElementById('f-qtd-label');
+  const qtdInput = document.getElementById('f-qtd');
+  qtdWrap.classList.remove('hidden');
+  qtdInput.value = '';
+
+  if (alimento.tipo_medida === 'unidade') {
+    qtdLabel.textContent = `Quantas unidades? (1 un. ≈ ${alimento.peso_unidade}g)`;
+    qtdInput.placeholder = '1';
+  } else {
+    qtdLabel.textContent = 'Quantidade em Gramas?';
+    qtdInput.placeholder = '100';
+  }
+  atualizarPreviewAlimento();
+  qtdInput.focus();
+}
+
+function calcularNutrientes(alimento, qtd) {
+  let fator;
+  if (alimento.tipo_medida === 'unidade') {
+    fator = (alimento.peso_unidade * qtd) / 100;
+  } else {
+    fator = qtd / 100;
+  }
+  return {
+    kcal: alimento.kcal * fator,
+    carb: alimento.carb * fator,
+    prot: alimento.prot * fator,
+    gord: alimento.gord * fator,
+  };
+}
+
+function atualizarPreviewAlimento() {
+  const qtd = parseFloat(document.getElementById('f-qtd').value);
+  const preview = document.getElementById('food-preview');
+  if (!alimentoSelecionado || !qtd || qtd <= 0) { preview.classList.add('hidden'); return; }
+  const n = calcularNutrientes(alimentoSelecionado, qtd);
+  document.getElementById('fp-kcal').textContent = n.kcal.toFixed(0);
+  document.getElementById('fp-carb').textContent = n.carb.toFixed(1) + 'g';
+  document.getElementById('fp-prot').textContent = n.prot.toFixed(1) + 'g';
+  document.getElementById('fp-gord').textContent = n.gord.toFixed(1) + 'g';
+  preview.classList.remove('hidden');
+}
+
+document.getElementById('f-busca').addEventListener('input', (e) => {
+  alimentoSelecionado = null;
+  document.getElementById('f-qtd-wrap').classList.add('hidden');
+  document.getElementById('food-preview').classList.add('hidden');
+  renderResultadosBusca(e.target.value);
+});
+document.getElementById('f-busca').addEventListener('focus', (e) => {
+  if (e.target.value) renderResultadosBusca(e.target.value);
+});
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('f-busca').parentElement;
+  if (wrap && !wrap.contains(e.target)) document.getElementById('f-resultados').classList.add('hidden');
+});
+document.getElementById('f-qtd').addEventListener('input', atualizarPreviewAlimento);
+
+document.getElementById('btn-add-food').addEventListener('click', async () => {
+  const qtd = parseFloat(document.getElementById('f-qtd').value);
+  if (!alimentoSelecionado) { toast('Busque e selecione um alimento na lista.'); return; }
+  if (!qtd || qtd <= 0) {
+    toast(alimentoSelecionado.tipo_medida === 'unidade' ? 'Informe a quantidade de unidades.' : 'Informe a quantidade em gramas.');
+    return;
+  }
+  const n = calcularNutrientes(alimentoSelecionado, qtd);
+  const gramasEquivalentes = alimentoSelecionado.tipo_medida === 'unidade' ? +(alimentoSelecionado.peso_unidade * qtd).toFixed(1) : qtd;
+  const registro = {
+    id: Date.now(),
+    data: dataDietaAtiva,
+    refeicao: document.getElementById('f-refeicao').value,
+    alimento: alimentoSelecionado.nome + (alimentoSelecionado.tipo_medida === 'unidade' ? ` (${qtd} un.)` : ''),
+    gramas: gramasEquivalentes,
+    kcal: +n.kcal.toFixed(1),
+    carb: +n.carb.toFixed(1),
+    prot: +n.prot.toFixed(1),
+    gord: +n.gord.toFixed(1),
+  };
+  state.diario.push(registro);
+  // Refeições migradas: grava somente pelo StorageService, preservando o formato do array.
+      await StorageService.saveMeals(state.diario);
+  resetBuscaAlimento();
+  renderDiarioHoje();
+  toast('Alimento adicionado ao diário.');
+});
+
+function alternarFormularioCustom(mostrar) {
+  document.getElementById('form-alimento-custom').classList.toggle('hidden', !mostrar);
+  document.getElementById('busca-padrao-wrap').classList.toggle('hidden', mostrar);
+  document.getElementById('btn-mostrar-custom').classList.toggle('hidden', mostrar);
+}
+
+function limparFormularioCustom() {
+  ['fc-nome', 'fc-kcal', 'fc-carb', 'fc-prot', 'fc-gord'].forEach(id => { document.getElementById(id).value = ''; });
+}
+
+document.getElementById('btn-mostrar-custom').addEventListener('click', () => {
+  resetBuscaAlimento();
+  alternarFormularioCustom(true);
+});
+
+document.getElementById('btn-cancelar-custom').addEventListener('click', () => {
+  limparFormularioCustom();
+  alternarFormularioCustom(false);
+});
+
+document.getElementById('btn-salvar-custom').addEventListener('click', async () => {
+  const nome = document.getElementById('fc-nome').value.trim();
+  const kcal = parseFloat(document.getElementById('fc-kcal').value);
+  const carb = parseFloat(document.getElementById('fc-carb').value) || 0;
+  const prot = parseFloat(document.getElementById('fc-prot').value) || 0;
+  const gord = parseFloat(document.getElementById('fc-gord').value) || 0;
+
+  if (!nome) { toast('Digite o nome do alimento.'); return; }
+  if (isNaN(kcal) || kcal < 0) { toast('Informe o valor de Kcal.'); return; }
+
+  const registro = {
+    id: Date.now(),
+    data: dataDietaAtiva,
+    refeicao: document.getElementById('f-refeicao').value,
+    alimento: `${nome} (customizado)`,
+    gramas: null,
+    kcal: +kcal.toFixed(1),
+    carb: +carb.toFixed(1),
+    prot: +prot.toFixed(1),
+    gord: +gord.toFixed(1),
+  };
+  state.diario.push(registro);
+  // Refeições migradas: grava somente pelo StorageService, preservando o formato do array.
+      await StorageService.saveMeals(state.diario);
+
+  limparFormularioCustom();
+  alternarFormularioCustom(false);
+  renderDiarioHoje();
+  toast(`"${nome}" adicionado ao diário.`);
+});
+
+const ORDEM_REFEICOES = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar', 'Ceia'];
+
+async function clonarRefeicaoAnterior(nomeRefeicao) {
+  const anteriores = state.diario
+    .filter(r => r.refeicao === nomeRefeicao && r.data < dataDietaAtiva)
+    .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+  if (anteriores.length === 0) {
+    toast('Nenhum histórico encontrado para esta refeição.');
+    return;
+  }
+
+  const ultimaData = anteriores[0].data;
+  const itensParaClonar = state.diario.filter(r => r.refeicao === nomeRefeicao && r.data === ultimaData);
+
+  const clones = itensParaClonar.map((r, i) => ({
+    ...r,
+    id: Date.now() + i,
+    data: dataDietaAtiva,
+  }));
+
+  state.diario.push(...clones);
+  // Refeições migradas: grava somente pelo StorageService, preservando o formato do array.
+      await StorageService.saveMeals(state.diario);
+  renderDiarioHoje();
+  toast(`${nomeRefeicao} copiado de ${fmtDataBR(ultimaData)}!`);
+}
+
+function renderDiarioHoje() {
+  const registros = state.diario.filter(r => r.data === dataDietaAtiva);
+  const cont = document.getElementById('diario-hoje');
+  const categorias = [...ORDEM_REFEICOES, 'Outros'];
+
+  cont.innerHTML = categorias.map(nomeRefeicao => {
+    const itens = registros.filter(r => (ORDEM_REFEICOES.includes(r.refeicao) ? r.refeicao : 'Outros') === nomeRefeicao);
+    const ehCategoriaOficial = ORDEM_REFEICOES.includes(nomeRefeicao);
+
+    if (!ehCategoriaOficial && itens.length === 0) return '';
+
+    const itensHtml = itens.length ? itens.slice().reverse().map(r => `
+        <div class="flex items-center justify-between bg-card2 rounded-lg px-3 py-2">
+          <div>
+            <p class="text-sm">${r.alimento}</p>
+            <p class="text-[11px] text-mute font-mono">${r.gramas != null ? r.gramas + 'g' : 'porção customizada'}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <p class="font-mono text-sm text-ember">${r.kcal} kcal</p>
+            <button data-id="${r.id}" class="del-food text-mute hover:text-ink"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+      `).join('') : `<p class="text-xs text-mute">Nenhum alimento registrado ainda.</p>`;
+
+    const botaoClonar = ehCategoriaOficial ? `
+        <button data-refeicao="${nomeRefeicao}" class="btn-clonar-refeicao flex items-center gap-1 text-[11px] text-mute hover:text-ember transition shrink-0">
+          <i data-lucide="copy" class="w-3 h-3"></i> Copiar anterior
+        </button>` : '';
+
+    return `
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-[11px] uppercase tracking-wide text-mute font-semibold">${nomeRefeicao}</p>
+          ${botaoClonar}
+        </div>
+        <div class="space-y-2">${itensHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  if(window.lucide) { lucide.createIcons(); }
+
+  cont.querySelectorAll('.del-food').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.id);
+      state.diario = state.diario.filter(r => r.id !== id);
+      // Refeições migradas: grava somente pelo StorageService, preservando o formato do array.
+      await StorageService.saveMeals(state.diario);
+      renderDiarioHoje();
+    });
+  });
+
+  cont.querySelectorAll('.btn-clonar-refeicao').forEach(btn => {
+    btn.addEventListener('click', () => clonarRefeicaoAnterior(btn.dataset.refeicao));
+  });
+
+  renderDiarioTotais();
+}
+
+function metasDieta() {
+  const p = state.perfil;
+  if (!p) return null;
+  const protMeta = p.metaProtKg * p.peso;
+  const gordMeta = p.metaGordKg * p.peso;
+  const kcalMeta = p.get;
+  const carbMeta = Math.max(kcalMeta - (protMeta * 4) - (gordMeta * 9), 0) / 4;
+  return { kcal: kcalMeta, prot: protMeta, carb: carbMeta, gord: gordMeta };
+}
+
+function renderDiarioTotais() {
+  const registros = state.diario.filter(r => r.data === dataDietaAtiva);
+  const tot = registros.reduce((acc, r) => {
+    acc.kcal += r.kcal; acc.carb += r.carb; acc.prot += r.prot; acc.gord += r.gord;
+    return acc;
+  }, { kcal: 0, carb: 0, prot: 0, gord: 0 });
+
+  const metas = metasDieta();
+  const pct = (consumido, meta) => meta ? Math.min((consumido / meta) * 100, 100) : 0;
+
+  document.getElementById('bar-kcal').style.width = pct(tot.kcal, metas?.kcal) + '%';
+  document.getElementById('bar-kcal-label').textContent = `${tot.kcal.toFixed(0)} / ${metas ? metas.kcal.toFixed(0) : '—'} kcal`;
+
+  document.getElementById('bar-prot').style.width = pct(tot.prot, metas?.prot) + '%';
+  document.getElementById('bar-prot-label').textContent = `${tot.prot.toFixed(0)}g / ${metas ? metas.prot.toFixed(0) + 'g' : '—'}`;
+
+  document.getElementById('bar-carb').style.width = pct(tot.carb, metas?.carb) + '%';
+  document.getElementById('bar-carb-label').textContent = `${tot.carb.toFixed(0)}g / ${metas ? metas.carb.toFixed(0) + 'g' : '—'}`;
+
+  document.getElementById('bar-gord').style.width = pct(tot.gord, metas?.gord) + '%';
+  document.getElementById('bar-gord-label').textContent = `${tot.gord.toFixed(0)}g / ${metas ? metas.gord.toFixed(0) + 'g' : '—'}`;
+}
+
+function metaAgua() {
+  const p = state.perfil;
+  return p ? p.peso * 35 : null;
+}
+
+function renderAgua() {
+  const registros = state.agua.filter(r => r.data === dataDietaAtiva);
+  const total = registros.reduce((acc, r) => acc + r.ml, 0);
+  const meta = metaAgua();
+  const pct = meta ? Math.min((total / meta) * 100, 100) : 0;
+
+  document.getElementById('bar-agua').style.width = pct + '%';
+  document.getElementById('bar-agua-label').textContent = `${total}ml / ${meta ? meta.toFixed(0) + 'ml' : '—'}`;
+}
+
+async function adicionarAgua(ml) {
+  const registro = { id: Date.now(), data: dataDietaAtiva, ml };
+  state.agua.push(registro);
+  // Hidratação migrada: grava somente pelo StorageService, preservando o formato do array.
+  await StorageService.saveHydration(state.agua);
+  renderAgua();
+  toast(`+${ml}ml de água registrado.`);
+}
+document.getElementById('btn-agua-250').addEventListener('click', () => adicionarAgua(250));
+document.getElementById('btn-agua-500').addEventListener('click', () => adicionarAgua(500));
+
+document.getElementById('btn-desfazer-agua').addEventListener('click', async () => {
+  const doDia = state.agua.filter(r => r.data === dataDietaAtiva);
+  if (doDia.length === 0) { toast('Nenhum registro de água para desfazer neste dia.'); return; }
+  const ultima = doDia.reduce((a, b) => (a.id > b.id ? a : b));
+  state.agua = state.agua.filter(r => r.id !== ultima.id);
+  // Hidratação migrada: grava somente pelo StorageService, preservando o formato do array.
+  await StorageService.saveHydration(state.agua);
+  renderAgua();
+  toast(`Último registro (+${ultima.ml}ml) removido.`);
+});
+
+function popularDatalistExercicios() {
+  const datalist = document.getElementById('lista-exercicios');
+  if (!datalist) return;
+  datalist.innerHTML = EXERCICIOS_BASE
+    .slice()
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    .map(ex => `<option value="${ex}"></option>`)
+    .join('');
+}
+
+function renderWorkoutDivisionSelector() {
+  const select = document.getElementById('treino-divisao');
+  const title = document.getElementById('treino-divisao-titulo');
+  if (!select) return;
+
+  const divisao = getWorkoutDivision();
+  state.configTreino = { divisao };
+  select.value = divisao;
+  if (title) title.textContent = `Divisao de treino (${divisao})`;
+
+  select.onchange = async () => {
+    const nextDivision = normalizeWorkoutDivision(select.value);
+    state.configTreino = saveWorkoutConfig({ divisao: nextDivision });
+    state.treinos = ensureValidWorkoutPlan(state.treinos, nextDivision);
+    if (title) title.textContent = `Divisao de treino (${nextDivision})`;
+
+    const visibleKeys = getWorkoutVisibleKeys(nextDivision);
+    if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
+
+    try {
+      localStorage.setItem(WORKOUTS_KEY, JSON.stringify(state.treinos));
+    } catch (error) {
+      console.warn('Workout plan cache save failed:', error);
+    }
+
+    renderTreinoTabs();
+    renderExerciciosLista();
+    popularSelectExercicios();
+    renderEstimativaCaloriasTreino();
+  };
+}
+
+function ensureActiveWorkout() {
+  const divisao = getWorkoutDivision();
+  const visibleKeys = getWorkoutVisibleKeys(divisao);
+  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
+  if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
+  return state.treinos[treinoAtivo];
+}
+
+function renderTreinoTabs() {
+  const cont = document.getElementById('treino-tabs');
+  if (!cont) return;
+
+  const divisao = getWorkoutDivision();
+  const visibleKeys = getWorkoutVisibleKeys(divisao);
+  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
+  if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
+
+  cont.style.gridTemplateColumns = `repeat(${visibleKeys.length}, minmax(0, 1fr))`;
+
+  cont.innerHTML = visibleKeys.map(k => `
+    <button data-treino="${k}" class="treino-tab-btn text-sm font-semibold rounded-lg py-2 ${k === treinoAtivo ? 'bg-ember text-bg' : 'bg-card2 text-mute'}">${k}</button>
+  `).join('');
+  cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      treinoAtivo = btn.dataset.treino;
+      renderTreinoTabs();
+      renderExerciciosLista();
+      popularSelectExercicios();
+      renderEstimativaCaloriasTreino();
+    });
+  });
+}
+
+function calcularKcalExercicio(nome, peso) {
+  const grupo = MAPA_MUSCULOS[nome] || 'Outros';
+  const isCardio = grupo === 'Cardio';
+  const ultima = ultimaExecucao(nome);
+  const MET = isCardio ? 7.0 : 5.0;
+
+  let minutos;
+  if (!ultima) {
+    minutos = (4 * ((10 * 4) + 90)) / 60;
+  } else if (isCardio) {
+    minutos = ultima.reps;
+  } else {
+    const tempoSerieSegundos = (ultima.reps * 4) + 90;
+    minutos = (ultima.series * tempoSerieSegundos) / 60;
+  }
+  return MET * peso * (minutos / 60);
+}
+
+function renderEstimativaCaloriasTreino() {
+  const el = document.getElementById('treino-estimativa-calorias');
+  if (!el) return;
+
+  const pesoCadastrado = state.perfil && state.perfil.peso ? state.perfil.peso : null;
+  const peso = pesoCadastrado || 75;
+  const t = ensureActiveWorkout();
+
+  if (!t || t.exercicios.length === 0) {
+    el.innerHTML = `<i data-lucide="flame" class="w-3.5 h-3.5 text-mute shrink-0"></i><span>Estimativa de Gasto (Treino Atual): ~0 kcal</span>`;
+    if(window.lucide) { lucide.createIcons(); }
+    return;
+  }
+
+  const totalKcal = t.exercicios.reduce((soma, nome) => soma + calcularKcalExercicio(nome, peso), 0);
+  const notaPeso = pesoCadastrado ? '' : ' <span class="text-mute">(peso padrão 75kg — cadastre o seu no Perfil)</span>';
+
+  el.innerHTML = `<i data-lucide="flame" class="w-3.5 h-3.5 text-ember shrink-0"></i><span>Estimativa de Gasto (Treino Atual): <span class="text-ember font-mono font-semibold">~${Math.round(totalKcal)} kcal</span>${notaPeso}</span>`;
+  if(window.lucide) { lucide.createIcons(); }
+}
+
+function renderExerciciosLista() {
+  const cont = document.getElementById('treino-exercicios-lista');
+  if (!cont) return;
+  const t = ensureActiveWorkout();
+  cont.replaceChildren();
+
+  if (t.exercicios.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'text-xs text-mute';
+    empty.textContent = `${t.nome} — nenhum exercício adicionado ainda. Use o campo acima para montar sua rotina.`;
+    cont.appendChild(empty);
+    return;
+  }
+
+  const title = document.createElement('p');
+  title.className = 'text-xs text-mute mb-1';
+  title.textContent = t.nome;
+  cont.appendChild(title);
+
+  t.exercicios.forEach((ex, idx) => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between text-sm bg-card2 rounded-lg px-3 py-2';
+
+    const name = document.createElement('span');
+    name.textContent = ex;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.idx = String(idx);
+    button.className = 'del-exercicio text-mute hover:text-ember shrink-0 ml-2';
+    button.title = 'Remover exercício';
+    button.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4"></i>';
+
+    row.appendChild(name);
+    row.appendChild(button);
+    cont.appendChild(row);
+  });
+
+  if(window.lucide) { lucide.createIcons(); }
+  cont.querySelectorAll('.del-exercicio').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = Number(btn.dataset.idx);
+      const treino = ensureActiveWorkout();
+      const nomeRemovido = treino.exercicios[idx];
+      treino.exercicios.splice(idx, 1);
+      await save(LS.treinos, state.treinos);
+      renderExerciciosLista();
+      popularSelectExercicios();
+      renderEstimativaCaloriasTreino();
+      toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
+    });
+  });
+}
+
+function popularSelectExercicios() {
+  const sel = document.getElementById('t-exercicio');
+  if (!sel) return;
+  const t = ensureActiveWorkout();
+  sel.replaceChildren();
+  t.exercicios.forEach(ex => {
+    sel.appendChild(new Option(ex, ex));
+  });
+  atualizarSugestaoProgressao();
+}
+
+document.getElementById('btn-add-exercicio').addEventListener('click', async () => {
+  const input = document.getElementById('novo-exercicio-nome');
+  const nome = input.value.trim();
+  if (!nome) { toast('Digite o nome do exercício.'); return; }
+
+  ensureActiveWorkout().exercicios.push(nome);
+  await save(LS.treinos, state.treinos);
+
+  input.value = '';
+  renderExerciciosLista();
+  popularSelectExercicios();
+  document.getElementById('t-exercicio').value = nome;
+  atualizarSugestaoProgressao();
+  renderEstimativaCaloriasTreino();
+  toast(`"${nome}" adicionado ao Treino ${treinoAtivo}.`);
+});
+document.getElementById('novo-exercicio-nome').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-exercicio').click(); }
+});
+
+function ultimaExecucao(exercicio) {
+  const historico = state.execucoes.filter(e => e.exercicio === exercicio).sort((a,b) => b.id - a.id);
+  return historico[0] || null;
+}
+
+function atualizarSugestaoProgressao() {
+  const exercicio = document.getElementById('t-exercicio').value;
+  const ultima = ultimaExecucao(exercicio);
+  const box = document.getElementById('sugestao-progressao');
+  const btnRepetir = document.getElementById('btn-repetir-execucao');
+
+  if (!ultima) {
+    box.classList.add('hidden');
+    btnRepetir.classList.add('hidden');
+    return;
+  }
+
+  btnRepetir.classList.remove('hidden');
+  box.classList.remove('hidden');
+  if (ultima.rpe <= 8) {
+    const novaCarga = (ultima.carga * 1.05).toFixed(1);
+    box.className = "mt-3 bg-mint/10 border border-mint/40 rounded-lg px-3 py-2 text-xs text-mint";
+    box.textContent = `Última vez: ${ultima.series}x${ultima.reps} com ${ultima.carga}kg (RPE ${ultima.rpe}). Como o RPE ficou ≤ 8, sugestão: subir para ${novaCarga}kg (+5%).`;
+  } else {
+    box.className = "mt-3 bg-ember/10 border border-ember/40 rounded-lg px-3 py-2 text-xs text-ember";
+    box.textContent = `Última vez: ${ultima.series}x${ultima.reps} com ${ultima.carga}kg (RPE ${ultima.rpe}). RPE alto — considere manter a carga atual.`;
+  }
+}
+document.getElementById('t-exercicio').addEventListener('change', atualizarSugestaoProgressao);
+
+document.getElementById('btn-repetir-execucao').addEventListener('click', () => {
+  const exercicio = document.getElementById('t-exercicio').value;
+  const ultima = ultimaExecucao(exercicio);
+  if (!ultima) return;
+  document.getElementById('t-series').value = ultima.series;
+  document.getElementById('t-reps').value = ultima.reps;
+  document.getElementById('t-carga').value = ultima.carga;
+  document.getElementById('t-rpe').value = ultima.rpe;
+  toast('Valores da última execução preenchidos — ajuste se precisar.');
+});
+
+document.getElementById('btn-add-treino').addEventListener('click', async () => {
+  const exercicio = document.getElementById('t-exercicio').value;
+  const series = parseFloat(document.getElementById('t-series').value);
+  const reps = parseFloat(document.getElementById('t-reps').value);
+  const carga = parseFloat(document.getElementById('t-carga').value);
+  const rpe = parseFloat(document.getElementById('t-rpe').value);
+
+  if (!exercicio) { toast('Adicione ao menos um exercício a este treino antes de registrar.'); return; }
+  if ([series, reps, carga, rpe].some(v => isNaN(v))) { toast('Preencha séries, repetições, carga e RPE.'); return; }
+  if (series <= 0) { toast('Séries devem ser um número positivo.'); return; }
+  if (reps <= 0) { toast('Repetições devem ser um número positivo.'); return; }
+  if (carga < 0) { toast('Carga não pode ser negativa.'); return; }
+  if (rpe < 1 || rpe > 10) { toast('RPE deve estar entre 1 e 10.'); return; }
+
+  const volume = series * reps * carga;
+  const rm1 = reps < 37 ? +(carga * (36 / (37 - reps))).toFixed(1) : null;
+  const registro = { id: Date.now(), data: todayISO(), treino: treinoAtivo, exercicio, series, reps, carga, rpe, volume, rm1 };
+  state.execucoes.push(registro);
+  await save(LS.execucoes, state.execucoes);
+
+  document.getElementById('t-series').value = '';
+  document.getElementById('t-reps').value = '';
+  document.getElementById('t-carga').value = '';
+  document.getElementById('t-rpe').value = '';
+
+  renderTreinoHistorico();
+  renderVolumeSemanal();
+  atualizarSugestaoProgressao();
+  renderEstimativaCaloriasTreino();
+  toast(`Execução salva — Volume: ${volume.toFixed(1)} kg`);
+});
+
+function renderTreinoHistorico() {
+  const cont = document.getElementById('treino-historico');
+  const historico = state.execucoes.slice().sort((a,b) => b.id - a.id).slice(0, 15);
+  if (!cont) return;
+  cont.replaceChildren();
+  if (historico.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'text-xs text-mute text-center py-4';
+    empty.textContent = 'Nenhuma execução registrada ainda.';
+    cont.appendChild(empty);
+    return;
+  }
+
+  historico.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between bg-card2 rounded-lg px-3 py-2';
+
+    const details = document.createElement('div');
+
+    const exercise = document.createElement('p');
+    exercise.className = 'text-sm';
+    exercise.textContent = e.exercicio;
+
+    const meta = document.createElement('p');
+    meta.className = 'text-[11px] text-mute font-mono';
+    meta.textContent = `${fmtDataBR(e.data)} · Treino ${e.treino} · ${e.series}x${e.reps} · ${e.carga}kg · RPE ${e.rpe}`;
+
+    const metrics = document.createElement('div');
+    metrics.className = 'text-right ml-2 shrink-0';
+
+    const volume = document.createElement('p');
+    volume.className = 'font-mono text-sm text-ember whitespace-nowrap';
+    volume.textContent = `${Number(e.volume || 0).toFixed(0)} kg`;
+
+    const rm1 = document.createElement('p');
+    rm1.className = 'font-mono text-[10px] text-mute whitespace-nowrap';
+    rm1.textContent = `1RM Est.: ${(e.rm1 ?? null) !== null ? e.rm1 + ' kg' : '—'}`;
+
+    details.appendChild(exercise);
+    details.appendChild(meta);
+    metrics.appendChild(volume);
+    metrics.appendChild(rm1);
+    row.appendChild(details);
+    row.appendChild(metrics);
+    cont.appendChild(row);
+  });
+}
+
+const CORES_MUSCULO = {
+  'Peito':   'bg-ember',
+  'Costas':  'bg-mint',
+  'Ombros':  'bg-amber-400',
+  'Bíceps':  'bg-violet-400',
+  'Tríceps': 'bg-blue-400',
+  'Pernas':  'bg-rose-400',
+  'Gluteos': 'bg-pink-400',
+  'Core':    'bg-cyan-400',
+  'Cardio':  'bg-orange-300',
+  'Outros':  'bg-mute',
+};
+const ORDEM_MUSCULOS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Gluteos', 'Core', 'Cardio', 'Outros'];
+const META_SERIES_SEMANAL = 20;
+
+function renderVolumeSemanal() {
+  const cont = document.getElementById('treino-volume-semanal');
+  const seteDiasAtras = somarDias(todayISO(), -7);
+  const recentes = state.execucoes.filter(e => e.data >= seteDiasAtras);
+
+  const volumePorMusculo = {};
+  recentes.forEach(e => {
+    const musculo = MAPA_MUSCULOS[e.exercicio] || 'Outros';
+    volumePorMusculo[musculo] = (volumePorMusculo[musculo] || 0) + e.series;
+  });
+
+  const musculos = ORDEM_MUSCULOS
+    .filter(m => (volumePorMusculo[m] || 0) > 0)
+    .map(m => [m, volumePorMusculo[m]]);
+
+  if (musculos.length === 0) {
+    cont.innerHTML = `<p class="text-xs text-mute text-center py-4">Nenhuma execução registrada nos últimos 7 dias.</p>`;
+    return;
+  }
+
+  cont.innerHTML = musculos.map(([musculo, series]) => {
+    const pct = Math.min((series / META_SERIES_SEMANAL) * 100, 100);
+    return `
+      <div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="text-mute">${musculo}</span>
+          <span class="font-mono font-semibold text-ink">${series} séries</span>
+        </div>
+        <div class="w-full h-2 bg-card2 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] rounded-full transition-all duration-700 ease-out" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+let cronometroRestante = 0;
+let cronometroInterval = null;
+let cronometroRodando = false;
+
+function formatarCronometro(segundos) {
+  const m = Math.floor(segundos / 60).toString().padStart(2, '0');
+  const s = Math.floor(segundos % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function atualizarDisplayCronometro() {
+  document.getElementById('cronometro-display').textContent = formatarCronometro(cronometroRestante);
+}
+
+function limparAlarmeCronometro() {
+  document.getElementById('cronometro-display').classList.remove('text-ember', 'animate-pulse');
+}
+
+function tocarBeepCronometro() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.25);
+    });
+  } catch (e) {}
+}
+
+function pararCronometro() {
+  clearInterval(cronometroInterval);
+  cronometroInterval = null;
+  cronometroRodando = false;
+  document.getElementById('btn-cronometro-toggle').textContent = 'Iniciar';
+}
+
+function alarmeCronometro() {
+  pararCronometro();
+  document.getElementById('cronometro-display').classList.add('text-ember', 'animate-pulse');
+  tocarBeepCronometro();
+  toast('Descanso finalizado — bora pra próxima série!');
+}
+
+document.querySelectorAll('.cronometro-add').forEach(btn => {
+  btn.addEventListener('click', () => {
+    cronometroRestante += Number(btn.dataset.add);
+    limparAlarmeCronometro();
+    atualizarDisplayCronometro();
+  });
+});
+
+document.getElementById('btn-cronometro-toggle').addEventListener('click', () => {
+  if (cronometroRodando) { pararCronometro(); return; }
+  if (cronometroRestante <= 0) { toast('Adicione um tempo de descanso primeiro.'); return; }
+
+  limparAlarmeCronometro();
+  cronometroRodando = true;
+  document.getElementById('btn-cronometro-toggle').textContent = 'Pausar';
+  cronometroInterval = setInterval(() => {
+    cronometroRestante -= 1;
+    if (cronometroRestante <= 0) {
+      cronometroRestante = 0;
+      atualizarDisplayCronometro();
+      alarmeCronometro();
+      return;
+    }
+    atualizarDisplayCronometro();
+  }, 1000);
+});
+
+document.getElementById('btn-cronometro-zerar').addEventListener('click', () => {
+  pararCronometro();
+  cronometroRestante = 0;
+  limparAlarmeCronometro();
+  atualizarDisplayCronometro();
+});
+
+document.getElementById('e-data').value = todayISO();
+
+document.getElementById('btn-add-evolucao').addEventListener('click', async () => {
+  const data = document.getElementById('e-data').value;
+  const peso = parseFloat(document.getElementById('e-peso').value);
+  const cintura = parseFloat(document.getElementById('e-cintura').value) || null;
+  const quadril = parseFloat(document.getElementById('e-quadril').value) || null;
+  const braco = parseFloat(document.getElementById('e-braco').value) || null;
+  const coxa = parseFloat(document.getElementById('e-coxa').value) || null;
+
+  if (!data || isNaN(peso)) { toast('Informe ao menos a data e o peso.'); return; }
+
+  const altura = state.perfil ? state.perfil.altura : null;
+  const imc = altura ? +(peso / Math.pow(altura / 100, 2)).toFixed(1) : null;
+
+  const registro = { id: Date.now(), data, peso, altura, imc, cintura, quadril, braco, coxa };
+  state.evolucao.push(registro);
+  await save(LS.evolucao, state.evolucao);
+
+  document.getElementById('e-peso').value = '';
+  document.getElementById('e-cintura').value = '';
+  document.getElementById('e-quadril').value = '';
+  document.getElementById('e-braco').value = '';
+  document.getElementById('e-coxa').value = '';
+
+  renderEvolucaoTabela();
+  renderGraficoEvolucao();
+  toast('Registro de evolução salvo.');
+});
+
+let graficoPeso = null;
+
+function renderGraficoEvolucao() {
+  const canvas = document.getElementById('grafico-peso');
+  const vazio = document.getElementById('grafico-peso-vazio');
+  if (!canvas) return;
+
+  const cronologico = state.evolucao.slice().sort((a, b) => new Date(a.data) - new Date(b.data));
+  if (graficoPeso) { graficoPeso.destroy(); graficoPeso = null; }
+
+  if (cronologico.length === 0) {
+    vazio.classList.remove('hidden');
+    canvas.classList.add('hidden');
+    return;
+  }
+  vazio.classList.add('hidden');
+  canvas.classList.remove('hidden');
+
+  graficoPeso = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: cronologico.map(r => fmtDataBR(r.data)),
+      datasets: [{
+        label: 'Peso (kg)',
+        data: cronologico.map(r => r.peso),
+        borderColor: '#2DD4BF',
+        backgroundColor: 'rgba(45, 212, 191, 0.12)',
+        pointBackgroundColor: '#FF7A45',
+        pointBorderColor: '#FF7A45',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2.5,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { ticks: { color: '#9C98A6', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#39353F' } },
+        y: { ticks: { color: '#9C98A6', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#39353F' } },
+      }
+    }
+  });
+}
+
+function renderEvolucaoTabela() {
+  const tbody = document.getElementById('tbody-evolucao');
+  if (state.evolucao.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-mute py-4">Nenhum registro ainda.</td></tr>`;
+    return;
+  }
+
+  const cronologico = state.evolucao.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
+  const deltaPorId = new Map();
+  cronologico.forEach((r, i) => {
+    const anterior = cronologico[i - 1];
+    deltaPorId.set(r.id, anterior ? +(r.peso - anterior.peso).toFixed(1) : null);
+  });
+
+  const registros = cronologico.slice().sort((a,b) => new Date(b.data) - new Date(a.data));
+  tbody.innerHTML = registros.map(r => {
+    const delta = deltaPorId.get(r.id);
+    let deltaHtml = '—';
+    if (delta !== null) {
+      const cor = delta < 0 ? 'text-mint' : (delta > 0 ? 'text-ember' : 'text-mute');
+      const sinal = delta > 0 ? '+' : '';
+      deltaHtml = `<span class="${cor}">${sinal}${delta.toFixed(1)}kg</span>`;
+    }
+    return `
+    <tr class="border-b border-line/60">
+      <td class="py-2 pr-2">${fmtDataBR(r.data)}</td>
+      <td class="py-2 pr-2">${r.peso}</td>
+      <td class="py-2 pr-2">${deltaHtml}</td>
+      <td class="py-2 pr-2">${r.imc ?? '—'}</td>
+      <td class="py-2 pr-2">${r.cintura ?? '—'}</td>
+      <td class="py-2 pr-2">${r.quadril ?? '—'}</td>
+      <td class="py-2 pr-2">${r.braco ?? '—'}</td>
+      <td class="py-2">${r.coxa ?? '—'}</td>
+    </tr>
+  `;
+  }).join('');
+}
+
+function renderContadores() {
+  document.getElementById('count-diario').textContent = state.diario.length;
+  document.getElementById('count-treino').textContent = state.execucoes.length;
+  document.getElementById('count-evolucao').textContent = state.evolucao.length;
+}
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const wb = XLSX.utils.book_new();
+
+  const evolOrdenada = state.evolucao.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
+  const evolHeader = ['Data', 'Peso (kg)', 'Altura (cm)', 'IMC', 'Cintura (cm)', 'Quadril (cm)', 'Braço (cm)', 'Coxa (cm)'];
+  const evolRows = evolOrdenada.map(r => [fmtDataBR(r.data), r.peso, r.altura ?? '', null, r.cintura ?? '', r.quadril ?? '', r.braco ?? '', r.coxa ?? '']);
+  const wsEvol = XLSX.utils.aoa_to_sheet([evolHeader, ...evolRows]);
+  evolRows.forEach((row, i) => {
+    const linha = i + 2;
+    if (row[2]) {
+      wsEvol[`D${linha}`] = { t: 'n', f: `B${linha}/(C${linha}/100)^2` };
+    }
+  });
+  wsEvol['!cols'] = evolHeader.map(() => ({ wch: 13 }));
+  XLSX.utils.book_append_sheet(wb, wsEvol, 'Evolução');
+
+  const diarioOrdenado = state.diario.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
+  const diarioHeader = ['Data', 'Refeição', 'Alimento', 'Quantidade (g)', 'Kcal', 'Carboidrato (g)', 'Proteína (g)', 'Gordura (g)'];
+  const diarioRows = diarioOrdenado.map(r => [fmtDataBR(r.data), r.refeicao || '—', r.alimento, r.gramas, r.kcal, r.carb, r.prot, r.gord]);
+  const wsDiario = XLSX.utils.aoa_to_sheet([diarioHeader, ...diarioRows]);
+  if (diarioRows.length > 0) {
+    const lastRow = diarioRows.length + 1;
+    const totalRow = lastRow + 1;
+    ['E','F','G','H'].forEach(col => {
+      wsDiario[`${col}${totalRow}`] = { t: 'n', f: `SUM(${col}2:${col}${lastRow})` };
+    });
+    wsDiario[`A${totalRow}`] = { t: 's', v: 'TOTAL' };
+  }
+  wsDiario['!cols'] = diarioHeader.map(() => ({ wch: 16 }));
+  XLSX.utils.book_append_sheet(wb, wsDiario, 'Diário de Dieta');
+
+  const treinoOrdenado = state.execucoes.slice().sort((a,b) => new Date(a.data) - new Date(b.data));
+  const treinoHeader = ['Data', 'Treino', 'Exercício', 'Séries', 'Repetições', 'Carga (kg)', 'RPE', 'Volume de Carga (kg)'];
+  const treinoRows = treinoOrdenado.map(r => [fmtDataBR(r.data), r.treino, r.exercicio, r.series, r.reps, r.carga, r.rpe, null]);
+  const wsTreino = XLSX.utils.aoa_to_sheet([treinoHeader, ...treinoRows]);
+  treinoRows.forEach((row, i) => {
+    const linha = i + 2;
+    wsTreino[`H${linha}`] = { t: 'n', f: `D${linha}*E${linha}*F${linha}` };
+  });
+  wsTreino['!cols'] = treinoHeader.map(() => ({ wch: 16 }));
+  XLSX.utils.book_append_sheet(wb, wsTreino, 'Histórico de Treinos');
+
+  const dataArquivo = todayISO();
+  XLSX.writeFile(wb, `Forja_${dataArquivo}.xlsx`);
+  toast('Planilha exportada com sucesso.');
+});
+
+document.getElementById('btn-backup-salvar').addEventListener('click', () => {
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'forja_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup salvo com sucesso.');
+});
+
+document.getElementById('btn-backup-restaurar').addEventListener('click', () => {
+  document.getElementById('input-backup-restaurar').click();
+});
+
+document.getElementById('input-backup-restaurar').addEventListener('change', (e) => {
+  const arquivo = e.target.files[0];
+  if (!arquivo) return;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const dados = JSON.parse(evt.target.result);
+      const chavesEsperadas = ['perfil', 'diario', 'treinos', 'execucoes', 'evolucao', 'agua'];
+      const pareceValido = chavesEsperadas.some(k => k in dados);
+      if (!pareceValido) throw new Error('Arquivo inválido.');
+
+      state = {
+        perfil:    dados.perfil    ?? null,
+        diario:    dados.diario    ?? [],
+        treinos:   dados.treinos   ?? TREINOS_PADRAO,
+        execucoes: dados.execucoes ?? [],
+        evolucao:  dados.evolucao  ?? [],
+        agua:      dados.agua      ?? [],
+      };
+
+      Object.keys(LS).forEach(k => save(LS[k], state[k]));
+      renderTudo();
+      toast('Backup restaurado com sucesso.');
+    } catch (err) {
+      toast('Falha ao ler backup.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+  reader.readAsText(arquivo);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Deseja apagar TODOS os dados salvos localmente?')) return;
+  Object.values(LS).forEach(k => localStorage.removeItem(k));
+  state = { perfil: null, diario: [], treinos: TREINOS_PADRAO, execucoes: [], evolucao: [], agua: [] };
+  dataDietaAtiva = todayISO();
+  document.getElementById('perfil-resultado').classList.add('hidden');
+  resetBuscaAlimento();
+  renderTudo();
+  toast('Todos os dados foram apagados.');
+});
+
+function renderTudo() {
+  initTema();
+  initPerfilForm();
+  atualizarLabelDataDieta();
+  renderDiarioHoje();
+  renderAgua();
+  popularDatalistExercicios();
+  renderWorkoutDivisionSelector();
+  renderTreinoTabs();
+  renderExerciciosLista();
+  popularSelectExercicios();
+  renderTreinoHistorico();
+  renderVolumeSemanal();
+  renderEstimativaCaloriasTreino();
+  renderEvolucaoTabela();
+  renderGraficoEvolucao();
+  renderContadores();
+  if (window.lucide) lucide.createIcons();
+}
+checkSession();
+</script>
+</body>
+</html>
