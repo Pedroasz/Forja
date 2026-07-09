@@ -2410,7 +2410,7 @@ async function testWorkoutCatalogIntegrity() {
   let hasDivisionSelector = false;
   let divisionOk = false;
   let visibleTabsOk = false;
-  let eachWorkoutHasExercises = false;
+  let eachWorkoutHasValidExerciseList = false;
   let noSyncTestNames = false;
   let exerciseBaseLargeEnough = false;
   let muscleMapOk = false;
@@ -2436,7 +2436,7 @@ async function testWorkoutCatalogIntegrity() {
     divisionOk = WORKOUT_DIVISIONS.includes(divisao);
     visibleTabsOk = visibleTabs.length === requiredKeys.length
       && requiredKeys.every((key, index) => visibleTabs[index] === key);
-    eachWorkoutHasExercises = requiredKeys.every(key => (workouts[key]?.exercicios || []).length >= 5);
+    eachWorkoutHasValidExerciseList = requiredKeys.every(key => Array.isArray(workouts[key]?.exercicios));
     noSyncTestNames = allWorkoutExercises.every(nome => !isExerciseTestData(nome));
     exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 100;
     muscleMapOk = EXERCICIOS_BASE.every(nome => Boolean(MAPA_MUSCULOS[nome]));
@@ -2447,7 +2447,7 @@ async function testWorkoutCatalogIntegrity() {
       hasDivisionSelector,
       divisionOk,
       visibleTabsOk,
-      eachWorkoutHasExercises,
+      eachWorkoutHasValidExerciseList,
       noSyncTestNames,
       exerciseBaseLargeEnough,
       muscleMapOk,
@@ -2456,7 +2456,7 @@ async function testWorkoutCatalogIntegrity() {
       passed: hasDivisionSelector
         && divisionOk
         && visibleTabsOk
-        && eachWorkoutHasExercises
+        && eachWorkoutHasValidExerciseList
         && noSyncTestNames
         && exerciseBaseLargeEnough
         && muscleMapOk
@@ -2469,7 +2469,7 @@ async function testWorkoutCatalogIntegrity() {
       hasDivisionSelector,
       divisionOk,
       visibleTabsOk,
-      eachWorkoutHasExercises,
+      eachWorkoutHasValidExerciseList,
       noSyncTestNames,
       exerciseBaseLargeEnough,
       muscleMapOk,
@@ -2480,27 +2480,23 @@ async function testWorkoutCatalogIntegrity() {
   }
 }
 
-function repairWorkoutPlan() {
+async function repairWorkoutPlan() {
   const divisao = getWorkoutDivision();
   const visibleTabs = getWorkoutVisibleKeys(divisao);
   state.configTreino = saveWorkoutConfig({ divisao });
   state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
   if (!visibleTabs.includes(treinoAtivo)) treinoAtivo = visibleTabs[0] || 'A';
-  try {
-    localStorage.setItem(WORKOUTS_KEY, JSON.stringify(state.treinos));
-  } catch (error) {
-    console.warn('Workout plan repair cache save failed:', error);
-  }
+  await save(LS.treinos, state.treinos);
   renderTudo();
 
-  const eachWorkoutHasExercises = visibleTabs.every(key => (state.treinos[key]?.exercicios || []).length >= 5);
+  const eachWorkoutHasValidExerciseList = visibleTabs.every(key => Array.isArray(state.treinos[key]?.exercicios));
 
   return {
     repaired: true,
     divisao,
     visibleTabs,
-    eachWorkoutHasExercises,
-    passed: WORKOUT_DIVISIONS.includes(divisao) && eachWorkoutHasExercises
+    eachWorkoutHasValidExerciseList,
+    passed: WORKOUT_DIVISIONS.includes(divisao) && eachWorkoutHasValidExerciseList
   };
 }
 
@@ -2933,6 +2929,14 @@ function removeLegacyCrossWorkoutDefaults(exercicios, treinoKey, defaults) {
   });
 }
 
+function createDefaultWorkoutForKey(defaults, key) {
+  const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
+  return {
+    ...defaultWorkout,
+    exercicios: cleanExerciseList(defaultWorkout.exercicios)
+  };
+}
+
 function cleanWorkoutPlan(treinos, divisao = null) {
   const activeDivision = getWorkoutDivision(divisao);
   const defaults = cloneWorkoutDefaults(activeDivision);
@@ -2949,7 +2953,13 @@ function cleanWorkoutPlan(treinos, divisao = null) {
     const defaultWorkout = defaults[key] || { nome: `Treino ${key}`, exercicios: [] };
 
     if (!workout || (typeof workout !== 'object' && !Array.isArray(workout))) {
-      if (defaults[key]) cleanedPlan[key] = defaultWorkout;
+      if (defaults[key]) cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
+      return;
+    }
+
+    const hasExerciseList = Array.isArray(workout) || Array.isArray(workout.exercicios);
+    if (!hasExerciseList) {
+      if (defaults[key]) cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
       return;
     }
 
@@ -2957,30 +2967,22 @@ function cleanWorkoutPlan(treinos, divisao = null) {
     const cleanedExercises = defaults[key]
       ? removeLegacyCrossWorkoutDefaults(cleanExerciseList(workoutExercises), key, defaults)
       : cleanExerciseList(workoutExercises);
-    const completedExercises = cleanExerciseList([
-      ...cleanedExercises,
-      ...(cleanedExercises.length < 5 ? defaultWorkout.exercicios : [])
-    ]);
 
     cleanedPlan[key] = {
       ...defaultWorkout,
       ...(Array.isArray(workout) ? {} : workout),
       nome: Array.isArray(workout) ? defaultWorkout.nome : (workout.nome || defaultWorkout.nome),
-      exercicios: completedExercises.length > 0 ? completedExercises : defaultWorkout.exercicios
+      exercicios: cleanedExercises
     };
   });
 
   requiredKeys.forEach(key => {
     if (!cleanedPlan[key] || typeof cleanedPlan[key] !== 'object') {
-      cleanedPlan[key] = defaults[key];
+      cleanedPlan[key] = createDefaultWorkoutForKey(defaults, key);
       return;
     }
 
-    const cleanedExercises = cleanExerciseList(cleanedPlan[key].exercicios);
-    cleanedPlan[key].exercicios = cleanExerciseList([
-      ...cleanedExercises,
-      ...(cleanedExercises.length < 5 ? defaults[key].exercicios : [])
-    ]);
+    cleanedPlan[key].exercicios = cleanExerciseList(cleanedPlan[key].exercicios);
     cleanedPlan[key].nome = cleanedPlan[key].nome || defaults[key].nome;
   });
 
@@ -3244,7 +3246,23 @@ const EXERCISE_GROUP_LABELS = {
   Outros: 'Outros'
 };
 
+function normalizeExerciseGroup(grupo) {
+  const key = normalizeExerciseKey(grupo);
+  if (key.includes('peito')) return 'Peito';
+  if (key.includes('costas')) return 'Costas';
+  if (key.includes('perna')) return 'Pernas';
+  if (key.includes('ombro')) return 'Ombros';
+  if (key.includes('biceps')) return 'Bíceps';
+  if (key.includes('triceps')) return 'Tríceps';
+  if (key.includes('core') || key.includes('abdomen') || key.includes('abdominal')) return 'Core';
+  if (key.includes('gluteo')) return 'Gluteos';
+  if (key.includes('cardio')) return 'Cardio';
+  if (key.includes('funcional')) return 'Funcional';
+  return 'Outros';
+}
+
 function getExerciseCategory(nome, grupo) {
+  grupo = normalizeExerciseGroup(grupo);
   const key = normalizeExerciseKey(nome);
   if (grupo === 'Cardio') return 'Cardio';
   if (grupo === 'Core') return 'Abdômen';
@@ -3255,6 +3273,7 @@ function getExerciseCategory(nome, grupo) {
 }
 
 function getExerciseEquipment(nome, grupo) {
+  grupo = normalizeExerciseGroup(grupo);
   const key = normalizeExerciseKey(nome);
   if (grupo === 'Cardio') {
     if (key.includes('esteira') || key.includes('caminhada') || key.includes('corrida')) return 'Esteira';
@@ -3276,6 +3295,7 @@ function getExerciseEquipment(nome, grupo) {
 }
 
 function getExerciseKcalEstimate(nome, grupo) {
+  grupo = normalizeExerciseGroup(grupo);
   const key = normalizeExerciseKey(nome);
   if (grupo === 'Cardio') return key.includes('hiit') || key.includes('corrida') ? 240 : 180;
   if (grupo === 'Funcional') return 160;
@@ -3290,7 +3310,7 @@ const EXERCISE_LIBRARY = EXERCICIOS_BASE
   .reduce((items, nome) => {
     const normalized = normalizeExerciseKey(nome);
     if (!normalized || items.some(item => item.key === normalized)) return items;
-    const grupo = MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(normalized) || 'Outros';
+    const grupo = normalizeExerciseGroup(MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(normalized) || 'Outros');
     items.push({
       key: normalized,
       nome,
@@ -3872,11 +3892,12 @@ function getWorkoutLabel(key) {
 }
 
 function getExerciseGroupLabel(grupo) {
-  return EXERCISE_GROUP_LABELS[grupo] || grupo || 'Outros';
+  const normalizedGroup = normalizeExerciseGroup(grupo);
+  return EXERCISE_GROUP_LABELS[normalizedGroup] || normalizedGroup || 'Outros';
 }
 
 function getExerciseGroups() {
-  const groups = Array.from(new Set(EXERCISE_LIBRARY.map(item => item.grupo || 'Outros')));
+  const groups = Array.from(new Set(EXERCISE_LIBRARY.map(item => normalizeExerciseGroup(item.grupo))));
   return groups.sort((a, b) => {
     const indexA = EXERCISE_GROUP_ORDER.indexOf(a);
     const indexB = EXERCISE_GROUP_ORDER.indexOf(b);
@@ -3921,7 +3942,7 @@ function getFilteredExerciseLibrary() {
   const busca = normalizeExerciseKey(document.getElementById('exercicio-busca')?.value || '');
   const grupo = document.getElementById('exercicio-grupo')?.value || 'todos';
   return EXERCISE_LIBRARY
-    .filter(item => grupo === 'todos' || item.grupo === grupo)
+    .filter(item => grupo === 'todos' || normalizeExerciseGroup(item.grupo) === grupo)
     .filter(item => {
       if (!busca) return true;
       return item.key.includes(busca)
@@ -3988,11 +4009,7 @@ async function adicionarExercicioDaBiblioteca() {
   treinoAtivo = targetWorkoutKey;
   await save(LS.treinos, state.treinos);
 
-  renderTreinoTabs();
-  renderExerciseTargetSelect();
-  renderExerciciosLista();
-  popularSelectExercicios();
-  renderEstimativaCaloriasTreino();
+  renderWorkoutEditor();
   toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
 }
 
@@ -4015,17 +4032,8 @@ function renderWorkoutDivisionSelector() {
     const visibleKeys = getWorkoutVisibleKeys(nextDivision);
     if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
 
-    try {
-      localStorage.setItem(WORKOUTS_KEY, JSON.stringify(state.treinos));
-    } catch (error) {
-      console.warn('Workout plan cache save failed:', error);
-    }
-
-    renderTreinoTabs();
-    renderExerciseLibraryControls();
-    renderExerciciosLista();
-    popularSelectExercicios();
-    renderEstimativaCaloriasTreino();
+    await save(LS.treinos, state.treinos);
+    renderWorkoutEditor({ refreshLibraryControls: true });
   };
 }
 
@@ -4060,17 +4068,26 @@ function renderTreinoTabs() {
   cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       treinoAtivo = btn.dataset.treino;
-      renderTreinoTabs();
-      renderExerciseTargetSelect();
-      renderExerciciosLista();
-      popularSelectExercicios();
-      renderEstimativaCaloriasTreino();
+      renderWorkoutEditor();
     });
   });
 }
 
+function renderWorkoutEditor(options = {}) {
+  const { refreshLibraryControls = false } = options;
+  renderTreinoTabs();
+  if (refreshLibraryControls) {
+    renderExerciseLibraryControls();
+  } else {
+    renderExerciseTargetSelect();
+  }
+  renderExerciciosLista();
+  popularSelectExercicios();
+  renderEstimativaCaloriasTreino();
+}
+
 function calcularKcalExercicio(nome, peso) {
-  const grupo = MAPA_MUSCULOS[nome] || 'Outros';
+  const grupo = normalizeExerciseGroup(MAPA_MUSCULOS[nome] || 'Outros');
   const isCardio = grupo === 'Cardio';
   const ultima = ultimaExecucao(nome);
   const MET = isCardio ? 7.0 : 5.0;
@@ -4154,9 +4171,7 @@ function renderExerciciosLista() {
       const nomeRemovido = treino.exercicios[idx];
       treino.exercicios.splice(idx, 1);
       await save(LS.treinos, state.treinos);
-      renderExerciciosLista();
-      popularSelectExercicios();
-      renderEstimativaCaloriasTreino();
+      renderWorkoutEditor();
       toast(`"${nomeRemovido}" removido do ${treino.nome}.`);
     });
   });
@@ -4183,10 +4198,7 @@ document.getElementById('exercicio-destino')?.addEventListener('change', (e) => 
   const nextWorkout = e.target.value;
   if (!getWorkoutVisibleKeys().includes(nextWorkout)) return;
   treinoAtivo = nextWorkout;
-  renderTreinoTabs();
-  renderExerciciosLista();
-  popularSelectExercicios();
-  renderEstimativaCaloriasTreino();
+  renderWorkoutEditor();
 });
 document.getElementById('exercicio-resultados')?.addEventListener('dblclick', adicionarExercicioDaBiblioteca);
 
@@ -4334,7 +4346,7 @@ function renderVolumeSemanal() {
 
   const volumePorMusculo = {};
   recentes.forEach(e => {
-    const musculo = MAPA_MUSCULOS[e.exercicio] || 'Outros';
+    const musculo = normalizeExerciseGroup(MAPA_MUSCULOS[e.exercicio] || 'Outros');
     volumePorMusculo[musculo] = (volumePorMusculo[musculo] || 0) + e.series;
   });
 
@@ -4686,13 +4698,9 @@ function renderTudo() {
   renderDiarioHoje();
   renderAgua();
   renderWorkoutDivisionSelector();
-  renderTreinoTabs();
-  renderExerciseLibraryControls();
-  renderExerciciosLista();
-  popularSelectExercicios();
+  renderWorkoutEditor({ refreshLibraryControls: true });
   renderTreinoHistorico();
   renderVolumeSemanal();
-  renderEstimativaCaloriasTreino();
   renderEvolucaoTabela();
   renderGraficoEvolucao();
   renderContadores();
