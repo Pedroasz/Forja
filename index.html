@@ -358,12 +358,29 @@
 
       <div id="treino-estimativa-calorias" class="mt-3 flex items-center gap-1.5 text-xs text-mute bg-card2 border border-line rounded-lg px-3 py-2"></div>
 
-      <div class="flex items-center gap-2 mt-3">
-        <input id="novo-exercicio-nome" type="text" list="lista-exercicios" placeholder="Novo exercício para este treino..." class="flex-1 min-w-0 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
-        <datalist id="lista-exercicios"></datalist>
-        <button id="btn-add-exercicio" title="Adicionar exercício" class="shrink-0 w-10 h-10 flex items-center justify-center bg-card2 border border-ember/50 text-ember rounded-lg hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200">
-          <i data-lucide="plus" class="w-4 h-4"></i>
+      <div class="mt-3 bg-bg/35 border border-line/50 rounded-xl p-3 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="sm:col-span-3">
+            <label for="exercicio-busca" class="text-xs text-mute">Buscar exercício</label>
+            <input id="exercicio-busca" type="search" placeholder="supino, agachamento, remada..." class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label for="exercicio-grupo" class="text-xs text-mute">Grupo muscular</label>
+            <select id="exercicio-grupo" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label for="exercicio-destino" class="text-xs text-mute">Adicionar ao treino</label>
+            <select id="exercicio-destino" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label for="exercicio-resultados" class="text-xs text-mute">Exercício encontrado</label>
+            <select id="exercicio-resultados" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+        </div>
+        <button id="btn-add-exercicio" type="button" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200 flex items-center justify-center gap-1.5">
+          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar exercício
         </button>
+        <datalist id="lista-exercicios"></datalist>
       </div>
 
       <div id="treino-exercicios-lista" class="mt-4 space-y-1.5"></div>
@@ -3179,6 +3196,10 @@ const EXERCICIOS_BASE_COMPLEMENTARES = {
   Cardio: [
     "Esteira", "Bicicleta ergometrica", "Eliptico", "Escada", "Remo ergometrico", "HIIT",
     "Corrida intervalada", "Caminhada inclinada"
+  ],
+  Funcional: [
+    "Burpee", "Kettlebell swing", "Battle rope", "Medicine ball slam", "Farmer walk",
+    "Mountain climber", "Jump squat", "Box jump", "Sled push", "Wall ball"
   ]
 };
 
@@ -3207,6 +3228,80 @@ EXERCICIOS_BASE.forEach(nome => {
     MAPA_MUSCULOS[nome] = muscleByNormalizedExercise.get(normalizeExerciseKey(nome)) || 'Outros';
   }
 });
+
+const EXERCISE_GROUP_ORDER = ['Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Core', 'Gluteos', 'Cardio', 'Funcional', 'Outros'];
+const EXERCISE_GROUP_LABELS = {
+  Peito: 'Peito',
+  Costas: 'Costas',
+  Pernas: 'Pernas',
+  Ombros: 'Ombros',
+  'Bíceps': 'Bíceps',
+  'Tríceps': 'Tríceps',
+  Core: 'Abdômen',
+  Gluteos: 'Glúteos',
+  Cardio: 'Cardio',
+  Funcional: 'Funcional',
+  Outros: 'Outros'
+};
+
+function getExerciseCategory(nome, grupo) {
+  const key = normalizeExerciseKey(nome);
+  if (grupo === 'Cardio') return 'Cardio';
+  if (grupo === 'Core') return 'Abdômen';
+  if (grupo === 'Funcional') return 'Funcional';
+  if (key.includes('panturrilha')) return 'Isolador';
+  if (key.includes('crucifixo') || key.includes('rosca') || key.includes('triceps') || key.includes('elevacao')) return 'Isolador';
+  return 'Força';
+}
+
+function getExerciseEquipment(nome, grupo) {
+  const key = normalizeExerciseKey(nome);
+  if (grupo === 'Cardio') {
+    if (key.includes('esteira') || key.includes('caminhada') || key.includes('corrida')) return 'Esteira';
+    if (key.includes('bicicleta')) return 'Bicicleta';
+    if (key.includes('remo')) return 'Remo';
+    if (key.includes('eliptico')) return 'Elíptico';
+    return 'Cardio';
+  }
+  if (key.includes('halter') || key.includes('dumbbell')) return 'Halteres';
+  if (key.includes('barra') || key.includes('smith')) return 'Barra';
+  if (key.includes('polia') || key.includes('cabo') || key.includes('pulley') || key.includes('crossover')) return 'Polia';
+  if (key.includes('cadeira') || key.includes('maquina') || key.includes('leg press') || key.includes('hack')) return 'Máquina';
+  if (key.includes('kettlebell')) return 'Kettlebell';
+  if (key.includes('rope')) return 'Corda';
+  if (key.includes('medicine')) return 'Medicine ball';
+  if (key.includes('esteira') || key.includes('bicicleta') || key.includes('eliptico')) return 'Cardio';
+  if (key.includes('prancha') || key.includes('burpee') || key.includes('mountain') || key.includes('jump') || key.includes('flexao')) return 'Peso corporal';
+  return 'Livre';
+}
+
+function getExerciseKcalEstimate(nome, grupo) {
+  const key = normalizeExerciseKey(nome);
+  if (grupo === 'Cardio') return key.includes('hiit') || key.includes('corrida') ? 240 : 180;
+  if (grupo === 'Funcional') return 160;
+  if (grupo === 'Pernas' || grupo === 'Gluteos') return 120;
+  if (grupo === 'Costas' || grupo === 'Peito') return 95;
+  if (grupo === 'Core') return 70;
+  return 80;
+}
+
+const EXERCISE_LIBRARY = EXERCICIOS_BASE
+  .filter(nome => !isExerciseTestData(nome))
+  .reduce((items, nome) => {
+    const normalized = normalizeExerciseKey(nome);
+    if (!normalized || items.some(item => item.key === normalized)) return items;
+    const grupo = MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(normalized) || 'Outros';
+    items.push({
+      key: normalized,
+      nome,
+      grupo,
+      categoria: getExerciseCategory(nome, grupo),
+      gastoCalorico: getExerciseKcalEstimate(nome, grupo),
+      equipamento: getExerciseEquipment(nome, grupo)
+    });
+    return items;
+  }, [])
+  .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
 const LS = {
   perfil:    'forja_perfil',
@@ -3766,11 +3861,139 @@ document.getElementById('btn-desfazer-agua').addEventListener('click', async () 
 function popularDatalistExercicios() {
   const datalist = document.getElementById('lista-exercicios');
   if (!datalist) return;
-  datalist.innerHTML = EXERCICIOS_BASE
-    .slice()
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-    .map(ex => `<option value="${ex}"></option>`)
-    .join('');
+  datalist.replaceChildren();
+  EXERCISE_LIBRARY.forEach(exercicio => {
+    datalist.appendChild(new Option(exercicio.nome, exercicio.nome));
+  });
+}
+
+function getWorkoutLabel(key) {
+  return `Treino ${key}`;
+}
+
+function getExerciseGroupLabel(grupo) {
+  return EXERCISE_GROUP_LABELS[grupo] || grupo || 'Outros';
+}
+
+function getExerciseGroups() {
+  const groups = Array.from(new Set(EXERCISE_LIBRARY.map(item => item.grupo || 'Outros')));
+  return groups.sort((a, b) => {
+    const indexA = EXERCISE_GROUP_ORDER.indexOf(a);
+    const indexB = EXERCISE_GROUP_ORDER.indexOf(b);
+    const orderA = indexA === -1 ? 999 : indexA;
+    const orderB = indexB === -1 ? 999 : indexB;
+    return orderA - orderB || getExerciseGroupLabel(a).localeCompare(getExerciseGroupLabel(b), 'pt-BR');
+  });
+}
+
+function renderExerciseGroupFilter() {
+  const select = document.getElementById('exercicio-grupo');
+  if (!select) return;
+  const previousValue = select.value || 'todos';
+  select.replaceChildren();
+  select.appendChild(new Option('Todos', 'todos'));
+  getExerciseGroups().forEach(grupo => {
+    select.appendChild(new Option(getExerciseGroupLabel(grupo), grupo));
+  });
+  select.value = Array.from(select.options).some(option => option.value === previousValue) ? previousValue : 'todos';
+}
+
+function renderExerciseTargetSelect() {
+  const select = document.getElementById('exercicio-destino');
+  if (!select) return;
+  const divisao = getWorkoutDivision();
+  const visibleKeys = getWorkoutVisibleKeys(divisao);
+  select.replaceChildren();
+  visibleKeys.forEach(key => {
+    select.appendChild(new Option(getWorkoutLabel(key), key));
+  });
+  select.value = visibleKeys.includes(treinoAtivo) ? treinoAtivo : (visibleKeys[0] || 'A');
+}
+
+function getSelectedWorkoutTarget() {
+  const divisao = getWorkoutDivision();
+  const visibleKeys = getWorkoutVisibleKeys(divisao);
+  const selected = document.getElementById('exercicio-destino')?.value;
+  return visibleKeys.includes(selected) ? selected : (visibleKeys.includes(treinoAtivo) ? treinoAtivo : visibleKeys[0]);
+}
+
+function getFilteredExerciseLibrary() {
+  const busca = normalizeExerciseKey(document.getElementById('exercicio-busca')?.value || '');
+  const grupo = document.getElementById('exercicio-grupo')?.value || 'todos';
+  return EXERCISE_LIBRARY
+    .filter(item => grupo === 'todos' || item.grupo === grupo)
+    .filter(item => {
+      if (!busca) return true;
+      return item.key.includes(busca)
+        || normalizeExerciseKey(item.grupo).includes(busca)
+        || normalizeExerciseKey(item.categoria).includes(busca)
+        || normalizeExerciseKey(item.equipamento).includes(busca);
+    })
+    .slice(0, 80);
+}
+
+function renderExerciseResults() {
+  const select = document.getElementById('exercicio-resultados');
+  if (!select) return;
+  const filtered = getFilteredExerciseLibrary();
+  select.replaceChildren();
+
+  if (filtered.length === 0) {
+    const emptyOption = new Option('Nenhum exercício encontrado', '');
+    emptyOption.disabled = true;
+    select.appendChild(emptyOption);
+    return;
+  }
+
+  filtered.forEach(item => {
+    const label = `${item.nome} • ${getExerciseGroupLabel(item.grupo)} • ${item.equipamento} • ~${item.gastoCalorico} kcal`;
+    select.appendChild(new Option(label, item.nome));
+  });
+}
+
+function renderExerciseLibraryControls() {
+  popularDatalistExercicios();
+  renderExerciseGroupFilter();
+  renderExerciseTargetSelect();
+  renderExerciseResults();
+}
+
+async function adicionarExercicioDaBiblioteca() {
+  const select = document.getElementById('exercicio-resultados');
+  const selectedName = select?.value || '';
+  const selectedExercise = EXERCISE_LIBRARY.find(item => item.nome === selectedName);
+  const targetWorkoutKey = getSelectedWorkoutTarget();
+
+  if (!selectedExercise) {
+    toast('Selecione um exercício da biblioteca.');
+    return;
+  }
+
+  const divisao = getWorkoutDivision();
+  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
+  const targetWorkout = state.treinos[targetWorkoutKey];
+  if (!targetWorkout) {
+    toast('Selecione um treino válido.');
+    return;
+  }
+
+  const alreadyExists = (targetWorkout.exercicios || [])
+    .some(nome => normalizeExerciseKey(nome) === selectedExercise.key);
+  if (alreadyExists) {
+    toast(`${selectedExercise.nome} já está no ${getWorkoutLabel(targetWorkoutKey)}.`);
+    return;
+  }
+
+  targetWorkout.exercicios.push(selectedExercise.nome);
+  treinoAtivo = targetWorkoutKey;
+  await save(LS.treinos, state.treinos);
+
+  renderTreinoTabs();
+  renderExerciseTargetSelect();
+  renderExerciciosLista();
+  popularSelectExercicios();
+  renderEstimativaCaloriasTreino();
+  toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
 }
 
 function renderWorkoutDivisionSelector() {
@@ -3799,6 +4022,7 @@ function renderWorkoutDivisionSelector() {
     }
 
     renderTreinoTabs();
+    renderExerciseLibraryControls();
     renderExerciciosLista();
     popularSelectExercicios();
     renderEstimativaCaloriasTreino();
@@ -3823,14 +4047,21 @@ function renderTreinoTabs() {
   if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
 
   cont.style.gridTemplateColumns = `repeat(${visibleKeys.length}, minmax(0, 1fr))`;
+  cont.replaceChildren();
 
-  cont.innerHTML = visibleKeys.map(k => `
-    <button data-treino="${k}" class="treino-tab-btn text-sm font-semibold rounded-lg py-2 ${k === treinoAtivo ? 'bg-ember text-bg' : 'bg-card2 text-mute'}">${k}</button>
-  `).join('');
+  visibleKeys.forEach(k => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.treino = k;
+    button.className = `treino-tab-btn text-xs sm:text-sm font-semibold rounded-lg py-2 ${k === treinoAtivo ? 'bg-ember text-bg' : 'bg-card2 text-mute'}`;
+    button.textContent = getWorkoutLabel(k);
+    cont.appendChild(button);
+  });
   cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       treinoAtivo = btn.dataset.treino;
       renderTreinoTabs();
+      renderExerciseTargetSelect();
       renderExerciciosLista();
       popularSelectExercicios();
       renderEstimativaCaloriasTreino();
@@ -3942,25 +4173,22 @@ function popularSelectExercicios() {
   atualizarSugestaoProgressao();
 }
 
-document.getElementById('btn-add-exercicio').addEventListener('click', async () => {
-  const input = document.getElementById('novo-exercicio-nome');
-  const nome = input.value.trim();
-  if (!nome) { toast('Digite o nome do exercício.'); return; }
-
-  ensureActiveWorkout().exercicios.push(nome);
-  await save(LS.treinos, state.treinos);
-
-  input.value = '';
+document.getElementById('btn-add-exercicio')?.addEventListener('click', adicionarExercicioDaBiblioteca);
+document.getElementById('exercicio-busca')?.addEventListener('input', renderExerciseResults);
+document.getElementById('exercicio-busca')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); adicionarExercicioDaBiblioteca(); }
+});
+document.getElementById('exercicio-grupo')?.addEventListener('change', renderExerciseResults);
+document.getElementById('exercicio-destino')?.addEventListener('change', (e) => {
+  const nextWorkout = e.target.value;
+  if (!getWorkoutVisibleKeys().includes(nextWorkout)) return;
+  treinoAtivo = nextWorkout;
+  renderTreinoTabs();
   renderExerciciosLista();
   popularSelectExercicios();
-  document.getElementById('t-exercicio').value = nome;
-  atualizarSugestaoProgressao();
   renderEstimativaCaloriasTreino();
-  toast(`"${nome}" adicionado ao Treino ${treinoAtivo}.`);
 });
-document.getElementById('novo-exercicio-nome').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-add-exercicio').click(); }
-});
+document.getElementById('exercicio-resultados')?.addEventListener('dblclick', adicionarExercicioDaBiblioteca);
 
 function ultimaExecucao(exercicio) {
   const historico = state.execucoes.filter(e => e.exercicio === exercicio).sort((a,b) => b.id - a.id);
@@ -4093,9 +4321,10 @@ const CORES_MUSCULO = {
   'Gluteos': 'bg-pink-400',
   'Core':    'bg-cyan-400',
   'Cardio':  'bg-orange-300',
+  'Funcional': 'bg-lime-400',
   'Outros':  'bg-mute',
 };
-const ORDEM_MUSCULOS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Gluteos', 'Core', 'Cardio', 'Outros'];
+const ORDEM_MUSCULOS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Gluteos', 'Core', 'Cardio', 'Funcional', 'Outros'];
 const META_SERIES_SEMANAL = 20;
 
 function renderVolumeSemanal() {
@@ -4456,9 +4685,9 @@ function renderTudo() {
   atualizarLabelDataDieta();
   renderDiarioHoje();
   renderAgua();
-  popularDatalistExercicios();
   renderWorkoutDivisionSelector();
   renderTreinoTabs();
+  renderExerciseLibraryControls();
   renderExerciciosLista();
   popularSelectExercicios();
   renderTreinoHistorico();
