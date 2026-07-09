@@ -2903,6 +2903,16 @@ function getWorkoutVisibleKeys(divisao = null) {
   return Object.keys(cloneWorkoutDefaults(divisao));
 }
 
+function getVisibleWorkoutKeys(divisao = null) {
+  return getWorkoutVisibleKeys(divisao);
+}
+
+function getCurrentWorkoutDivision() {
+  const select = document.getElementById('treino-divisao');
+  const divisao = select ? select.value : getWorkoutDivision();
+  return normalizeWorkoutDivision(divisao);
+}
+
 function removeLegacyCrossWorkoutDefaults(exercicios, treinoKey, defaults) {
   const currentDefaults = new Set((defaults[treinoKey]?.exercicios || []).map(nome => String(nome).toLowerCase()));
   const otherDefaults = new Set();
@@ -3856,9 +3866,9 @@ function getWorkoutLabel(key) {
   return `Treino ${key}`;
 }
 
-function getActiveWorkoutKey() {
-  const divisao = getWorkoutDivision();
-  const visibleKeys = getWorkoutVisibleKeys(divisao);
+function getActiveWorkoutKey(divisao = null) {
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  const visibleKeys = getWorkoutVisibleKeys(activeDivision);
   if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
   return treinoAtivo;
 }
@@ -3957,25 +3967,31 @@ function renderWorkoutDivisionSelector() {
     if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
 
     await saveWorkoutState();
-    renderWorkoutEditor({ refreshLibraryControls: true });
+    renderWorkoutEditor({ refreshLibraryControls: true, divisao: nextDivision });
   };
 }
 
-function ensureActiveWorkout() {
-  const divisao = getWorkoutDivision();
-  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
-  getActiveWorkoutKey();
-  return state.treinos[treinoAtivo];
+function ensureActiveWorkout(divisao = null) {
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  const defaults = cloneWorkoutDefaults(activeDivision);
+  const activeKey = getActiveWorkoutKey(activeDivision);
+  state.treinos = ensureValidWorkoutPlan(state.treinos, activeDivision);
+
+  if (!state.treinos[activeKey]) {
+    state.treinos[activeKey] = createDefaultWorkoutForKey(defaults, activeKey);
+  }
+
+  return state.treinos[activeKey];
 }
 
-function renderTreinoTabs() {
+function renderTreinoTabs(divisao = null) {
   const cont = document.getElementById('treino-tabs');
   if (!cont) return;
 
-  const divisao = getWorkoutDivision();
-  const visibleKeys = getWorkoutVisibleKeys(divisao);
-  state.treinos = ensureValidWorkoutPlan(state.treinos, divisao);
-  if (!visibleKeys.includes(treinoAtivo)) treinoAtivo = visibleKeys[0] || 'A';
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  const visibleKeys = getVisibleWorkoutKeys(activeDivision);
+  state.treinos = ensureValidWorkoutPlan(state.treinos, activeDivision);
+  const activeKey = getActiveWorkoutKey(activeDivision);
 
   cont.style.gridTemplateColumns = `repeat(${visibleKeys.length}, minmax(0, 1fr))`;
   cont.replaceChildren();
@@ -3984,25 +4000,27 @@ function renderTreinoTabs() {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.treino = k;
-    button.className = `treino-tab-btn text-xs sm:text-sm font-semibold rounded-lg py-2 ${k === treinoAtivo ? 'bg-ember text-bg' : 'bg-card2 text-mute'}`;
+    button.className = `treino-tab-btn text-xs sm:text-sm font-semibold rounded-lg py-2 ${k === activeKey ? 'bg-ember text-bg' : 'bg-card2 text-mute'}`;
     button.textContent = getWorkoutLabel(k);
     cont.appendChild(button);
   });
   cont.querySelectorAll('.treino-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       treinoAtivo = btn.dataset.treino;
-      renderWorkoutEditor();
+      renderWorkoutEditor({ divisao: activeDivision });
     });
   });
 }
 
 function renderWorkoutEditor(options = {}) {
-  const { refreshLibraryControls = false } = options;
-  renderTreinoTabs();
+  const { refreshLibraryControls = false, divisao = null } = options;
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  state.configTreino = { divisao: activeDivision };
+  renderTreinoTabs(activeDivision);
   if (refreshLibraryControls) renderExerciseLibraryControls();
-  renderExerciciosLista();
-  popularSelectExercicios();
-  renderEstimativaCaloriasTreino();
+  renderExerciciosLista(activeDivision);
+  popularSelectExercicios(activeDivision);
+  renderEstimativaCaloriasTreino(activeDivision);
 }
 
 function calcularKcalExercicio(nome, peso) {
@@ -4023,13 +4041,13 @@ function calcularKcalExercicio(nome, peso) {
   return MET * peso * (minutos / 60);
 }
 
-function renderEstimativaCaloriasTreino() {
+function renderEstimativaCaloriasTreino(divisao = null) {
   const el = document.getElementById('treino-estimativa-calorias');
   if (!el) return;
 
   const pesoCadastrado = state.perfil && state.perfil.peso ? state.perfil.peso : null;
   const peso = pesoCadastrado || 75;
-  const t = ensureActiveWorkout();
+  const t = ensureActiveWorkout(divisao);
 
   if (!t || t.exercicios.length === 0) {
     el.innerHTML = `<i data-lucide="flame" class="w-3.5 h-3.5 text-mute shrink-0"></i><span>Estimativa de Gasto (Treino Atual): ~0 kcal</span>`;
@@ -4044,10 +4062,11 @@ function renderEstimativaCaloriasTreino() {
   if(window.lucide) { lucide.createIcons(); }
 }
 
-function renderExerciciosLista() {
+function renderExerciciosLista(divisao = null) {
   const cont = document.getElementById('treino-exercicios-lista');
   if (!cont) return;
-  const t = ensureActiveWorkout();
+  const activeDivision = divisao ? getWorkoutDivision(divisao) : getCurrentWorkoutDivision();
+  const t = ensureActiveWorkout(activeDivision);
   cont.replaceChildren();
 
   if (t.exercicios.length === 0) {
@@ -4096,10 +4115,10 @@ function renderExerciciosLista() {
   });
 }
 
-function popularSelectExercicios() {
+function popularSelectExercicios(divisao = null) {
   const sel = document.getElementById('t-exercicio');
   if (!sel) return;
-  const t = ensureActiveWorkout();
+  const t = ensureActiveWorkout(divisao);
   sel.replaceChildren();
   t.exercicios.forEach(ex => {
     sel.appendChild(new Option(ex, ex));
