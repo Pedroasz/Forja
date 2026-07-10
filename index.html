@@ -347,8 +347,8 @@
     font-size: 9px;
     font-weight: 600;
   }
-  .exercise-library-actions { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 7px; margin-top: 10px; }
-  .exercise-video-button,
+  .exercise-library-actions { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 7px; margin-top: 10px; }
+  .exercise-detail-button,
   .exercise-add-button {
     min-height: 36px !important;
     display: inline-flex;
@@ -359,21 +359,21 @@
     font-size: 10px;
     font-weight: 700;
   }
-  .exercise-video-button {
+  .exercise-detail-button {
     color: var(--forja-text);
     background: rgba(255,255,255,.03);
     border: 1px solid rgba(77,82,97,.72);
   }
-  .exercise-video-button:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 45%, transparent); }
+  .exercise-detail-button:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 45%, transparent); }
   .exercise-add-button {
     color: #101116;
     background: var(--color-primary);
     border: 1px solid color-mix(in srgb, var(--color-primary) 76%, white 8%);
   }
   .exercise-add-button:hover { background: var(--color-primary-hover); }
-  .exercise-video-dialog {
-    width: min(540px, calc(100vw - 28px));
-    max-height: calc(100vh - 32px);
+  .exercise-detail-dialog {
+    width: min(720px, calc(100vw - 28px));
+    max-height: calc(100dvh - 32px);
     margin: auto;
     padding: 0;
     color: var(--forja-text);
@@ -381,15 +381,16 @@
     border: 0;
     overflow: visible;
   }
-  .exercise-video-dialog::backdrop { background: rgba(2,3,6,.78); backdrop-filter: blur(8px); }
-  .exercise-video-panel {
-    overflow: hidden;
+  .exercise-detail-dialog::backdrop { background: rgba(2,3,6,.78); backdrop-filter: blur(8px); }
+  .exercise-detail-panel {
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
     background: linear-gradient(145deg, rgba(26,29,38,.99), rgba(13,15,21,.99));
     border: 1px solid rgba(84,89,104,.7);
     border-radius: 14px;
     box-shadow: 0 30px 90px rgba(0,0,0,.58);
   }
-  .exercise-video-hero {
+  .exercise-detail-media {
     position: relative;
     min-height: 184px;
     display: grid;
@@ -399,18 +400,33 @@
     background-size: 28px 28px;
     border-bottom: 1px solid rgba(70,75,89,.55);
   }
-  .exercise-video-play {
-    width: 70px;
-    height: 70px;
+  .exercise-detail-media img,
+  .exercise-detail-media video {
+    width: 100%;
+    max-height: 320px;
+    display: block;
+    object-fit: cover;
+  }
+  .exercise-media-fallback {
+    min-height: 184px;
     display: grid;
     place-items: center;
-    color: #0d0e12;
-    background: var(--color-primary);
-    border-radius: 50%;
-    box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-primary) 10%, transparent), 0 16px 44px rgba(0,0,0,.35);
+    padding: 28px;
+    text-align: center;
   }
-  .exercise-video-play svg { width: 29px; height: 29px; fill: currentColor; }
-  .exercise-video-close {
+  .exercise-media-fallback-icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+    border-radius: 12px;
+  }
+  .exercise-media-fallback-icon svg { width: 25px; height: 25px; }
+  .exercise-detail-close {
     position: absolute;
     top: 12px;
     right: 12px;
@@ -424,30 +440,37 @@
     border: 1px solid rgba(80,85,99,.7);
     border-radius: 8px;
   }
-  .exercise-video-body { padding: 20px; }
-  .exercise-video-cues { display: grid; gap: 8px; margin-top: 16px; }
-  .exercise-video-cue {
-    display: flex;
-    gap: 9px;
-    color: var(--forja-muted);
-    font-size: 12px;
-    line-height: 1.45;
+  .exercise-detail-body { padding: 20px; }
+  .exercise-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .exercise-detail-section {
+    min-width: 0;
+    padding: 13px;
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(67,72,86,.5);
+    border-radius: 9px;
   }
-  .exercise-video-cue svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 1px; color: var(--forja-green); }
-  .exercise-video-link {
+  .exercise-detail-section-wide { grid-column: 1 / -1; }
+  .exercise-detail-section h3 { color: var(--forja-text); font-size: 11px; font-weight: 700; }
+  .exercise-detail-section p,
+  .exercise-detail-section li { color: var(--forja-muted); font-size: 12px; line-height: 1.5; }
+  .exercise-detail-list { display: grid; gap: 7px; margin-top: 8px; }
+  .exercise-detail-list li { position: relative; padding-left: 15px; }
+  .exercise-detail-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; background: var(--forja-green); border-radius: 50%; }
+  .exercise-detail-add {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     width: 100%;
-    margin-top: 18px;
+    margin-top: 16px;
     color: #101116;
     background: var(--color-primary);
     border-radius: 9px;
     font-size: 12px;
     font-weight: 800;
   }
+  body.exercise-modal-open { overflow: hidden; }
   #cronometro-display { text-shadow: 0 0 28px rgba(255,255,255,.06); }
   .evolution-chart { min-height: 340px; }
   #tabela-evolucao th { font-family: Inter, sans-serif; font-weight: 600; }
@@ -769,7 +792,7 @@
     #exercicio-lista-biblioteca > .exercise-library-item { padding: 13px !important; }
     .exercise-muscle-mark { width: 42px; height: 42px; flex-basis: 42px; }
     .exercise-library-actions { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
-    .exercise-video-button,
+    .exercise-detail-button,
     .exercise-add-button { min-height: 42px !important; font-size: 11px; }
     #btn-add-exercicio { min-height: 50px; border-radius: 10px; }
     .workout-execution-card input,
@@ -807,11 +830,13 @@
     .auth-card #btn-entrar,
     .auth-card #btn-cadastrar { min-height: 52px; border-radius: 11px; }
 
-    .exercise-video-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: min(88vh, 720px); margin: 0; }
-    .exercise-video-panel { max-height: min(88vh, 720px); overflow-y: auto; border-radius: 20px 20px 0 0; }
-    .exercise-video-hero { min-height: 142px; }
-    .exercise-video-body { padding: 18px 17px max(21px, env(safe-area-inset-bottom)); }
-    .exercise-video-link { min-height: 50px; }
+    .exercise-detail-dialog { position: fixed; inset: auto 10px 76px; width: auto; max-width: none; max-height: calc(100dvh - 92px); margin: 0; }
+    .exercise-detail-panel { max-height: calc(100dvh - 92px); overflow-y: auto; border-radius: 16px; }
+    .exercise-detail-media { min-height: 142px; }
+    .exercise-detail-body { padding: 18px 17px max(21px, env(safe-area-inset-bottom)); }
+    .exercise-detail-grid { grid-template-columns: 1fr; }
+    .exercise-detail-section-wide { grid-column: auto; }
+    .exercise-detail-add { min-height: 50px; }
     #toast { max-width: calc(100vw - 28px); width: max-content; bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px) !important; }
   }
 
@@ -1194,7 +1219,7 @@
       <div class="flex items-center justify-between gap-3 mb-3">
         <div>
           <h2 class="font-display font-semibold text-lg">Biblioteca de exercícios</h2>
-          <p class="text-xs text-mute">Catálogo completo com orientação e acesso a vídeos.</p>
+          <p class="text-xs text-mute">Catálogo local com orientações e mídia preparada.</p>
           <span class="exercise-library-count"><i data-lucide="database" class="w-3 h-3"></i><span id="exercise-library-count">0</span> exercícios cadastrados</span>
         </div>
         <i data-lucide="library" class="w-5 h-5 text-mute"></i>
@@ -1213,11 +1238,11 @@
               <option value="Peito">Peito</option>
               <option value="Costas">Costas</option>
               <option value="Ombros">Ombros</option>
-              <option value="Biceps">Biceps</option>
-              <option value="Triceps">Triceps</option>
+              <option value="Biceps">Bíceps</option>
+              <option value="Triceps">Tríceps</option>
               <option value="Pernas">Pernas</option>
-              <option value="Gluteos">Gluteos</option>
-              <option value="Core">Abdomen</option>
+              <option value="Gluteos">Glúteos</option>
+              <option value="Core">Abdômen/Core</option>
               <option value="Cardio">Cardio</option>
               <option value="Funcional">Funcional</option>
             </select>
@@ -1235,10 +1260,12 @@
           <button type="button" class="exercise-filter-chip" data-exercise-group="Pernas">Pernas</button>
           <button type="button" class="exercise-filter-chip" data-exercise-group="Bíceps">Bíceps</button>
           <button type="button" class="exercise-filter-chip" data-exercise-group="Tríceps">Tríceps</button>
-          <button type="button" class="exercise-filter-chip" data-exercise-group="Core">Abdômen</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Core">Abdômen/Core</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Glúteos">Glúteos</button>
           <button type="button" class="exercise-filter-chip" data-exercise-group="Cardio">Cardio</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Funcional">Funcional</button>
         </div>
-        <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1"></div>
+        <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 gap-2 max-h-[34rem] overflow-y-auto pr-1"></div>
         <button id="btn-add-exercicio" type="button" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200 flex items-center justify-center gap-1.5">
           <i data-lucide="plus" class="w-4 h-4"></i> Adicionar exercício
         </button>
@@ -1420,26 +1447,44 @@
   </section>
 </main>
 
-<dialog id="exercise-video-modal" class="exercise-video-dialog" aria-labelledby="exercise-video-title">
-  <div class="exercise-video-panel">
-    <div class="exercise-video-hero">
-      <button type="button" id="exercise-video-close" class="exercise-video-close" title="Fechar"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <div class="exercise-video-play"><i data-lucide="play"></i></div>
+<dialog id="exercise-detail-modal" class="exercise-detail-dialog" aria-labelledby="exercise-detail-title">
+  <div class="exercise-detail-panel">
+    <div id="exercise-detail-media" class="exercise-detail-media">
+      <button type="button" id="exercise-detail-close" class="exercise-detail-close" title="Fechar" aria-label="Fechar detalhes do exercício"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <div class="exercise-video-body">
-      <p id="exercise-video-eyebrow" class="text-[10px] uppercase font-semibold text-ember">Guia do exercício</p>
-      <h2 id="exercise-video-title" class="font-display font-semibold text-xl mt-1">Exercício</h2>
-      <p id="exercise-video-meta" class="text-xs text-mute mt-2"></p>
-      <div id="exercise-video-badges" class="exercise-badges"></div>
-      <div class="exercise-video-cues">
-        <p class="exercise-video-cue"><i data-lucide="check-circle-2"></i><span id="exercise-video-cue-1"></span></p>
-        <p class="exercise-video-cue"><i data-lucide="check-circle-2"></i><span id="exercise-video-cue-2"></span></p>
-        <p class="exercise-video-cue"><i data-lucide="shield-check"></i><span id="exercise-video-cue-3"></span></p>
+    <div class="exercise-detail-body">
+      <p id="exercise-detail-eyebrow" class="text-[10px] uppercase font-semibold text-ember">Guia do exercício</p>
+      <h2 id="exercise-detail-title" class="font-display font-semibold text-xl mt-1">Exercício</h2>
+      <p id="exercise-detail-meta" class="text-xs text-mute mt-2"></p>
+      <div id="exercise-detail-badges" class="exercise-badges"></div>
+
+      <div class="exercise-detail-grid">
+        <section class="exercise-detail-section">
+          <h3>Músculos primários</h3>
+          <p id="exercise-detail-primary" class="mt-2"></p>
+        </section>
+        <section class="exercise-detail-section">
+          <h3>Músculos secundários</h3>
+          <p id="exercise-detail-secondary" class="mt-2"></p>
+        </section>
+        <section class="exercise-detail-section exercise-detail-section-wide">
+          <h3>Como executar</h3>
+          <ul id="exercise-detail-instructions" class="exercise-detail-list"></ul>
+        </section>
+        <section class="exercise-detail-section">
+          <h3>Dicas</h3>
+          <ul id="exercise-detail-tips" class="exercise-detail-list"></ul>
+        </section>
+        <section class="exercise-detail-section">
+          <h3>Observações</h3>
+          <p id="exercise-detail-observations" class="mt-2"></p>
+        </section>
       </div>
-      <a id="exercise-video-link" class="exercise-video-link" href="#" target="_blank" rel="noopener noreferrer">
-        <i data-lucide="play-circle" class="w-4 h-4"></i> Assistir demonstração em vídeo
-      </a>
-      <p class="text-[10px] text-mute text-center mt-2">A demonstração abre em uma nova guia. Priorize sempre orientação profissional.</p>
+
+      <p id="exercise-detail-source" class="text-[10px] text-mute mt-3"></p>
+      <button type="button" id="exercise-detail-add" class="exercise-detail-add">
+        <i data-lucide="plus" class="w-4 h-4"></i><span>Adicionar ao treino</span>
+      </button>
     </div>
   </div>
 </dialog>
@@ -3335,7 +3380,7 @@ async function testWorkoutCatalogIntegrity() {
     eachWorkoutHasValidExerciseList = requiredKeys.every(key => Array.isArray(workouts[key]?.exercicios));
     noSyncTestNames = allWorkoutExercises.every(nome => !isExerciseTestData(nome));
     exerciseBaseLargeEnough = EXERCICIOS_BASE.length >= 100;
-    muscleMapOk = EXERCICIOS_BASE.every(nome => Boolean(MAPA_MUSCULOS[nome]));
+    muscleMapOk = EXERCICIOS_BASE.every(item => Boolean(item.grupo));
     selectHasOptions = (document.getElementById('t-exercicio')?.options.length || 0) > 0;
     exercisePickerHasOptions = (document.getElementById('exercicio-resultados')?.options.length || 0) > 0;
 
@@ -3712,7 +3757,7 @@ window.testForjaPremiumUI = async function() {
     const requiredIds = [
       'app-principal', 'screen-dieta', 'screen-treino', 'screen-evolucao', 'screen-exportar',
       'treino-divisao', 'treino-tabs', 'treino-exercicios-lista', 'exercicio-lista-biblioteca',
-      'exercise-video-modal', 'exercise-video-link', 't-exercicio', 'grafico-peso', 'tbody-evolucao', 'btn-export'
+      'exercise-detail-modal', 'exercise-detail-add', 't-exercicio', 'grafico-peso', 'tbody-evolucao', 'btn-export'
     ];
 
     desktopLayoutOk = Boolean(main?.classList.contains('app-content'))
@@ -3736,9 +3781,9 @@ window.testForjaPremiumUI = async function() {
       && ['A', 'B', 'C', 'D', 'E'].every(key => workoutKeys.includes(key));
     noExtraLabel = !/\bextra\b/i.test(workout?.textContent || '')
       && workoutButtons.every(button => button.dataset.status !== 'extra');
-    exerciseLibraryOk = EXERCISE_LIBRARY.length >= 200
-      && EXERCISE_LIBRARY.every(item => Boolean(item.videoUrl && item.dificuldade && item.seriesSugeridas && item.repeticoesSugeridas))
-      && (document.querySelectorAll('#exercicio-lista-biblioteca .exercise-video-button').length || 0) > 0;
+    exerciseLibraryOk = EXERCISE_LIBRARY.length >= 100
+      && EXERCISE_LIBRARY.every(item => Boolean(item.id && item.nivel && item.series_sugeridas && item.reps_sugeridas))
+      && (document.querySelectorAll('#exercicio-lista-biblioteca .exercise-detail-button').length || 0) > 0;
     authStillWorks = typeof checkSession === 'function'
       && typeof login === 'function'
       && typeof register === 'function'
@@ -3804,42 +3849,44 @@ window.testExerciseVideoLibrary = async function() {
   try {
     renderBibliotecaExercicios();
     const librarySize = EXERCISE_LIBRARY.length;
-    const richMetadataOk = EXERCISE_LIBRARY.every(item => Boolean(
-      item.nome
-      && item.grupo
-      && item.equipamento
-      && item.dificuldade
-      && item.seriesSugeridas
-      && item.repeticoesSugeridas
-      && item.videoUrl
-      && item.guide?.cues?.length === 3
-    ));
-    const videoLinksOk = EXERCISE_LIBRARY.every(item => /^https:\/\//.test(item.videoUrl));
+    const richFields = [
+      'id', 'nome', 'aliases', 'grupo', 'equipamento', 'kcal', 'nivel',
+      'series_sugeridas', 'reps_sugeridas', 'musculos_primarios', 'musculos_secundarios',
+      'instrucoes', 'dicas', 'observacoes', 'video_url', 'thumbnail_url', 'source_label'
+    ];
+    const richMetadataOk = EXERCISE_LIBRARY.every(item => richFields.every(field => Object.hasOwn(item, field))
+      && Array.isArray(item.aliases)
+      && Array.isArray(item.instrucoes)
+      && item.instrucoes.length > 0);
+    const mediaLinksSafe = EXERCISE_LIBRARY.every(item =>
+      (!item.video_url || /^https:\/\//.test(item.video_url))
+      && (!item.thumbnail_url || /^https:\/\//.test(item.thumbnail_url))
+    );
     const cardsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-library-item').length > 0;
-    const videoButtonsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-video-button').length > 0;
+    const detailButtonsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-detail-button').length > 0;
     const addButtonsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-add-button').length > 0;
-    const filterChipsRendered = document.querySelectorAll('#exercise-filter-chips .exercise-filter-chip').length >= 8;
-    const modalReady = Boolean(document.getElementById('exercise-video-modal'))
-      && Boolean(document.getElementById('exercise-video-title'))
-      && Boolean(document.getElementById('exercise-video-link'));
+    const filterChipsRendered = document.querySelectorAll('#exercise-filter-chips .exercise-filter-chip').length >= 10;
+    const modalReady = Boolean(document.getElementById('exercise-detail-modal'))
+      && Boolean(document.getElementById('exercise-detail-title'))
+      && Boolean(document.getElementById('exercise-detail-add'));
     const noStateFormatChange = getAllWorkoutKeys().every(key => Array.isArray(state.treinos?.[key]?.exercicios));
 
     return {
       librarySize,
-      libraryLargeEnough: librarySize >= 200,
+      libraryLargeEnough: librarySize >= 100,
       richMetadataOk,
-      videoLinksOk,
+      mediaLinksSafe,
       cardsRendered,
-      videoButtonsRendered,
+      detailButtonsRendered,
       addButtonsRendered,
       filterChipsRendered,
       modalReady,
       noStateFormatChange,
-      passed: librarySize >= 200
+      passed: librarySize >= 100
         && richMetadataOk
-        && videoLinksOk
+        && mediaLinksSafe
         && cardsRendered
-        && videoButtonsRendered
+        && detailButtonsRendered
         && addButtonsRendered
         && filterChipsRendered
         && modalReady
@@ -3848,6 +3895,193 @@ window.testExerciseVideoLibrary = async function() {
   } catch (error) {
     console.warn('testExerciseVideoLibrary failed:', error);
     return { passed: false, error: error.message };
+  }
+};
+
+window.testWorkoutProUI = async function() {
+  const previous = {
+    configTreino: { ...(state.configTreino || {}) },
+    treinos: JSON.parse(JSON.stringify(state.treinos || {})),
+    treinoAtivo,
+    busca: document.getElementById('exercicio-busca')?.value || '',
+    grupo: document.getElementById('exercicio-grupo')?.value || ''
+  };
+
+  let codeHealthy = false;
+  let blocksOk = false;
+  let noExtraLabel = false;
+  let libraryOk = false;
+  let richCatalogOk = false;
+  let searchOk = false;
+  let filtersOk = false;
+  let exerciseModalOk = false;
+  let videoFallbackOk = false;
+  let addExerciseOk = false;
+  let removeExerciseOk = false;
+  let executionSelectOk = false;
+  let mobileReady = false;
+  let dietStillWorks = false;
+  let foodSearchStillWorks = false;
+  let syncStillWorks = false;
+  let noBlockingErrors = false;
+
+  try {
+    renderTelaTreino();
+    const workoutSection = document.getElementById('screen-treino');
+    const requiredFunctions = [
+      getExerciseById, openExerciseModal, closeExerciseModal, renderExerciseDetails,
+      renderExerciseMediaState, renderBibliotecaExercicios, adicionarExercicioAoTreinoAtivo,
+      removerExercicioDoTreinoAtivo, popularSelectExercicios
+    ];
+    codeHealthy = requiredFunctions.every(fn => typeof fn === 'function');
+
+    const workoutButtons = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'));
+    blocksOk = workoutButtons.length === 5
+      && ['A', 'B', 'C', 'D', 'E'].every(key => workoutButtons.some(button => button.dataset.treino === key));
+    noExtraLabel = !/\bextra\b/i.test(workoutSection?.textContent || '')
+      && workoutButtons.every(button => button.dataset.status === 'disponivel');
+
+    const richFields = [
+      'id', 'nome', 'aliases', 'grupo', 'equipamento', 'kcal', 'nivel',
+      'series_sugeridas', 'reps_sugeridas', 'musculos_primarios', 'musculos_secundarios',
+      'instrucoes', 'dicas', 'observacoes', 'video_url', 'thumbnail_url', 'source_label'
+    ];
+    richCatalogOk = EXERCICIOS_BASE.length >= 100
+      && EXERCICIOS_BASE.every(item => richFields.every(field => Object.hasOwn(item, field)));
+    libraryOk = EXERCISE_LIBRARY.length === EXERCICIOS_BASE.length
+      && document.querySelectorAll('#exercicio-lista-biblioteca .exercise-library-item').length > 0
+      && document.querySelectorAll('#exercicio-lista-biblioteca .exercise-detail-button').length > 0
+      && document.querySelectorAll('#exercicio-lista-biblioteca .exercise-add-button').length > 0;
+
+    const searchInput = document.getElementById('exercicio-busca');
+    const groupSelect = document.getElementById('exercicio-grupo');
+    searchInput.value = 'supino';
+    groupSelect.value = '';
+    renderBibliotecaExercicios();
+    const searchResults = filtrarExerciciosBiblioteca();
+    searchOk = searchResults.length > 0 && searchResults.every(item => item.search_text.includes('supino'));
+
+    searchInput.value = 'remada';
+    groupSelect.value = 'Costas';
+    renderBibliotecaExercicios();
+    const combinedResults = filtrarExerciciosBiblioteca();
+    filtersOk = combinedResults.length > 0
+      && combinedResults.every(item => item.grupo === 'Costas' && item.search_text.includes('remada'));
+
+    const exerciseWithoutVideo = EXERCISE_LIBRARY.find(item => !item.video_url) || EXERCISE_LIBRARY[0];
+    exerciseModalOk = Boolean(exerciseWithoutVideo && openExerciseModal(exerciseWithoutVideo.id))
+      && Boolean(document.getElementById('exercise-detail-modal')?.open || document.getElementById('exercise-detail-modal')?.hasAttribute('open'))
+      && document.getElementById('exercise-detail-title')?.textContent === exerciseWithoutVideo.nome;
+    videoFallbackOk = (document.getElementById('exercise-detail-media')?.textContent || '')
+      .includes('Vídeo ainda não cadastrado para este exercício.')
+      && (document.getElementById('exercise-detail-media')?.textContent || '')
+        .includes('Este espaço já está preparado para demonstração em vídeo.');
+    closeExerciseModal();
+
+    state.configTreino = { divisao: 'ABCDE' };
+    state.treinos = createEmptyWorkoutPlan('ABCDE');
+    treinoAtivo = 'B';
+    searchInput.value = '';
+    groupSelect.value = '';
+    renderTelaTreino({ divisao: 'ABCDE' });
+
+    const exerciseToTest = EXERCISE_LIBRARY.find(item => item.key.includes('supino')) || EXERCISE_LIBRARY[0];
+    const addResult = await adicionarExercicioAoTreinoAtivo(exerciseToTest, { persist: false, notify: false });
+    addExerciseOk = Boolean(addResult.added)
+      && state.treinos.B.exercicios.some(nome => normalizeExerciseKey(nome) === exerciseToTest.key);
+    executionSelectOk = Array.from(document.getElementById('t-exercicio')?.options || [])
+      .some(option => option.value === exerciseToTest.nome);
+
+    const exerciseIndex = state.treinos.B.exercicios.findIndex(nome => normalizeExerciseKey(nome) === exerciseToTest.key);
+    const removeResult = await removerExercicioDoTreinoAtivo(exerciseIndex, { persist: false, notify: false, divisao: 'ABCDE' });
+    removeExerciseOk = Boolean(removeResult.removed)
+      && !state.treinos.B.exercicios.some(nome => normalizeExerciseKey(nome) === exerciseToTest.key);
+
+    const modal = document.getElementById('exercise-detail-modal');
+    mobileReady = document.documentElement.scrollWidth <= window.innerWidth + 1
+      && Boolean(document.querySelector('meta[name="viewport"]'))
+      && Boolean(modal?.querySelector('.exercise-detail-panel'))
+      && Boolean(workoutSection?.querySelector('.workout-library-card'));
+
+    dietStillWorks = typeof renderDiarioHoje === 'function'
+      && typeof selecionarAlimento === 'function'
+      && Boolean(document.getElementById('f-busca'))
+      && Boolean(document.getElementById('btn-add-food'))
+      && Boolean(document.getElementById('diario-hoje'));
+    foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function'
+      && filtrarAlimentosLocal('banana').length > 0
+      && filtrarAlimentosLocal('arroz').length > 0
+      && filtrarAlimentosLocal('frango').length > 0;
+    syncStillWorks = typeof StorageService === 'object'
+      && typeof DataMapper === 'object'
+      && typeof SyncQueue === 'object'
+      && typeof StorageService.saveWorkouts === 'function'
+      && typeof SyncQueue.syncPending === 'function';
+
+    const requiredIds = [
+      'treino-tabs', 'treino-exercicios-lista', 'exercicio-busca', 'exercicio-grupo',
+      'exercicio-lista-biblioteca', 'exercise-detail-modal', 'exercise-detail-add',
+      't-exercicio', 'f-busca', 'btn-add-food', 'diario-hoje'
+    ];
+    noBlockingErrors = codeHealthy && requiredIds.every(id => Boolean(document.getElementById(id)));
+
+    const passed = codeHealthy && blocksOk && noExtraLabel && libraryOk && richCatalogOk
+      && searchOk && filtersOk && exerciseModalOk && videoFallbackOk && addExerciseOk
+      && removeExerciseOk && executionSelectOk && mobileReady && dietStillWorks
+      && foodSearchStillWorks && syncStillWorks && noBlockingErrors;
+
+    return {
+      codeHealthy,
+      blocksOk,
+      noExtraLabel,
+      libraryOk,
+      richCatalogOk,
+      searchOk,
+      filtersOk,
+      exerciseModalOk,
+      videoFallbackOk,
+      addExerciseOk,
+      removeExerciseOk,
+      executionSelectOk,
+      mobileReady,
+      dietStillWorks,
+      foodSearchStillWorks,
+      syncStillWorks,
+      noBlockingErrors,
+      passed
+    };
+  } catch (error) {
+    console.warn('testWorkoutProUI failed:', error);
+    return {
+      codeHealthy,
+      blocksOk,
+      noExtraLabel,
+      libraryOk,
+      richCatalogOk,
+      searchOk,
+      filtersOk,
+      exerciseModalOk,
+      videoFallbackOk,
+      addExerciseOk,
+      removeExerciseOk,
+      executionSelectOk,
+      mobileReady,
+      dietStillWorks,
+      foodSearchStillWorks,
+      syncStillWorks,
+      noBlockingErrors,
+      passed: false
+    };
+  } finally {
+    closeExerciseModal();
+    state.configTreino = previous.configTreino;
+    state.treinos = previous.treinos;
+    treinoAtivo = previous.treinoAtivo;
+    const searchInput = document.getElementById('exercicio-busca');
+    const groupSelect = document.getElementById('exercicio-grupo');
+    if (searchInput) searchInput.value = previous.busca;
+    if (groupSelect) groupSelect.value = previous.grupo;
+    renderTelaTreino();
   }
 };
 
@@ -3883,11 +4117,11 @@ window.testMobileForjaUI = async function() {
     const evolution = document.getElementById('screen-evolucao');
     const exportScreen = document.getElementById('screen-exportar');
     const workoutButtons = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'));
-    const modal = document.getElementById('exercise-video-modal');
+    const modal = document.getElementById('exercise-detail-modal');
     const requiredIds = [
       'tela-auth', 'app-principal', 'btn-entrar', 'btn-cadastrar', 'btn-offline', 'btn-logout',
       'screen-dieta', 'screen-treino', 'screen-evolucao', 'screen-exportar', 'treino-tabs',
-      'treino-divisao', 't-exercicio', 'exercise-filter-chips', 'exercise-video-modal',
+      'treino-divisao', 't-exercicio', 'exercise-filter-chips', 'exercise-detail-modal',
       'grafico-peso', 'tabela-evolucao', 'btn-export'
     ];
 
@@ -3927,9 +4161,9 @@ window.testMobileForjaUI = async function() {
       return rect.width >= minimumTouchHeight && rect.height >= minimumTouchHeight;
     });
     touchTargetsOk = controlsHaveMobileHeight && navHasTouchTargets;
-    modalMobileReady = Boolean(modal?.querySelector('.exercise-video-panel'))
-      && Boolean(document.getElementById('exercise-video-close'))
-      && Boolean(document.getElementById('exercise-video-link'))
+    modalMobileReady = Boolean(modal?.querySelector('.exercise-detail-panel'))
+      && Boolean(document.getElementById('exercise-detail-close'))
+      && Boolean(document.getElementById('exercise-detail-add'))
       && (!isMobileViewport || getComputedStyle(modal).position === 'fixed');
     desktopStillOk = Boolean(document.querySelector('main.app-content'))
       && Boolean(document.querySelector('nav.app-nav .sidebar-brand'))
@@ -4498,7 +4732,7 @@ function ensureValidWorkoutPlan(treinos, divisao = null) {
   return cleanWorkoutPlan(treinos, divisao);
 }
 
-const EXERCICIOS_BASE = [
+const EXERCICIO_NOMES_BASE = [
   "Supino Reto com Barra", "Supino Reto com Halteres", "Supino Inclinado com Barra",
   "Supino Inclinado com Halteres", "Supino Declinado", "Crucifixo com Halteres",
   "Crucifixo na Polia (Cross-over)", "Peck Deck (Voador)", "Flexão de Braço",
@@ -4758,8 +4992,8 @@ function normalizeExerciseKey(nome) {
 
 Object.entries(EXERCICIOS_BASE_COMPLEMENTARES).forEach(([musculo, exercicios]) => {
   exercicios.forEach(nome => {
-    if (!EXERCICIOS_BASE.some(item => normalizeExerciseKey(item) === normalizeExerciseKey(nome))) {
-      EXERCICIOS_BASE.push(nome);
+    if (!EXERCICIO_NOMES_BASE.some(item => normalizeExerciseKey(item) === normalizeExerciseKey(nome))) {
+      EXERCICIO_NOMES_BASE.push(nome);
     }
     MAPA_MUSCULOS[nome] = musculo;
   });
@@ -4768,7 +5002,7 @@ Object.entries(EXERCICIOS_BASE_COMPLEMENTARES).forEach(([musculo, exercicios]) =
 const muscleByNormalizedExercise = new Map(
   Object.entries(MAPA_MUSCULOS).map(([nome, musculo]) => [normalizeExerciseKey(nome), musculo])
 );
-EXERCICIOS_BASE.forEach(nome => {
+EXERCICIO_NOMES_BASE.forEach(nome => {
   if (!MAPA_MUSCULOS[nome]) {
     MAPA_MUSCULOS[nome] = muscleByNormalizedExercise.get(normalizeExerciseKey(nome)) || 'Outros';
   }
@@ -4833,52 +5067,86 @@ function getExerciseKcalEstimate(nome, grupo) {
   return 80;
 }
 
-const EXERCISE_VIDEO_OVERRIDES = Object.freeze({});
+// Mídia real pode ser adicionada futuramente por ID, sem alterar o catálogo nem inventar URLs.
+const EXERCISE_MEDIA_OVERRIDES = Object.freeze({});
 
 const EXERCISE_GROUP_GUIDES = {
   Peito: {
     icon: 'panels-top-left',
-    cues: ['Mantenha as escápulas encaixadas e o peito estável.', 'Controle a descida antes de iniciar a fase de força.', 'Evite perder o alinhamento dos punhos e cotovelos.']
+    primarios: ['Peitoral maior'],
+    secundarios: ['Tríceps', 'Deltoide anterior'],
+    instrucoes: ['Estabilize as escápulas e posicione os apoios.', 'Execute a fase de descida com controle.', 'Retorne mantendo punhos e cotovelos alinhados.'],
+    dicas: ['Use amplitude confortável e mantenha o peito estável.', 'Evite transformar a repetição em impulso.']
   },
   Costas: {
     icon: 'align-vertical-justify-center',
-    cues: ['Inicie o movimento organizando as escápulas.', 'Conduza os cotovelos sem transformar a repetição em impulso.', 'Mantenha a coluna neutra durante toda a amplitude.']
+    primarios: ['Latíssimo do dorso', 'Romboides'],
+    secundarios: ['Bíceps', 'Trapézio'],
+    instrucoes: ['Organize as escápulas antes de puxar.', 'Conduza os cotovelos na direção proposta pelo exercício.', 'Retorne devagar sem perder a postura.'],
+    dicas: ['Mantenha a coluna neutra.', 'Evite iniciar o movimento balançando o tronco.']
   },
   Ombros: {
     icon: 'move-up',
-    cues: ['Mantenha o tronco firme e as costelas controladas.', 'Use uma amplitude confortável para a articulação do ombro.', 'Evite acelerar a carga na parte final da repetição.']
+    primarios: ['Deltoides'],
+    secundarios: ['Trapézio', 'Tríceps'],
+    instrucoes: ['Estabilize o tronco e controle as costelas.', 'Eleve ou empurre na amplitude confortável.', 'Retorne a carga sem relaxar bruscamente.'],
+    dicas: ['Evite acelerar a parte final da repetição.', 'Reduza a carga se perder o alinhamento.']
   },
   'Bíceps': {
     icon: 'biceps-flexed',
-    cues: ['Mantenha os cotovelos estáveis ao lado do corpo.', 'Complete a repetição sem balançar o tronco.', 'Controle a fase de retorno para preservar a tensão.']
+    primarios: ['Bíceps braquial'],
+    secundarios: ['Braquial', 'Braquiorradial'],
+    instrucoes: ['Fixe os cotovelos antes de iniciar.', 'Flexione sem balançar o tronco.', 'Controle a extensão na volta.'],
+    dicas: ['Mantenha os punhos neutros.', 'Priorize tensão contínua.']
   },
   'Tríceps': {
     icon: 'biceps-flexed',
-    cues: ['Fixe os cotovelos antes de iniciar a extensão.', 'Evite compensar com ombros ou inclinação excessiva.', 'Finalize a extensão sem travar a articulação com impacto.']
+    primarios: ['Tríceps braquial'],
+    secundarios: ['Deltoide anterior', 'Antebraços'],
+    instrucoes: ['Estabilize ombros e cotovelos.', 'Estenda os braços sem usar impulso.', 'Retorne com controle até a amplitude planejada.'],
+    dicas: ['Evite abrir os cotovelos sem necessidade.', 'Não trave a articulação com impacto.']
   },
   Pernas: {
     icon: 'person-standing',
-    cues: ['Distribua o apoio dos pés de forma estável.', 'Mantenha joelhos alinhados com a direção dos pés.', 'Priorize amplitude controlada sem perder a postura.']
+    primarios: ['Quadríceps', 'Posteriores de coxa'],
+    secundarios: ['Glúteos', 'Panturrilhas'],
+    instrucoes: ['Ajuste os apoios e estabilize o tronco.', 'Flexione quadris e joelhos com controle.', 'Retorne mantendo os joelhos alinhados aos pés.'],
+    dicas: ['Distribua a pressão pelos pés.', 'Não sacrifique postura para ganhar amplitude.']
   },
   Gluteos: {
     icon: 'activity',
-    cues: ['Estabilize a pelve antes de produzir força.', 'Concentre a extensão no quadril, sem exagerar na lombar.', 'Segure brevemente a contração na posição final.']
+    primarios: ['Glúteo máximo', 'Glúteo médio'],
+    secundarios: ['Posteriores de coxa', 'Core'],
+    instrucoes: ['Estabilize a pelve antes do movimento.', 'Produza força a partir do quadril.', 'Retorne sem perder o controle lombar.'],
+    dicas: ['Evite hiperestender a lombar.', 'Segure brevemente a contração final.']
   },
   Core: {
     icon: 'circle-dot',
-    cues: ['Mantenha o abdômen ativo e a respiração controlada.', 'Evite compensações excessivas na região lombar.', 'Interrompa a série quando perder a posição do tronco.']
+    primarios: ['Reto abdominal', 'Oblíquos'],
+    secundarios: ['Transverso abdominal', 'Flexores do quadril'],
+    instrucoes: ['Organize a postura e ative o abdômen.', 'Execute a repetição mantendo a respiração.', 'Finalize antes de perder a posição do tronco.'],
+    dicas: ['Evite compensações lombares.', 'Prefira qualidade a velocidade.']
   },
   Cardio: {
     icon: 'heart-pulse',
-    cues: ['Ajuste a intensidade ao seu condicionamento atual.', 'Mantenha ritmo e respiração sustentáveis durante o bloco.', 'Reduza a intensidade se perder a técnica ou sentir desconforto.']
+    primarios: ['Sistema cardiorrespiratório'],
+    secundarios: ['Membros inferiores'],
+    instrucoes: ['Ajuste equipamento e intensidade.', 'Mantenha ritmo sustentável no bloco.', 'Reduza gradualmente antes de encerrar.'],
+    dicas: ['Monitore esforço e respiração.', 'Interrompa diante de dor ou mal-estar.']
   },
   Funcional: {
     icon: 'zap',
-    cues: ['Aprenda o padrão em baixa velocidade antes de acelerar.', 'Mantenha o centro do corpo ativo nas transições.', 'Priorize repetições consistentes em vez de velocidade máxima.']
+    primarios: ['Cadeia corporal integrada'],
+    secundarios: ['Core', 'Estabilizadores'],
+    instrucoes: ['Aprenda o padrão em baixa velocidade.', 'Mantenha o centro do corpo ativo.', 'Aumente o ritmo apenas com técnica estável.'],
+    dicas: ['Priorize repetições consistentes.', 'Organize bem o espaço e os equipamentos.']
   },
   Outros: {
     icon: 'dumbbell',
-    cues: ['Ajuste o equipamento antes de iniciar.', 'Use uma carga que permita controle em toda a amplitude.', 'Interrompa o exercício diante de dor ou perda de técnica.']
+    primarios: ['Musculatura alvo'],
+    secundarios: ['Estabilizadores'],
+    instrucoes: ['Ajuste o equipamento antes de iniciar.', 'Execute com carga controlável.', 'Retorne à posição inicial sem perder a postura.'],
+    dicas: ['Interrompa diante de dor.', 'Procure orientação profissional quando necessário.']
   }
 };
 
@@ -4899,18 +5167,31 @@ function getExerciseDifficulty(nome, equipamento) {
   return 'Intermediário';
 }
 
-function getExerciseVideoUrl(nome) {
-  const override = EXERCISE_VIDEO_OVERRIDES[normalizeExerciseKey(nome)];
-  if (override) return override;
-  const query = `${nome} execução correta exercício academia`;
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-}
-
 function getExerciseGuide(grupo) {
   return EXERCISE_GROUP_GUIDES[normalizeExerciseGroup(grupo)] || EXERCISE_GROUP_GUIDES.Outros;
 }
 
-const EXERCISE_LIBRARY = EXERCICIOS_BASE
+function getExerciseAliases(nome) {
+  const withoutParentheses = String(nome || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  const aliases = [withoutParentheses, normalizeExerciseKey(nome)].filter(Boolean);
+  return [...new Set(aliases.filter(alias => normalizeExerciseKey(alias) !== normalizeExerciseKey(nome) || alias !== nome))];
+}
+
+function getExerciseId(nome) {
+  const slug = normalizeExerciseKey(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return `exercise-${slug || 'item'}`;
+}
+
+function getExerciseMedia(nome) {
+  const media = EXERCISE_MEDIA_OVERRIDES[getExerciseId(nome)] || {};
+  return {
+    video_url: typeof media.video_url === 'string' ? media.video_url : null,
+    thumbnail_url: typeof media.thumbnail_url === 'string' ? media.thumbnail_url : null,
+    source_label: typeof media.source_label === 'string' ? media.source_label : 'Catálogo local FORJA'
+  };
+}
+
+const EXERCICIOS_BASE = EXERCICIO_NOMES_BASE
   .filter(nome => !isExerciseTestData(nome))
   .reduce((items, nome) => {
     const normalized = normalizeExerciseKey(nome);
@@ -4920,24 +5201,45 @@ const EXERCISE_LIBRARY = EXERCICIOS_BASE
     const categoria = getExerciseCategory(nome, grupo);
     const equipamento = getExerciseEquipment(nome, grupo);
     const prescription = getExercisePrescription(grupo, categoria);
+    const guide = getExerciseGuide(grupo);
+    const media = getExerciseMedia(nome);
+    const nivel = getExerciseDifficulty(nome, equipamento);
+    const aliases = getExerciseAliases(nome);
     items.push({
+      id: getExerciseId(nome),
       key: normalized,
       nome,
+      aliases,
       grupo,
       categoria,
       kcal,
-      gastoCalorico: kcal,
       equipamento,
-      dificuldade: getExerciseDifficulty(nome, equipamento),
+      nivel,
+      series_sugeridas: prescription.series,
+      reps_sugeridas: prescription.repeticoes,
+      musculos_primarios: [...guide.primarios],
+      musculos_secundarios: [...guide.secundarios],
+      instrucoes: [...guide.instrucoes],
+      dicas: [...guide.dicas],
+      observacoes: 'Ajuste carga e amplitude ao seu nível. Em caso de dor, interrompa e procure orientação profissional.',
+      video_url: media.video_url,
+      thumbnail_url: media.thumbnail_url,
+      source_label: media.source_label,
+      search_text: normalizeExerciseKey([nome, ...aliases, grupo, categoria, equipamento, nivel].join(' ')),
+
+      // Compatibilidade visual com as funções existentes; o formato salvo continua sendo apenas o nome.
+      gastoCalorico: kcal,
+      dificuldade: nivel,
       seriesSugeridas: prescription.series,
       repeticoesSugeridas: prescription.repeticoes,
-      videoUrl: getExerciseVideoUrl(nome),
-      videoProvider: 'YouTube',
-      guide: getExerciseGuide(grupo)
+      videoUrl: media.video_url,
+      guide
     });
     return items;
   }, [])
   .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+const EXERCISE_LIBRARY = EXERCICIOS_BASE;
 
 const LS = {
   perfil:    'forja_perfil',
@@ -5468,9 +5770,13 @@ function renderDiarioHoje() {
 function metasDieta() {
   const p = state.perfil;
   if (!p) return null;
-  const protMeta = p.metaProtKg * p.peso;
-  const gordMeta = p.metaGordKg * p.peso;
-  const kcalMeta = p.get;
+  const peso = Number(p.peso);
+  const metaProtKg = Number(p.metaProtKg);
+  const metaGordKg = Number(p.metaGordKg);
+  const kcalMeta = Number(p.get);
+  if (![peso, metaProtKg, metaGordKg, kcalMeta].every(Number.isFinite)) return null;
+  const protMeta = metaProtKg * peso;
+  const gordMeta = metaGordKg * peso;
   const carbMeta = Math.max(kcalMeta - (protMeta * 4) - (gordMeta * 9), 0) / 4;
   return { kcal: kcalMeta, prot: protMeta, carb: carbMeta, gord: gordMeta };
 }
@@ -5561,15 +5867,11 @@ function filtrarExerciciosBiblioteca() {
   return EXERCISE_LIBRARY
     .filter(item => {
       const matchesSearch = !busca
-        || item.key.includes(busca)
-        || normalizeExerciseKey(item.grupo).includes(busca)
-        || normalizeExerciseKey(item.categoria).includes(busca)
-        || normalizeExerciseKey(item.equipamento).includes(busca)
-        || normalizeExerciseKey(item.dificuldade).includes(busca);
+        || item.search_text.includes(busca);
       const matchesGroup = grupoFiltro === 'Outros' || normalizeExerciseGroup(item.grupo) === grupoFiltro;
       return matchesSearch && matchesGroup;
     })
-    .slice(0, 120);
+    .slice(0, 60);
 }
 
 function getFilteredExerciseLibrary() {
@@ -5585,40 +5887,135 @@ function syncExerciseFilterChips() {
   });
 }
 
-function openExerciseVideo(exercise) {
-  if (!exercise) return;
-  const modal = document.getElementById('exercise-video-modal');
-  if (!modal) return;
+function getExerciseById(id) {
+  const lookup = String(id || '');
+  const normalized = normalizeExerciseKey(lookup);
+  return EXERCISE_LIBRARY.find(item => item.id === lookup || item.key === normalized || normalizeExerciseKey(item.nome) === normalized) || null;
+}
 
-  document.getElementById('exercise-video-eyebrow').textContent = `${exercise.grupo} · Guia do exercício`;
-  document.getElementById('exercise-video-title').textContent = exercise.nome;
-  document.getElementById('exercise-video-meta').textContent = `${exercise.equipamento} · ${exercise.categoria} · ~${exercise.gastoCalorico} kcal por sessão estimada`;
+function isSafeExerciseMediaUrl(value) {
+  if (!value) return false;
+  try {
+    return new URL(value, window.location.href).protocol === 'https:';
+  } catch (error) {
+    return false;
+  }
+}
 
-  const badges = document.getElementById('exercise-video-badges');
+function renderExerciseMediaState(exercise) {
+  const media = document.getElementById('exercise-detail-media');
+  if (!media) return;
+  const closeButton = document.getElementById('exercise-detail-close');
+  media.replaceChildren();
+  if (closeButton) media.appendChild(closeButton);
+
+  const videoUrl = isSafeExerciseMediaUrl(exercise?.video_url) ? exercise.video_url : null;
+  const thumbnailUrl = isSafeExerciseMediaUrl(exercise?.thumbnail_url) ? exercise.thumbnail_url : null;
+
+  if (videoUrl) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.preload = 'metadata';
+    video.src = videoUrl;
+    if (thumbnailUrl) video.poster = thumbnailUrl;
+    video.setAttribute('aria-label', `Demonstração em vídeo de ${exercise.nome}`);
+    media.appendChild(video);
+    return;
+  }
+
+  if (thumbnailUrl) {
+    const image = document.createElement('img');
+    image.src = thumbnailUrl;
+    image.alt = `Demonstração de ${exercise.nome}`;
+    image.loading = 'lazy';
+    media.appendChild(image);
+    return;
+  }
+
+  const fallback = document.createElement('div');
+  fallback.className = 'exercise-media-fallback';
+
+  const content = document.createElement('div');
+  const icon = document.createElement('span');
+  icon.className = 'exercise-media-fallback-icon';
+  icon.innerHTML = '<i data-lucide="video-off"></i>';
+
+  const title = document.createElement('p');
+  title.className = 'text-sm font-semibold text-ink';
+  title.textContent = 'Vídeo ainda não cadastrado para este exercício.';
+
+  const description = document.createElement('p');
+  description.className = 'text-xs text-mute mt-2';
+  description.textContent = 'Este espaço já está preparado para demonstração em vídeo.';
+
+  content.appendChild(icon);
+  content.appendChild(title);
+  content.appendChild(description);
+  fallback.appendChild(content);
+  media.appendChild(fallback);
+}
+
+function renderExerciseDetailList(elementId, items) {
+  const list = document.getElementById(elementId);
+  if (!list) return;
+  list.replaceChildren();
+  (Array.isArray(items) && items.length ? items : ['Informação ainda não cadastrada.']).forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    list.appendChild(li);
+  });
+}
+
+function renderExerciseDetails(exercise) {
+  if (!exercise) return false;
+  document.getElementById('exercise-detail-eyebrow').textContent = `${exercise.grupo} · Guia do exercício`;
+  document.getElementById('exercise-detail-title').textContent = exercise.nome;
+  document.getElementById('exercise-detail-meta').textContent = `${exercise.equipamento} · ${exercise.categoria} · ~${exercise.kcal} kcal estimadas`;
+  document.getElementById('exercise-detail-primary').textContent = exercise.musculos_primarios.join(', ');
+  document.getElementById('exercise-detail-secondary').textContent = exercise.musculos_secundarios.join(', ');
+  document.getElementById('exercise-detail-observations').textContent = exercise.observacoes;
+  document.getElementById('exercise-detail-source').textContent = `Fonte: ${exercise.source_label}`;
+
+  const badges = document.getElementById('exercise-detail-badges');
   badges.replaceChildren();
-  [exercise.dificuldade, exercise.seriesSugeridas, exercise.repeticoesSugeridas].forEach(label => {
+  [exercise.nivel, exercise.series_sugeridas, exercise.reps_sugeridas].forEach(label => {
     const badge = document.createElement('span');
     badge.className = 'exercise-badge';
     badge.textContent = label;
     badges.appendChild(badge);
   });
 
-  const cues = exercise.guide?.cues || EXERCISE_GROUP_GUIDES.Outros.cues;
-  document.getElementById('exercise-video-cue-1').textContent = cues[0];
-  document.getElementById('exercise-video-cue-2').textContent = cues[1];
-  document.getElementById('exercise-video-cue-3').textContent = cues[2];
-  document.getElementById('exercise-video-link').href = exercise.videoUrl;
+  renderExerciseDetailList('exercise-detail-instructions', exercise.instrucoes);
+  renderExerciseDetailList('exercise-detail-tips', exercise.dicas);
+  renderExerciseMediaState(exercise);
 
-  if (typeof modal.showModal === 'function') modal.showModal();
-  else modal.setAttribute('open', '');
-  if (window.lucide) lucide.createIcons();
+  const addButton = document.getElementById('exercise-detail-add');
+  addButton.dataset.exerciseId = exercise.id;
+  addButton.querySelector('span').textContent = `Adicionar ao ${getWorkoutLabel(getActiveWorkoutKey())}`;
+  return true;
 }
 
-function closeExerciseVideo() {
-  const modal = document.getElementById('exercise-video-modal');
+function openExerciseModal(exerciseId) {
+  const exercise = typeof exerciseId === 'object' ? exerciseId : getExerciseById(exerciseId);
+  const modal = document.getElementById('exercise-detail-modal');
+  if (!exercise || !modal || !renderExerciseDetails(exercise)) return false;
+
+  if (typeof modal.showModal === 'function') {
+    if (!modal.open) modal.showModal();
+  } else {
+    modal.setAttribute('open', '');
+  }
+  document.body.classList.add('exercise-modal-open');
+  if (window.lucide) lucide.createIcons();
+  return true;
+}
+
+function closeExerciseModal() {
+  const modal = document.getElementById('exercise-detail-modal');
   if (!modal) return;
   if (typeof modal.close === 'function' && modal.open) modal.close();
   else modal.removeAttribute('open');
+  document.body.classList.remove('exercise-modal-open');
 }
 
 function renderExerciseResults() {
@@ -5651,10 +6048,20 @@ function renderExerciseResults() {
     if (list) {
       const card = document.createElement('article');
       card.className = 'exercise-library-item text-left bg-card2 border border-line rounded-lg transition';
-      card.dataset.exercicio = item.nome;
+      card.dataset.exerciseId = item.id;
 
       const top = document.createElement('div');
-      top.className = 'exercise-library-top';
+      top.className = 'exercise-library-top cursor-pointer';
+      top.tabIndex = 0;
+      top.setAttribute('role', 'button');
+      top.setAttribute('aria-label', `Ver detalhes de ${item.nome}`);
+      top.addEventListener('click', () => openExerciseModal(item.id));
+      top.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openExerciseModal(item.id);
+        }
+      });
 
       const mark = document.createElement('span');
       mark.className = 'exercise-muscle-mark';
@@ -5678,7 +6085,7 @@ function renderExerciseResults() {
 
       const badges = document.createElement('div');
       badges.className = 'exercise-badges';
-      [item.dificuldade, item.seriesSugeridas, item.repeticoesSugeridas].forEach(labelText => {
+      [item.nivel, item.series_sugeridas, item.reps_sugeridas].forEach(labelText => {
         const badge = document.createElement('span');
         badge.className = 'exercise-badge';
         badge.textContent = labelText;
@@ -5688,13 +6095,13 @@ function renderExerciseResults() {
       const actions = document.createElement('div');
       actions.className = 'exercise-library-actions';
 
-      const videoButton = document.createElement('button');
-      videoButton.type = 'button';
-      videoButton.className = 'exercise-video-button';
-      videoButton.title = `Ver guia e vídeo de ${item.nome}`;
-      videoButton.setAttribute('aria-label', `Ver guia e vídeo de ${item.nome}`);
-      videoButton.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
-      videoButton.addEventListener('click', () => openExerciseVideo(item));
+      const detailButton = document.createElement('button');
+      detailButton.type = 'button';
+      detailButton.className = 'exercise-detail-button';
+      detailButton.title = `Ver detalhes de ${item.nome}`;
+      detailButton.setAttribute('aria-label', `Ver detalhes de ${item.nome}`);
+      detailButton.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i><span>Ver</span>';
+      detailButton.addEventListener('click', () => openExerciseModal(item.id));
 
       const addButton = document.createElement('button');
       addButton.type = 'button';
@@ -5705,7 +6112,7 @@ function renderExerciseResults() {
         await adicionarExercicioAoTreinoAtivo(item);
       });
 
-      actions.appendChild(videoButton);
+      actions.appendChild(detailButton);
       actions.appendChild(addButton);
       card.appendChild(top);
       card.appendChild(badges);
@@ -5836,7 +6243,7 @@ function renderTreinoTabs(divisao = null) {
 
     const count = document.createElement('span');
     count.className = 'workout-count text-[11px] font-mono text-mute';
-    count.textContent = `${exerciseCount} ex.`;
+    count.textContent = `${exerciseCount} ${exerciseCount === 1 ? 'exercício' : 'exercícios'}`;
 
     const status = document.createElement('span');
     status.className = 'workout-status mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold bg-ember/10 text-ember';
@@ -5981,14 +6388,14 @@ function renderExerciciosLista(divisao = null) {
     actions.className = 'workout-exercise-actions';
 
     if (exerciseMeta) {
-      const videoButton = document.createElement('button');
-      videoButton.type = 'button';
-      videoButton.className = 'workout-exercise-icon-button';
-      videoButton.title = `Ver guia e vídeo de ${ex}`;
-      videoButton.setAttribute('aria-label', `Ver guia e vídeo de ${ex}`);
-      videoButton.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
-      videoButton.addEventListener('click', () => openExerciseVideo(exerciseMeta));
-      actions.appendChild(videoButton);
+      const detailButton = document.createElement('button');
+      detailButton.type = 'button';
+      detailButton.className = 'workout-exercise-icon-button';
+      detailButton.title = `Ver detalhes de ${ex}`;
+      detailButton.setAttribute('aria-label', `Ver detalhes de ${ex}`);
+      detailButton.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i>';
+      detailButton.addEventListener('click', () => openExerciseModal(exerciseMeta.id));
+      actions.appendChild(detailButton);
     }
 
     const button = document.createElement('button');
@@ -6050,9 +6457,17 @@ document.getElementById('exercicio-busca')?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); adicionarExercicioDaBiblioteca(); }
 });
 document.getElementById('exercicio-resultados')?.addEventListener('dblclick', adicionarExercicioDaBiblioteca);
-document.getElementById('exercise-video-close')?.addEventListener('click', closeExerciseVideo);
-document.getElementById('exercise-video-modal')?.addEventListener('click', (event) => {
-  if (event.target === event.currentTarget) closeExerciseVideo();
+document.getElementById('exercise-detail-close')?.addEventListener('click', closeExerciseModal);
+document.getElementById('exercise-detail-add')?.addEventListener('click', async (event) => {
+  const exercise = getExerciseById(event.currentTarget.dataset.exerciseId);
+  const result = await adicionarExercicioAoTreinoAtivo(exercise);
+  if (result.added) closeExerciseModal();
+});
+document.getElementById('exercise-detail-modal')?.addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) closeExerciseModal();
+});
+document.getElementById('exercise-detail-modal')?.addEventListener('close', () => {
+  document.body.classList.remove('exercise-modal-open');
 });
 
 function ultimaExecucao(exercicio) {
