@@ -249,17 +249,194 @@
     border-radius: 9px !important;
     padding: 11px 12px;
   }
+  .workout-exercise-actions { display: flex; align-items: center; gap: 6px; margin-left: 10px; }
+  .workout-exercise-icon-button {
+    width: 34px;
+    height: 34px;
+    min-height: 34px !important;
+    display: grid;
+    place-items: center;
+    color: var(--forja-muted);
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(72,77,91,.62);
+    border-radius: 8px;
+  }
+  .workout-exercise-icon-button:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 42%, transparent); }
   #exercicio-lista-biblioteca { scrollbar-color: var(--forja-line) transparent; }
-  #exercicio-lista-biblioteca > button {
+  .exercise-library-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 8px;
+    color: var(--forja-muted);
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(70,75,89,.55);
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .exercise-filter-chips {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 1px 0 5px;
+    scrollbar-width: none;
+  }
+  .exercise-filter-chips::-webkit-scrollbar { display: none; }
+  .exercise-filter-chip {
+    flex: 0 0 auto;
+    min-height: 34px !important;
+    padding: 0 11px;
+    color: var(--forja-muted);
+    background: rgba(26,29,38,.82);
+    border: 1px solid rgba(67,72,86,.62);
+    border-radius: 8px;
+    font-size: 11px;
+    transition: color .18s ease, border-color .18s ease, background-color .18s ease;
+  }
+  .exercise-filter-chip:hover,
+  .exercise-filter-chip.active {
+    color: var(--color-primary);
+    border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 10%, rgba(26,29,38,.9));
+  }
+  #exercicio-lista-biblioteca > .exercise-library-item {
     position: relative;
     background: rgba(25,28,37,.86) !important;
     border-color: rgba(67,72,86,.62) !important;
     border-radius: 10px !important;
     padding: 12px 13px !important;
   }
-  #exercicio-lista-biblioteca > button:hover {
+  #exercicio-lista-biblioteca > .exercise-library-item:hover {
     background: color-mix(in srgb, var(--color-primary) 8%, rgba(25,28,37,.92)) !important;
     transform: translateY(-1px);
+  }
+  .exercise-library-top { display: flex; align-items: flex-start; gap: 10px; }
+  .exercise-muscle-mark {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: grid;
+    place-items: center;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+    border-radius: 9px;
+  }
+  .exercise-muscle-mark svg { width: 18px; height: 18px; }
+  .exercise-library-meta { min-width: 0; flex: 1; }
+  .exercise-library-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .exercise-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+  .exercise-badge {
+    padding: 3px 6px;
+    color: var(--forja-muted);
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(67,72,86,.5);
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 600;
+  }
+  .exercise-library-actions { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 7px; margin-top: 10px; }
+  .exercise-video-button,
+  .exercise-add-button {
+    min-height: 36px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .exercise-video-button {
+    color: var(--forja-text);
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(77,82,97,.72);
+  }
+  .exercise-video-button:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 45%, transparent); }
+  .exercise-add-button {
+    color: #101116;
+    background: var(--color-primary);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 76%, white 8%);
+  }
+  .exercise-add-button:hover { background: var(--color-primary-hover); }
+  .exercise-video-dialog {
+    width: min(540px, calc(100vw - 28px));
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    padding: 0;
+    color: var(--forja-text);
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .exercise-video-dialog::backdrop { background: rgba(2,3,6,.78); backdrop-filter: blur(8px); }
+  .exercise-video-panel {
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(26,29,38,.99), rgba(13,15,21,.99));
+    border: 1px solid rgba(84,89,104,.7);
+    border-radius: 14px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.58);
+  }
+  .exercise-video-hero {
+    position: relative;
+    min-height: 184px;
+    display: grid;
+    place-items: center;
+    background-color: #0d0f15;
+    background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    background-size: 28px 28px;
+    border-bottom: 1px solid rgba(70,75,89,.55);
+  }
+  .exercise-video-play {
+    width: 70px;
+    height: 70px;
+    display: grid;
+    place-items: center;
+    color: #0d0e12;
+    background: var(--color-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-primary) 10%, transparent), 0 16px 44px rgba(0,0,0,.35);
+  }
+  .exercise-video-play svg { width: 29px; height: 29px; fill: currentColor; }
+  .exercise-video-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px !important;
+    display: grid;
+    place-items: center;
+    color: var(--forja-muted);
+    background: rgba(8,9,13,.72);
+    border: 1px solid rgba(80,85,99,.7);
+    border-radius: 8px;
+  }
+  .exercise-video-body { padding: 20px; }
+  .exercise-video-cues { display: grid; gap: 8px; margin-top: 16px; }
+  .exercise-video-cue {
+    display: flex;
+    gap: 9px;
+    color: var(--forja-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .exercise-video-cue svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 1px; color: var(--forja-green); }
+  .exercise-video-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 18px;
+    color: #101116;
+    background: var(--color-primary);
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 800;
   }
   #cronometro-display { text-shadow: 0 0 28px rgba(255,255,255,.06); }
   .evolution-chart { min-height: 340px; }
@@ -350,13 +527,21 @@
       font-size: 11px;
       line-height: 1.55;
     }
-    .screen.active.diet-grid { display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
-    .diet-grid .screen-intro { grid-column: 1 / -1; margin-bottom: 0; }
-    .card-profile { grid-column: span 4; }
-    .card-food { grid-column: span 4; }
-    .card-diary { grid-column: span 4; }
-    .card-hydration { grid-column: span 4; }
-    .card-nutrition { grid-column: span 8; }
+    .screen.active.diet-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-areas:
+        "intro intro intro"
+        "profile food diary"
+        "hydration nutrition diary";
+      gap: 18px;
+    }
+    .diet-grid .screen-intro { grid-area: intro; margin-bottom: 0; }
+    .card-profile { grid-area: profile; }
+    .card-food { grid-area: food; }
+    .card-diary { grid-area: diary; align-self: stretch; }
+    .card-hydration { grid-area: hydration; }
+    .card-nutrition { grid-area: nutrition; }
     .workout-layout { display: grid !important; grid-template-columns: minmax(220px, 3fr) minmax(360px, 5fr) minmax(320px, 4fr); gap: 18px !important; }
     .screen.active.evolution-grid { display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
     .evolution-grid .screen-intro { grid-column: 1 / -1; margin-bottom: 0; }
@@ -383,6 +568,15 @@
     .screen.active.diet-grid,
     .screen.active.evolution-grid,
     .screen.active.export-grid { display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .screen.active.diet-grid {
+      grid-template-areas:
+        "intro"
+        "profile"
+        "food"
+        "hydration"
+        "nutrition"
+        "diary";
+    }
     .card-profile { order: 1; }
     .card-food { order: 2; }
     .card-hydration { order: 3; }
@@ -790,7 +984,8 @@
       <div class="flex items-center justify-between gap-3 mb-3">
         <div>
           <h2 class="font-display font-semibold text-lg">Biblioteca de exercícios</h2>
-          <p class="text-xs text-mute">Exercícios prontos para adicionar ao treino ativo.</p>
+          <p class="text-xs text-mute">Catálogo completo com orientação e acesso a vídeos.</p>
+          <span class="exercise-library-count"><i data-lucide="database" class="w-3 h-3"></i><span id="exercise-library-count">0</span> exercícios cadastrados</span>
         </div>
         <i data-lucide="library" class="w-5 h-5 text-mute"></i>
       </div>
@@ -822,7 +1017,18 @@
             <select id="exercicio-resultados" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm"></select>
           </div>
         </div>
-        <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1"></div>
+        <div id="exercise-filter-chips" class="exercise-filter-chips" aria-label="Filtros rápidos por grupo muscular">
+          <button type="button" class="exercise-filter-chip active" data-exercise-group="">Todos</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Peito">Peito</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Costas">Costas</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Ombros">Ombros</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Pernas">Pernas</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Bíceps">Bíceps</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Tríceps">Tríceps</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Core">Abdômen</button>
+          <button type="button" class="exercise-filter-chip" data-exercise-group="Cardio">Cardio</button>
+        </div>
+        <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1"></div>
         <button id="btn-add-exercicio" type="button" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200 flex items-center justify-center gap-1.5">
           <i data-lucide="plus" class="w-4 h-4"></i> Adicionar exercício
         </button>
@@ -1003,6 +1209,30 @@
     </div>
   </section>
 </main>
+
+<dialog id="exercise-video-modal" class="exercise-video-dialog" aria-labelledby="exercise-video-title">
+  <div class="exercise-video-panel">
+    <div class="exercise-video-hero">
+      <button type="button" id="exercise-video-close" class="exercise-video-close" title="Fechar"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <div class="exercise-video-play"><i data-lucide="play"></i></div>
+    </div>
+    <div class="exercise-video-body">
+      <p id="exercise-video-eyebrow" class="text-[10px] uppercase font-semibold text-ember">Guia do exercício</p>
+      <h2 id="exercise-video-title" class="font-display font-semibold text-xl mt-1">Exercício</h2>
+      <p id="exercise-video-meta" class="text-xs text-mute mt-2"></p>
+      <div id="exercise-video-badges" class="exercise-badges"></div>
+      <div class="exercise-video-cues">
+        <p class="exercise-video-cue"><i data-lucide="check-circle-2"></i><span id="exercise-video-cue-1"></span></p>
+        <p class="exercise-video-cue"><i data-lucide="check-circle-2"></i><span id="exercise-video-cue-2"></span></p>
+        <p class="exercise-video-cue"><i data-lucide="shield-check"></i><span id="exercise-video-cue-3"></span></p>
+      </div>
+      <a id="exercise-video-link" class="exercise-video-link" href="#" target="_blank" rel="noopener noreferrer">
+        <i data-lucide="play-circle" class="w-4 h-4"></i> Assistir demonstração em vídeo
+      </a>
+      <p class="text-[10px] text-mute text-center mt-2">A demonstração abre em uma nova guia. Priorize sempre orientação profissional.</p>
+    </div>
+  </div>
+</dialog>
 
 <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-card2 border border-ember/40 text-sm px-4 py-2.5 rounded-xl z-50 shadow-lg"></div>
 
@@ -3272,7 +3502,7 @@ window.testForjaPremiumUI = async function() {
     const requiredIds = [
       'app-principal', 'screen-dieta', 'screen-treino', 'screen-evolucao', 'screen-exportar',
       'treino-divisao', 'treino-tabs', 'treino-exercicios-lista', 'exercicio-lista-biblioteca',
-      't-exercicio', 'grafico-peso', 'tbody-evolucao', 'btn-export'
+      'exercise-video-modal', 'exercise-video-link', 't-exercicio', 'grafico-peso', 'tbody-evolucao', 'btn-export'
     ];
 
     desktopLayoutOk = Boolean(main?.classList.contains('app-content'))
@@ -3296,8 +3526,9 @@ window.testForjaPremiumUI = async function() {
       && ['A', 'B', 'C', 'D', 'E'].every(key => workoutKeys.includes(key));
     noExtraLabel = !/\bextra\b/i.test(workout?.textContent || '')
       && workoutButtons.every(button => button.dataset.status !== 'extra');
-    exerciseLibraryOk = EXERCISE_LIBRARY.length >= 100
-      && (document.getElementById('exercicio-lista-biblioteca')?.children.length || 0) > 0;
+    exerciseLibraryOk = EXERCISE_LIBRARY.length >= 200
+      && EXERCISE_LIBRARY.every(item => Boolean(item.videoUrl && item.dificuldade && item.seriesSugeridas && item.repeticoesSugeridas))
+      && (document.querySelectorAll('#exercicio-lista-biblioteca .exercise-video-button').length || 0) > 0;
     authStillWorks = typeof checkSession === 'function'
       && typeof login === 'function'
       && typeof register === 'function'
@@ -3356,6 +3587,57 @@ window.testForjaPremiumUI = async function() {
       noBlockingErrors,
       passed: false
     };
+  }
+};
+
+window.testExerciseVideoLibrary = async function() {
+  try {
+    renderBibliotecaExercicios();
+    const librarySize = EXERCISE_LIBRARY.length;
+    const richMetadataOk = EXERCISE_LIBRARY.every(item => Boolean(
+      item.nome
+      && item.grupo
+      && item.equipamento
+      && item.dificuldade
+      && item.seriesSugeridas
+      && item.repeticoesSugeridas
+      && item.videoUrl
+      && item.guide?.cues?.length === 3
+    ));
+    const videoLinksOk = EXERCISE_LIBRARY.every(item => /^https:\/\//.test(item.videoUrl));
+    const cardsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-library-item').length > 0;
+    const videoButtonsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-video-button').length > 0;
+    const addButtonsRendered = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-add-button').length > 0;
+    const filterChipsRendered = document.querySelectorAll('#exercise-filter-chips .exercise-filter-chip').length >= 8;
+    const modalReady = Boolean(document.getElementById('exercise-video-modal'))
+      && Boolean(document.getElementById('exercise-video-title'))
+      && Boolean(document.getElementById('exercise-video-link'));
+    const noStateFormatChange = getAllWorkoutKeys().every(key => Array.isArray(state.treinos?.[key]?.exercicios));
+
+    return {
+      librarySize,
+      libraryLargeEnough: librarySize >= 200,
+      richMetadataOk,
+      videoLinksOk,
+      cardsRendered,
+      videoButtonsRendered,
+      addButtonsRendered,
+      filterChipsRendered,
+      modalReady,
+      noStateFormatChange,
+      passed: librarySize >= 200
+        && richMetadataOk
+        && videoLinksOk
+        && cardsRendered
+        && videoButtonsRendered
+        && addButtonsRendered
+        && filterChipsRendered
+        && modalReady
+        && noStateFormatChange
+    };
+  } catch (error) {
+    console.warn('testExerciseVideoLibrary failed:', error);
+    return { passed: false, error: error.message };
   }
 };
 
@@ -4022,45 +4304,83 @@ const EXERCICIOS_BASE_COMPLEMENTARES = {
   Peito: [
     "Supino reto", "Supino inclinado", "Supino declinado", "Supino reto com halteres",
     "Supino inclinado com halteres", "Crucifixo reto", "Crucifixo inclinado", "Crossover",
-    "Peck deck", "Flexao de braco", "Paralelas"
+    "Peck deck", "Flexao de braco", "Paralelas", "Supino reto na maquina",
+    "Supino inclinado na maquina", "Chest press", "Chest press unilateral", "Crucifixo no cabo baixo",
+    "Crucifixo no cabo alto", "Svend press", "Hex press", "Floor press com barra",
+    "Floor press com halteres", "Flexao diamante", "Flexao inclinada", "Flexao declinada",
+    "Pullover com halter"
   ],
   Costas: [
     "Puxada frontal", "Puxada aberta", "Puxada fechada", "Barra fixa", "Remada curvada",
     "Remada baixa", "Remada unilateral", "Remada cavalinho", "Pulldown", "Levantamento terra",
-    "Hiperextensao lombar"
+    "Hiperextensao lombar", "Puxada neutra", "Puxada supinada", "Chin up",
+    "Remada articulada", "Remada maquina pegada neutra", "Remada serrote", "Remada invertida",
+    "Remada no banco inclinado", "Pullover na polia", "Face pull", "Rack pull",
+    "Good morning", "Extensao lombar no banco", "Barra fixa assistida", "Puxada unilateral no cabo"
   ],
   Ombros: [
     "Desenvolvimento militar", "Desenvolvimento com halteres", "Arnold press", "Elevacao lateral",
-    "Elevacao frontal", "Crucifixo inverso", "Remada alta", "Encolhimento"
+    "Elevacao frontal", "Crucifixo inverso", "Remada alta", "Encolhimento",
+    "Desenvolvimento na maquina", "Desenvolvimento no smith", "Push press", "Elevacao lateral no cabo",
+    "Elevacao lateral na maquina", "Elevacao lateral inclinada", "Elevacao frontal com anilha",
+    "Crucifixo inverso na maquina", "Crucifixo inverso no cabo", "Face pull para ombros",
+    "Encolhimento com barra", "Encolhimento com halteres", "Rotacao externa no cabo"
   ],
   "Bíceps": [
     "Rosca direta", "Rosca alternada", "Rosca martelo", "Rosca concentrada", "Rosca Scott",
-    "Rosca no cabo", "Rosca 21"
+    "Rosca no cabo", "Rosca 21", "Rosca inclinada com halteres", "Rosca spider",
+    "Rosca inversa", "Rosca Zottman", "Rosca bayesian", "Rosca Scott unilateral",
+    "Rosca martelo cruzada", "Rosca martelo na corda", "Rosca direta na polia baixa",
+    "Rosca drag", "Rosca pronada com barra", "Rosca alternada no banco inclinado"
   ],
   "Tríceps": [
     "Triceps pulley", "Triceps corda", "Triceps testa", "Triceps frances", "Mergulho no banco",
-    "Supino fechado", "Triceps coice"
+    "Supino fechado", "Triceps coice", "Triceps unilateral no cabo", "Triceps barra V",
+    "Triceps testa com halteres", "Triceps testa no cabo", "Triceps frances no cabo",
+    "Triceps frances bilateral", "Paralelas para triceps", "Mergulho na maquina",
+    "Extensao de triceps acima da cabeca", "JM press", "Tate press"
   ],
   Pernas: [
     "Agachamento livre", "Agachamento smith", "Hack squat", "Leg press 45", "Cadeira extensora",
     "Mesa flexora", "Cadeira flexora", "Stiff", "Levantamento terra romeno", "Afundo", "Passada",
-    "Cadeira abdutora", "Cadeira adutora", "Panturrilha em pe", "Panturrilha sentado"
+    "Cadeira abdutora", "Cadeira adutora", "Panturrilha em pe", "Panturrilha sentado",
+    "Agachamento frontal", "Agachamento goblet", "Agachamento bulgaro", "Agachamento no pendulo",
+    "Agachamento sissy", "Leg press horizontal", "Leg press unilateral", "Extensora unilateral",
+    "Flexora unilateral", "Flexora em pe", "Nordic curl", "Good morning para posteriores",
+    "Afundo no smith", "Afundo reverso", "Passada caminhando", "Step up",
+    "Pistol squat assistido", "Adutor no cabo", "Abdutor no cabo", "Panturrilha no leg press",
+    "Panturrilha unilateral", "Panturrilha no smith", "Tibial anterior na maquina"
   ],
   Gluteos: [
     "Elevacao pelvica", "Hip thrust", "Coice no cabo", "Abducao de quadril", "Agachamento sumo",
-    "Passada no smith", "Gluteo maquina"
+    "Passada no smith", "Gluteo maquina", "Hip thrust unilateral", "Ponte de gluteos",
+    "Ponte de gluteos unilateral", "Coice na maquina", "Abducao sentada com elastico",
+    "Abducao em pe no cabo", "Pull through", "Levantamento terra sumo",
+    "Afundo curtsy", "Step up lateral", "Extensao de quadril no banco", "Frog pump"
   ],
   Core: [
     "Abdominal supra", "Abdominal infra", "Prancha", "Prancha lateral", "Abdominal maquina",
-    "Elevacao de pernas", "Abdominal obliquo", "Crunch no cabo"
+    "Elevacao de pernas", "Abdominal obliquo", "Crunch no cabo", "Dead bug",
+    "Bird dog", "Hollow body hold", "Ab wheel", "Pallof press", "Russian twist",
+    "Mountain climber cruzado", "Prancha com toque no ombro", "Prancha alta",
+    "Prancha com elevacao de perna", "Canivete", "V up", "Bicicleta abdominal",
+    "Elevacao de joelhos na barra", "Crunch reverso", "Woodchopper no cabo",
+    "Farmer walk unilateral"
   ],
   Cardio: [
     "Esteira", "Bicicleta ergometrica", "Eliptico", "Escada", "Remo ergometrico", "HIIT",
-    "Corrida intervalada", "Caminhada inclinada"
+    "Corrida intervalada", "Caminhada inclinada", "Air bike", "Assault bike",
+    "Spinning", "Ski erg", "Transport", "Corrida continua", "Caminhada moderada",
+    "Trote leve", "Sprint na esteira", "Escada intervalada", "Remo intervalado",
+    "Bicicleta intervalada", "Circuito aerobico", "Shadow boxing"
   ],
   Funcional: [
     "Burpee", "Kettlebell swing", "Battle rope", "Medicine ball slam", "Farmer walk",
-    "Mountain climber", "Jump squat", "Box jump", "Sled push", "Wall ball"
+    "Mountain climber", "Jump squat", "Box jump", "Sled push", "Wall ball",
+    "Sled pull", "Turkish get up", "Kettlebell clean", "Kettlebell snatch",
+    "Kettlebell goblet squat", "Devil press", "Thruster", "Bear crawl",
+    "Crab walk", "Inchworm", "Renegade row", "Sandbag carry",
+    "Medicine ball throw", "Lunge jump", "Skater jump", "TRX row"
   ]
 };
 
@@ -4149,6 +4469,83 @@ function getExerciseKcalEstimate(nome, grupo) {
   return 80;
 }
 
+const EXERCISE_VIDEO_OVERRIDES = Object.freeze({});
+
+const EXERCISE_GROUP_GUIDES = {
+  Peito: {
+    icon: 'panels-top-left',
+    cues: ['Mantenha as escápulas encaixadas e o peito estável.', 'Controle a descida antes de iniciar a fase de força.', 'Evite perder o alinhamento dos punhos e cotovelos.']
+  },
+  Costas: {
+    icon: 'align-vertical-justify-center',
+    cues: ['Inicie o movimento organizando as escápulas.', 'Conduza os cotovelos sem transformar a repetição em impulso.', 'Mantenha a coluna neutra durante toda a amplitude.']
+  },
+  Ombros: {
+    icon: 'move-up',
+    cues: ['Mantenha o tronco firme e as costelas controladas.', 'Use uma amplitude confortável para a articulação do ombro.', 'Evite acelerar a carga na parte final da repetição.']
+  },
+  'Bíceps': {
+    icon: 'biceps-flexed',
+    cues: ['Mantenha os cotovelos estáveis ao lado do corpo.', 'Complete a repetição sem balançar o tronco.', 'Controle a fase de retorno para preservar a tensão.']
+  },
+  'Tríceps': {
+    icon: 'biceps-flexed',
+    cues: ['Fixe os cotovelos antes de iniciar a extensão.', 'Evite compensar com ombros ou inclinação excessiva.', 'Finalize a extensão sem travar a articulação com impacto.']
+  },
+  Pernas: {
+    icon: 'person-standing',
+    cues: ['Distribua o apoio dos pés de forma estável.', 'Mantenha joelhos alinhados com a direção dos pés.', 'Priorize amplitude controlada sem perder a postura.']
+  },
+  Gluteos: {
+    icon: 'activity',
+    cues: ['Estabilize a pelve antes de produzir força.', 'Concentre a extensão no quadril, sem exagerar na lombar.', 'Segure brevemente a contração na posição final.']
+  },
+  Core: {
+    icon: 'circle-dot',
+    cues: ['Mantenha o abdômen ativo e a respiração controlada.', 'Evite compensações excessivas na região lombar.', 'Interrompa a série quando perder a posição do tronco.']
+  },
+  Cardio: {
+    icon: 'heart-pulse',
+    cues: ['Ajuste a intensidade ao seu condicionamento atual.', 'Mantenha ritmo e respiração sustentáveis durante o bloco.', 'Reduza a intensidade se perder a técnica ou sentir desconforto.']
+  },
+  Funcional: {
+    icon: 'zap',
+    cues: ['Aprenda o padrão em baixa velocidade antes de acelerar.', 'Mantenha o centro do corpo ativo nas transições.', 'Priorize repetições consistentes em vez de velocidade máxima.']
+  },
+  Outros: {
+    icon: 'dumbbell',
+    cues: ['Ajuste o equipamento antes de iniciar.', 'Use uma carga que permita controle em toda a amplitude.', 'Interrompa o exercício diante de dor ou perda de técnica.']
+  }
+};
+
+function getExercisePrescription(grupo, categoria) {
+  if (grupo === 'Cardio') return { series: '3 blocos', repeticoes: '20–30 min' };
+  if (grupo === 'Core') return { series: '3 séries', repeticoes: '12–20 reps' };
+  if (categoria === 'Isolador') return { series: '3 séries', repeticoes: '10–15 reps' };
+  if (grupo === 'Funcional') return { series: '3–4 séries', repeticoes: '8–15 reps' };
+  return { series: '4 séries', repeticoes: '6–12 reps' };
+}
+
+function getExerciseDifficulty(nome, equipamento) {
+  const key = normalizeExerciseKey(nome);
+  if (['snatch', 'clean', 'turkish', 'pistol', 'nordic', 'levantamento terra', 'agachamento livre', 'burpee'].some(term => key.includes(term))) {
+    return 'Avançado';
+  }
+  if (equipamento === 'Máquina' || key.includes('assistid') || key.includes('caminhada')) return 'Iniciante';
+  return 'Intermediário';
+}
+
+function getExerciseVideoUrl(nome) {
+  const override = EXERCISE_VIDEO_OVERRIDES[normalizeExerciseKey(nome)];
+  if (override) return override;
+  const query = `${nome} execução correta exercício academia`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function getExerciseGuide(grupo) {
+  return EXERCISE_GROUP_GUIDES[normalizeExerciseGroup(grupo)] || EXERCISE_GROUP_GUIDES.Outros;
+}
+
 const EXERCISE_LIBRARY = EXERCICIOS_BASE
   .filter(nome => !isExerciseTestData(nome))
   .reduce((items, nome) => {
@@ -4156,14 +4553,23 @@ const EXERCISE_LIBRARY = EXERCICIOS_BASE
     if (!normalized || items.some(item => item.key === normalized)) return items;
     const grupo = normalizeExerciseGroup(MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(normalized) || 'Outros');
     const kcal = getExerciseKcalEstimate(nome, grupo);
+    const categoria = getExerciseCategory(nome, grupo);
+    const equipamento = getExerciseEquipment(nome, grupo);
+    const prescription = getExercisePrescription(grupo, categoria);
     items.push({
       key: normalized,
       nome,
       grupo,
-      categoria: getExerciseCategory(nome, grupo),
+      categoria,
       kcal,
       gastoCalorico: kcal,
-      equipamento: getExerciseEquipment(nome, grupo)
+      equipamento,
+      dificuldade: getExerciseDifficulty(nome, equipamento),
+      seriesSugeridas: prescription.series,
+      repeticoesSugeridas: prescription.repeticoes,
+      videoUrl: getExerciseVideoUrl(nome),
+      videoProvider: 'YouTube',
+      guide: getExerciseGuide(grupo)
     });
     return items;
   }, [])
@@ -4754,15 +5160,61 @@ function filtrarExerciciosBiblioteca() {
         || item.key.includes(busca)
         || normalizeExerciseKey(item.grupo).includes(busca)
         || normalizeExerciseKey(item.categoria).includes(busca)
-        || normalizeExerciseKey(item.equipamento).includes(busca);
+        || normalizeExerciseKey(item.equipamento).includes(busca)
+        || normalizeExerciseKey(item.dificuldade).includes(busca);
       const matchesGroup = grupoFiltro === 'Outros' || normalizeExerciseGroup(item.grupo) === grupoFiltro;
       return matchesSearch && matchesGroup;
     })
-    .slice(0, 80);
+    .slice(0, 120);
 }
 
 function getFilteredExerciseLibrary() {
   return filtrarExerciciosBiblioteca();
+}
+
+function syncExerciseFilterChips() {
+  const selectedGroup = normalizeExerciseGroup(document.getElementById('exercicio-grupo')?.value || '');
+  document.querySelectorAll('#exercise-filter-chips .exercise-filter-chip').forEach(button => {
+    const buttonGroup = normalizeExerciseGroup(button.dataset.exerciseGroup || '');
+    const isActive = selectedGroup === 'Outros' ? !button.dataset.exerciseGroup : buttonGroup === selectedGroup;
+    button.classList.toggle('active', isActive);
+  });
+}
+
+function openExerciseVideo(exercise) {
+  if (!exercise) return;
+  const modal = document.getElementById('exercise-video-modal');
+  if (!modal) return;
+
+  document.getElementById('exercise-video-eyebrow').textContent = `${exercise.grupo} · Guia do exercício`;
+  document.getElementById('exercise-video-title').textContent = exercise.nome;
+  document.getElementById('exercise-video-meta').textContent = `${exercise.equipamento} · ${exercise.categoria} · ~${exercise.gastoCalorico} kcal por sessão estimada`;
+
+  const badges = document.getElementById('exercise-video-badges');
+  badges.replaceChildren();
+  [exercise.dificuldade, exercise.seriesSugeridas, exercise.repeticoesSugeridas].forEach(label => {
+    const badge = document.createElement('span');
+    badge.className = 'exercise-badge';
+    badge.textContent = label;
+    badges.appendChild(badge);
+  });
+
+  const cues = exercise.guide?.cues || EXERCISE_GROUP_GUIDES.Outros.cues;
+  document.getElementById('exercise-video-cue-1').textContent = cues[0];
+  document.getElementById('exercise-video-cue-2').textContent = cues[1];
+  document.getElementById('exercise-video-cue-3').textContent = cues[2];
+  document.getElementById('exercise-video-link').href = exercise.videoUrl;
+
+  if (typeof modal.showModal === 'function') modal.showModal();
+  else modal.setAttribute('open', '');
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeExerciseVideo() {
+  const modal = document.getElementById('exercise-video-modal');
+  if (!modal) return;
+  if (typeof modal.close === 'function' && modal.open) modal.close();
+  else modal.removeAttribute('open');
 }
 
 function renderExerciseResults() {
@@ -4770,6 +5222,9 @@ function renderExerciseResults() {
   const list = document.getElementById('exercicio-lista-biblioteca');
   if (!select) return;
   const filtered = getFilteredExerciseLibrary();
+  const count = document.getElementById('exercise-library-count');
+  if (count) count.textContent = String(EXERCISE_LIBRARY.length);
+  syncExerciseFilterChips();
   select.replaceChildren();
   if (list) list.replaceChildren();
 
@@ -4790,33 +5245,71 @@ function renderExerciseResults() {
     const label = `${item.nome} • ${item.equipamento} • ~${item.gastoCalorico} kcal`;
     select.appendChild(new Option(label, item.nome));
     if (list) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'exercise-library-item text-left bg-card2 border border-line rounded-lg px-3 py-2 hover:border-ember/60 hover:bg-ember/10 transition';
-      button.dataset.exercicio = item.nome;
+      const card = document.createElement('article');
+      card.className = 'exercise-library-item text-left bg-card2 border border-line rounded-lg transition';
+      card.dataset.exercicio = item.nome;
 
-      const name = document.createElement('span');
-      name.className = 'block text-sm font-semibold text-ink';
+      const top = document.createElement('div');
+      top.className = 'exercise-library-top';
+
+      const mark = document.createElement('span');
+      mark.className = 'exercise-muscle-mark';
+      mark.innerHTML = `<i data-lucide="${item.guide?.icon || 'dumbbell'}"></i>`;
+
+      const content = document.createElement('div');
+      content.className = 'exercise-library-meta';
+
+      const name = document.createElement('strong');
+      name.className = 'text-sm font-semibold text-ink';
       name.textContent = item.nome;
 
       const meta = document.createElement('span');
-      meta.className = 'block text-[11px] text-mute';
+      meta.className = 'block mt-1 text-[10px] text-mute';
       meta.textContent = `${item.grupo} · ${item.equipamento} · ~${item.gastoCalorico} kcal`;
 
-      const action = document.createElement('span');
-      action.className = 'block mt-1 text-[11px] font-semibold text-ember';
-      action.textContent = `+ Adicionar ao ${getWorkoutLabel(getActiveWorkoutKey())}`;
+      content.appendChild(name);
+      content.appendChild(meta);
+      top.appendChild(mark);
+      top.appendChild(content);
 
-      button.appendChild(name);
-      button.appendChild(meta);
-      button.appendChild(action);
-      button.addEventListener('click', async () => {
+      const badges = document.createElement('div');
+      badges.className = 'exercise-badges';
+      [item.dificuldade, item.seriesSugeridas, item.repeticoesSugeridas].forEach(labelText => {
+        const badge = document.createElement('span');
+        badge.className = 'exercise-badge';
+        badge.textContent = labelText;
+        badges.appendChild(badge);
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'exercise-library-actions';
+
+      const videoButton = document.createElement('button');
+      videoButton.type = 'button';
+      videoButton.className = 'exercise-video-button';
+      videoButton.title = `Ver guia e vídeo de ${item.nome}`;
+      videoButton.setAttribute('aria-label', `Ver guia e vídeo de ${item.nome}`);
+      videoButton.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
+      videoButton.addEventListener('click', () => openExerciseVideo(item));
+
+      const addButton = document.createElement('button');
+      addButton.type = 'button';
+      addButton.className = 'exercise-add-button';
+      addButton.innerHTML = `<i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Adicionar ao ${getWorkoutLabel(getActiveWorkoutKey())}</span>`;
+      addButton.addEventListener('click', async () => {
         select.value = item.nome;
         await adicionarExercicioAoTreinoAtivo(item);
       });
-      list.appendChild(button);
+
+      actions.appendChild(videoButton);
+      actions.appendChild(addButton);
+      card.appendChild(top);
+      card.appendChild(badges);
+      card.appendChild(actions);
+      list.appendChild(card);
     }
   });
+  if (window.lucide) lucide.createIcons();
 }
 
 function renderExerciseLibraryControls() {
@@ -5080,17 +5573,33 @@ function renderExerciciosLista(divisao = null) {
     group.className = 'block text-[11px] text-mute';
     group.textContent = exerciseMeta?.grupo || normalizeExerciseGroup(MAPA_MUSCULOS[ex] || 'Outros');
 
+    const actions = document.createElement('div');
+    actions.className = 'workout-exercise-actions';
+
+    if (exerciseMeta) {
+      const videoButton = document.createElement('button');
+      videoButton.type = 'button';
+      videoButton.className = 'workout-exercise-icon-button';
+      videoButton.title = `Ver guia e vídeo de ${ex}`;
+      videoButton.setAttribute('aria-label', `Ver guia e vídeo de ${ex}`);
+      videoButton.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
+      videoButton.addEventListener('click', () => openExerciseVideo(exerciseMeta));
+      actions.appendChild(videoButton);
+    }
+
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.idx = String(idx);
-    button.className = 'del-exercicio text-mute hover:text-ember shrink-0 ml-2';
+    button.className = 'del-exercicio workout-exercise-icon-button';
     button.title = 'Remover exercício';
+    button.setAttribute('aria-label', `Remover ${ex}`);
     button.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4"></i>';
+    actions.appendChild(button);
 
     details.appendChild(name);
     details.appendChild(group);
     row.appendChild(details);
-    row.appendChild(button);
+    row.appendChild(actions);
     cont.appendChild(row);
   });
 
@@ -5124,10 +5633,23 @@ function popularSelectExercicios(divisao = null) {
 document.getElementById('btn-add-exercicio')?.addEventListener('click', adicionarExercicioDaBiblioteca);
 document.getElementById('exercicio-busca')?.addEventListener('input', renderExerciseResults);
 document.getElementById('exercicio-grupo')?.addEventListener('change', renderExerciseResults);
+document.getElementById('exercise-filter-chips')?.addEventListener('click', (event) => {
+  const button = event.target.closest('.exercise-filter-chip');
+  const select = document.getElementById('exercicio-grupo');
+  if (!button || !select) return;
+  const requestedGroup = normalizeExerciseGroup(button.dataset.exerciseGroup || '');
+  const option = Array.from(select.options).find(item => normalizeExerciseGroup(item.value || '') === requestedGroup);
+  select.value = button.dataset.exerciseGroup ? (option?.value || '') : '';
+  renderExerciseResults();
+});
 document.getElementById('exercicio-busca')?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); adicionarExercicioDaBiblioteca(); }
 });
 document.getElementById('exercicio-resultados')?.addEventListener('dblclick', adicionarExercicioDaBiblioteca);
+document.getElementById('exercise-video-close')?.addEventListener('click', closeExerciseVideo);
+document.getElementById('exercise-video-modal')?.addEventListener('click', (event) => {
+  if (event.target === event.currentTarget) closeExerciseVideo();
+});
 
 function ultimaExecucao(exercicio) {
   const historico = state.execucoes.filter(e => e.exercicio === exercicio).sort((a,b) => b.id - a.id);
