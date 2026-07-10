@@ -323,6 +323,21 @@
     transform: translateY(-1px);
   }
   .exercise-library-top { display: flex; align-items: flex-start; gap: 10px; }
+  .exercise-library-media {
+    width: 72px;
+    height: 58px;
+    flex: 0 0 72px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, #101219);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+    border-radius: 9px;
+  }
+  .exercise-library-media img { width: 100%; height: 100%; object-fit: cover; }
+  .exercise-library-media svg { width: 20px; height: 20px; }
+  .exercise-library-media span { display: block; margin-top: 3px; color: var(--forja-muted); font-size: 8px; font-weight: 700; }
   .exercise-muscle-mark {
     width: 38px;
     height: 38px;
@@ -347,7 +362,7 @@
     font-size: 9px;
     font-weight: 600;
   }
-  .exercise-library-actions { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 7px; margin-top: 10px; }
+  .exercise-library-actions { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 7px; margin-top: 10px; }
   .exercise-detail-button,
   .exercise-add-button {
     min-height: 36px !important;
@@ -471,6 +486,82 @@
     font-weight: 800;
   }
   body.exercise-modal-open { overflow: hidden; }
+  .workout-plan-list { display: grid; gap: 10px; }
+  .workout-plan-item {
+    display: grid;
+    grid-template-columns: 34px 46px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 12px !important;
+  }
+  .workout-order {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+    border-radius: 8px;
+    font: 700 12px/1 'JetBrains Mono', monospace;
+  }
+  .workout-plan-media {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--forja-muted);
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(72,77,91,.62);
+    border-radius: 8px;
+  }
+  .workout-plan-media img { width: 100%; height: 100%; object-fit: cover; }
+  .workout-plan-media svg { width: 18px; height: 18px; }
+  .workout-plan-content { min-width: 0; }
+  .workout-plan-metrics { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .workout-plan-actions {
+    grid-column: 2 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 2px;
+  }
+  .workout-action-button {
+    min-height: 36px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 9px;
+    color: var(--forja-muted);
+    background: rgba(255,255,255,.025);
+    border: 1px solid rgba(72,77,91,.62);
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .workout-action-button:hover:not(:disabled) { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 42%, transparent); }
+  .workout-action-button:disabled { opacity: .38; cursor: not-allowed; }
+  .workout-action-danger:hover:not(:disabled) { color: #fb7185; border-color: rgba(251,113,133,.45); }
+  .workout-config-dialog { width: min(560px, calc(100vw - 28px)); }
+  .workout-config-body { padding: 20px; }
+  .workout-config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  .workout-config-fields input,
+  .workout-config-fields textarea {
+    width: 100%;
+    color: var(--forja-text);
+    background: rgba(28,31,41,.9);
+    border: 1px solid rgba(79,84,99,.62);
+    border-radius: 9px;
+    padding: 10px 12px;
+    outline: none;
+  }
+  .workout-config-fields input { min-height: 44px; }
+  .workout-config-fields textarea { min-height: 88px; resize: vertical; }
+  .workout-config-fields input:focus,
+  .workout-config-fields textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent); }
+  .workout-config-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 18px; }
   #cronometro-display { text-shadow: 0 0 28px rgba(255,255,255,.06); }
   .evolution-chart { min-height: 340px; }
   #tabela-evolucao th { font-family: Inter, sans-serif; font-weight: 600; }
@@ -837,6 +928,14 @@
     .exercise-detail-grid { grid-template-columns: 1fr; }
     .exercise-detail-section-wide { grid-column: auto; }
     .exercise-detail-add { min-height: 50px; }
+    .workout-plan-item { grid-template-columns: 32px 42px minmax(0, 1fr); padding: 11px !important; }
+    .workout-plan-media { width: 42px; height: 42px; }
+    .workout-plan-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .workout-action-button { min-height: 44px !important; padding: 0 7px; }
+    .workout-action-button span { display: none; }
+    .workout-config-fields { grid-template-columns: 1fr; }
+    .workout-config-actions { grid-template-columns: 1fr; }
+    .workout-config-actions button { min-height: 48px !important; }
     #toast { max-width: calc(100vw - 28px); width: max-content; bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px) !important; }
   }
 
@@ -1485,6 +1584,49 @@
       <button type="button" id="exercise-detail-add" class="exercise-detail-add">
         <i data-lucide="plus" class="w-4 h-4"></i><span>Adicionar ao treino</span>
       </button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="workout-exercise-config-modal" class="exercise-detail-dialog workout-config-dialog" aria-labelledby="workout-config-title">
+  <div class="exercise-detail-panel relative">
+    <button type="button" id="workout-config-close" class="exercise-detail-close" title="Fechar" aria-label="Fechar configuração"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div class="workout-config-body">
+      <p class="text-[10px] uppercase font-semibold text-ember">Configuração da ficha</p>
+      <h2 id="workout-config-title" class="font-display font-semibold text-xl mt-1">Exercício</h2>
+      <p id="workout-config-meta" class="text-xs text-mute mt-2"></p>
+
+      <div class="workout-config-fields">
+        <div>
+          <label for="workout-config-series" class="text-xs text-mute">Séries</label>
+          <input id="workout-config-series" type="number" min="1" step="1" class="w-full mt-1 px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label for="workout-config-reps" class="text-xs text-mute">Repetições ou faixa</label>
+          <input id="workout-config-reps" type="text" maxlength="24" placeholder="8–10" class="w-full mt-1 px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label for="workout-config-load" class="text-xs text-mute">Carga inicial (kg)</label>
+          <input id="workout-config-load" type="number" min="0" step="0.5" placeholder="Opcional" class="w-full mt-1 px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label for="workout-config-rest" class="text-xs text-mute">Descanso (segundos)</label>
+          <input id="workout-config-rest" type="number" min="15" step="5" class="w-full mt-1 px-3 py-2 text-sm font-mono">
+        </div>
+        <div>
+          <label for="workout-config-rpe" class="text-xs text-mute">RPE alvo (1–10)</label>
+          <input id="workout-config-rpe" type="number" min="1" max="10" step="0.5" placeholder="Opcional" class="w-full mt-1 px-3 py-2 text-sm font-mono">
+        </div>
+        <div class="sm:col-span-2">
+          <label for="workout-config-notes" class="text-xs text-mute">Observações</label>
+          <textarea id="workout-config-notes" maxlength="500" placeholder="Ajustes técnicos, cadência ou orientação do treinador."></textarea>
+        </div>
+      </div>
+
+      <div class="workout-config-actions">
+        <button type="button" id="workout-config-cancel" class="border border-line text-mute hover:text-ink rounded-lg px-4 py-2.5 text-sm font-semibold">Cancelar</button>
+        <button type="button" id="workout-config-save" class="bg-ember text-bg rounded-lg px-4 py-2.5 text-sm font-semibold">Salvar configuração</button>
+      </div>
     </div>
   </div>
 </dialog>
@@ -3851,7 +3993,7 @@ window.testExerciseVideoLibrary = async function() {
     const librarySize = EXERCISE_LIBRARY.length;
     const richFields = [
       'id', 'nome', 'aliases', 'grupo', 'equipamento', 'kcal', 'nivel',
-      'series_sugeridas', 'reps_sugeridas', 'musculos_primarios', 'musculos_secundarios',
+      'series_sugeridas', 'reps_sugeridas', 'descanso_sugerido', 'musculos_primarios', 'musculos_secundarios',
       'instrucoes', 'dicas', 'observacoes', 'video_url', 'thumbnail_url', 'source_label'
     ];
     const richMetadataOk = EXERCISE_LIBRARY.every(item => richFields.every(field => Object.hasOwn(item, field))
@@ -3943,7 +4085,7 @@ window.testWorkoutProUI = async function() {
 
     const richFields = [
       'id', 'nome', 'aliases', 'grupo', 'equipamento', 'kcal', 'nivel',
-      'series_sugeridas', 'reps_sugeridas', 'musculos_primarios', 'musculos_secundarios',
+      'series_sugeridas', 'reps_sugeridas', 'descanso_sugerido', 'musculos_primarios', 'musculos_secundarios',
       'instrucoes', 'dicas', 'observacoes', 'video_url', 'thumbnail_url', 'source_label'
     ];
     richCatalogOk = EXERCICIOS_BASE.length >= 100
@@ -3973,9 +4115,9 @@ window.testWorkoutProUI = async function() {
       && Boolean(document.getElementById('exercise-detail-modal')?.open || document.getElementById('exercise-detail-modal')?.hasAttribute('open'))
       && document.getElementById('exercise-detail-title')?.textContent === exerciseWithoutVideo.nome;
     videoFallbackOk = (document.getElementById('exercise-detail-media')?.textContent || '')
-      .includes('Vídeo ainda não cadastrado para este exercício.')
+      .includes('Demonstração em vídeo ainda não disponível.')
       && (document.getElementById('exercise-detail-media')?.textContent || '')
-        .includes('Este espaço já está preparado para demonstração em vídeo.');
+        .includes('Consulte as instruções abaixo para executar o movimento.');
     closeExerciseModal();
 
     state.configTreino = { divisao: 'ABCDE' };
@@ -4081,6 +4223,246 @@ window.testWorkoutProUI = async function() {
     const groupSelect = document.getElementById('exercicio-grupo');
     if (searchInput) searchInput.value = previous.busca;
     if (groupSelect) groupSelect.value = previous.grupo;
+    renderTelaTreino();
+  }
+};
+
+window.testWorkoutProV2 = async function() {
+  const previous = {
+    configTreino: { ...(state.configTreino || {}) },
+    treinos: JSON.parse(JSON.stringify(state.treinos || {})),
+    execucoes: JSON.parse(JSON.stringify(state.execucoes || [])),
+    treinoAtivo,
+    busca: document.getElementById('exercicio-busca')?.value || '',
+    grupo: document.getElementById('exercicio-grupo')?.value || ''
+  };
+  const originalSaveWorkouts = StorageService.saveWorkouts;
+  let capturedPersistence = null;
+  const result = {
+    catalogHas100Items: false,
+    catalogUniqueIds: false,
+    normalizationOk: false,
+    blocksABCDEOk: false,
+    noExtraLabel: false,
+    libraryInitialRenderOk: false,
+    searchByNameOk: false,
+    searchByAliasOk: false,
+    accentInsensitiveOk: false,
+    filtersOk: false,
+    detailsModalOpens: false,
+    detailsModalCloses: false,
+    thumbnailFallbackOk: false,
+    videoFallbackOk: false,
+    addExerciseOk: false,
+    duplicatePreventionOk: false,
+    configureExerciseOk: false,
+    catalogUnaffectedByConfiguration: false,
+    moveExerciseOk: false,
+    removeExerciseOk: false,
+    executionSelectUpdates: false,
+    persistenceOk: false,
+    mobileNoOverflow: false,
+    dietStillWorks: false,
+    foodSearchStillWorks: false,
+    syncArchitecturePreserved: false,
+    noBlockingErrors: false,
+    passed: false
+  };
+
+  try {
+    const ids = EXERCICIOS_BASE.map(exercise => exercise.id);
+    result.catalogHas100Items = EXERCICIOS_BASE.length >= 100;
+    result.catalogUniqueIds = ids.length === new Set(ids).size;
+
+    const normalizedCatalogItem = normalizeExercise({
+      nome: 'Supino de validação',
+      grupo: 'Peito',
+      equipamento: 'Barra'
+    });
+    const normalizedLegacyString = normalizeWorkoutExercise('Supino Reto com Barra', 0);
+    const normalizedLegacyObject = normalizeWorkoutExercise({
+      nome: 'Remada baixa',
+      grupo: 'Costas',
+      equipamento: 'Polia',
+      kcal: 90
+    }, 1);
+    result.normalizationOk = Boolean(
+      normalizedCatalogItem?.id
+      && Number.isInteger(normalizedCatalogItem.series_sugeridas)
+      && normalizedCatalogItem.descanso_sugerido > 0
+      && normalizedLegacyString?.exerciseId
+      && normalizedLegacyString.series > 0
+      && normalizedLegacyObject?.grupo === 'Costas'
+      && normalizedLegacyObject.ordem === 1
+    );
+
+    state.configTreino = { divisao: 'ABCDE' };
+    state.treinos = createEmptyWorkoutPlan('ABCDE');
+    treinoAtivo = 'B';
+    const search = document.getElementById('exercicio-busca');
+    const group = document.getElementById('exercicio-grupo');
+    search.value = '';
+    group.value = '';
+    renderTelaTreino({ divisao: 'ABCDE' });
+
+    const workoutButtons = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'));
+    result.blocksABCDEOk = workoutButtons.length === 5
+      && ['A', 'B', 'C', 'D', 'E'].every(key => workoutButtons.some(button => button.dataset.treino === key));
+    result.noExtraLabel = !/\bextra\b/i.test(document.getElementById('screen-treino')?.textContent || '');
+    result.libraryInitialRenderOk = document.querySelectorAll('#exercicio-lista-biblioteca .exercise-library-item').length > 0;
+
+    search.value = 'supino';
+    group.value = '';
+    renderBibliotecaExercicios();
+    const byName = filtrarExerciciosBiblioteca();
+    result.searchByNameOk = byName.length > 0 && byName.every(item => item.search_text.includes('supino'));
+
+    search.value = 'bench press';
+    renderBibliotecaExercicios();
+    const byAlias = filtrarExerciciosBiblioteca();
+    result.searchByAliasOk = byAlias.length > 0 && byAlias.every(item => item.search_text.includes('bench press'));
+
+    search.value = 'biceps';
+    renderBibliotecaExercicios();
+    const accentResults = filtrarExerciciosBiblioteca();
+    result.accentInsensitiveOk = accentResults.length > 0
+      && accentResults.some(item => normalizeExerciseKey(item.grupo) === 'biceps');
+
+    search.value = 'remada';
+    group.value = 'Costas';
+    renderBibliotecaExercicios();
+    const filtered = filtrarExerciciosBiblioteca();
+    result.filtersOk = filtered.length > 0
+      && filtered.every(item => item.grupo === 'Costas' && item.search_text.includes('remada'));
+
+    const exerciseWithoutMedia = EXERCISE_LIBRARY.find(item => !item.video_url && !item.thumbnail_url) || EXERCISE_LIBRARY[0];
+    result.detailsModalOpens = openExerciseModal(exerciseWithoutMedia.id)
+      && Boolean(document.getElementById('exercise-detail-modal')?.open || document.getElementById('exercise-detail-modal')?.hasAttribute('open'));
+    const media = document.getElementById('exercise-detail-media');
+    result.thumbnailFallbackOk = Boolean(media?.querySelector('.exercise-media-fallback')) && !Boolean(media?.querySelector('img'));
+    result.videoFallbackOk = (media?.textContent || '').includes('Demonstração em vídeo ainda não disponível.')
+      && (media?.textContent || '').includes('Consulte as instruções abaixo para executar o movimento.');
+    closeExerciseModal();
+    result.detailsModalCloses = !Boolean(document.getElementById('exercise-detail-modal')?.open)
+      && !document.getElementById('exercise-detail-modal')?.hasAttribute('open');
+
+    search.value = '';
+    group.value = '';
+    renderBibliotecaExercicios();
+    const firstExercise = EXERCISE_LIBRARY.find(item => item.key.includes('supino reto com barra'))
+      || EXERCISE_LIBRARY.find(item => item.key.includes('supino'))
+      || EXERCISE_LIBRARY[0];
+    const secondExercise = EXERCISE_LIBRARY.find(item => item.grupo === 'Costas' && item.id !== firstExercise.id)
+      || EXERCISE_LIBRARY.find(item => item.id !== firstExercise.id);
+    const catalogBeforeConfiguration = JSON.stringify(getExerciseById(firstExercise.id));
+
+    const addResult = await adicionarExercicioAoTreinoAtivo(firstExercise, { persist: false, notify: false });
+    result.addExerciseOk = addResult.added
+      && state.treinos.B.exercicios.some(item => item.exerciseId === firstExercise.id);
+    const duplicateResult = await adicionarExercicioAoTreinoAtivo(firstExercise, { persist: false, notify: false });
+    result.duplicatePreventionOk = !duplicateResult.added
+      && duplicateResult.reason === 'duplicate'
+      && state.treinos.B.exercicios.filter(item => item.exerciseId === firstExercise.id).length === 1;
+
+    const firstIndex = state.treinos.B.exercicios.findIndex(item => item.exerciseId === firstExercise.id);
+    const configureResult = await updateWorkoutExerciseConfiguration(firstIndex, {
+      series: 5,
+      reps: '8–10',
+      carga: 42.5,
+      descanso: 105,
+      rpeAlvo: 8,
+      observacoes: 'Validação temporária da configuração.'
+    }, { persist: false, notify: false });
+    const configured = state.treinos.B.exercicios.find(item => item.exerciseId === firstExercise.id);
+    result.configureExerciseOk = configureResult.updated
+      && configured?.series === 5
+      && configured?.reps === '8–10'
+      && configured?.carga === 42.5
+      && configured?.descanso === 105
+      && configured?.rpeAlvo === 8;
+    result.catalogUnaffectedByConfiguration = JSON.stringify(getExerciseById(firstExercise.id)) === catalogBeforeConfiguration;
+
+    await adicionarExercicioAoTreinoAtivo(secondExercise, { persist: false, notify: false });
+    const secondIndex = state.treinos.B.exercicios.findIndex(item => item.exerciseId === secondExercise.id);
+    const moveResult = await moveWorkoutExercise(secondIndex, 'up', { persist: false, notify: false });
+    result.moveExerciseOk = moveResult.moved
+      && state.treinos.B.exercicios[0]?.exerciseId === secondExercise.id
+      && state.treinos.B.exercicios[1]?.exerciseId === firstExercise.id
+      && state.treinos.B.exercicios.every((item, index) => item.ordem === index);
+
+    result.executionSelectUpdates = Array.from(document.getElementById('t-exercicio')?.options || [])
+      .some(option => option.value === firstExercise.nome)
+      && Array.from(document.getElementById('t-exercicio')?.options || [])
+        .some(option => option.value === secondExercise.nome);
+
+    StorageService.saveWorkouts = async payload => {
+      capturedPersistence = JSON.parse(JSON.stringify(payload));
+      return true;
+    };
+    await saveWorkoutState();
+    const persisted = capturedPersistence?.treinos?.B?.exercicios
+      ?.find(item => item.exerciseId === firstExercise.id);
+    result.persistenceOk = Boolean(
+      persisted
+      && persisted.series === 5
+      && persisted.reps === '8–10'
+      && persisted.descanso === 105
+      && Array.isArray(capturedPersistence.execucoes)
+    );
+
+    const configuredIndex = state.treinos.B.exercicios.findIndex(item => item.exerciseId === firstExercise.id);
+    const removeResult = await removerExercicioDoTreinoAtivo(configuredIndex, {
+      persist: false,
+      notify: false,
+      divisao: 'ABCDE'
+    });
+    result.removeExerciseOk = removeResult.removed
+      && !state.treinos.B.exercicios.some(item => item.exerciseId === firstExercise.id);
+
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1
+      && Boolean(document.querySelector('#screen-treino .workout-layout'))
+      && Boolean(document.getElementById('workout-exercise-config-modal'));
+    result.dietStillWorks = typeof renderDiarioHoje === 'function'
+      && typeof selecionarAlimento === 'function'
+      && Boolean(document.getElementById('f-busca'))
+      && Boolean(document.getElementById('btn-add-food'));
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function'
+      && filtrarAlimentosLocal('banana').length > 0
+      && filtrarAlimentosLocal('arroz').length > 0
+      && filtrarAlimentosLocal('frango').length > 0;
+    result.syncArchitecturePreserved = typeof StorageService === 'object'
+      && typeof DataMapper === 'object'
+      && typeof SyncQueue === 'object'
+      && typeof StorageService.loadWorkouts === 'function'
+      && typeof DataMapper.workoutsToSupabase === 'function'
+      && typeof SyncQueue.syncPending === 'function';
+    result.noBlockingErrors = [
+      'treino-tabs', 'treino-exercicios-lista', 'exercicio-lista-biblioteca',
+      'exercise-detail-modal', 'workout-exercise-config-modal', 't-exercicio'
+    ].every(id => Boolean(document.getElementById(id)))
+      && typeof normalizeExercise === 'function'
+      && typeof normalizeWorkoutExercise === 'function'
+      && typeof moveWorkoutExercise === 'function';
+
+    result.passed = Object.entries(result)
+      .filter(([key]) => key !== 'passed')
+      .every(([, value]) => value === true);
+    return result;
+  } catch (error) {
+    console.warn('testWorkoutProV2 failed:', error);
+    return result;
+  } finally {
+    StorageService.saveWorkouts = originalSaveWorkouts;
+    closeExerciseModal();
+    closeWorkoutExerciseConfig();
+    state.configTreino = previous.configTreino;
+    state.treinos = previous.treinos;
+    state.execucoes = previous.execucoes;
+    treinoAtivo = previous.treinoAtivo;
+    const search = document.getElementById('exercicio-busca');
+    const group = document.getElementById('exercicio-grupo');
+    if (search) search.value = previous.busca;
+    if (group) group.value = previous.grupo;
     renderTelaTreino();
   }
 };
@@ -4588,7 +4970,8 @@ const TREINOS_PADRAO_POR_DIVISAO = {
 const TREINOS_PADRAO = TREINOS_PADRAO_POR_DIVISAO.ABCDE;
 
 function isExerciseTestData(nome) {
-  const normalized = String(nome || '').toLowerCase();
+  const value = nome && typeof nome === 'object' ? (nome.nome || nome.name || nome.exerciseId || '') : nome;
+  const normalized = String(value || '').toLowerCase();
   return normalized.includes('teste sync')
     || normalized.includes('test sync')
     || normalized.includes('sync test')
@@ -4599,12 +4982,13 @@ function cleanExerciseList(exercicios = []) {
   const cleaned = [];
   const seen = new Set();
 
-  (Array.isArray(exercicios) ? exercicios : []).forEach(exercicio => {
-    const nome = String(exercicio || '').trim();
-    const key = nome.toLowerCase();
-    if (!nome || isExerciseTestData(nome) || seen.has(key)) return;
+  (Array.isArray(exercicios) ? exercicios : []).forEach((exercicio, index) => {
+    const normalized = normalizeWorkoutExercise(exercicio, index);
+    const key = normalized?.exerciseId || normalizeExerciseKey(normalized);
+    if (!normalized || isExerciseTestData(normalized) || seen.has(key)) return;
     seen.add(key);
-    cleaned.push(nome);
+    normalized.ordem = cleaned.length;
+    cleaned.push(normalized);
   });
 
   return cleaned;
@@ -4983,7 +5367,10 @@ const EXERCICIOS_BASE_COMPLEMENTARES = {
 };
 
 function normalizeExerciseKey(nome) {
-  return String(nome || '')
+  const value = nome && typeof nome === 'object'
+    ? (nome.nome || nome.name || nome.exerciseId || nome.id || '')
+    : nome;
+  return String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -5151,11 +5538,16 @@ const EXERCISE_GROUP_GUIDES = {
 };
 
 function getExercisePrescription(grupo, categoria) {
-  if (grupo === 'Cardio') return { series: '3 blocos', repeticoes: '20–30 min' };
-  if (grupo === 'Core') return { series: '3 séries', repeticoes: '12–20 reps' };
-  if (categoria === 'Isolador') return { series: '3 séries', repeticoes: '10–15 reps' };
-  if (grupo === 'Funcional') return { series: '3–4 séries', repeticoes: '8–15 reps' };
-  return { series: '4 séries', repeticoes: '6–12 reps' };
+  if (grupo === 'Cardio') return { series: 3, repeticoes: '20–30 min' };
+  if (grupo === 'Core') return { series: 3, repeticoes: '12–20' };
+  if (categoria === 'Isolador') return { series: 3, repeticoes: '10–15' };
+  if (grupo === 'Funcional') return { series: 3, repeticoes: '8–15' };
+  return { series: 4, repeticoes: '6–12' };
+}
+
+function formatSuggestedReps(value) {
+  const text = String(value || '').trim();
+  return /\b(min|seg|s)\b/i.test(text) ? text : `${text} reps`;
 }
 
 function getExerciseDifficulty(nome, equipamento) {
@@ -5173,8 +5565,23 @@ function getExerciseGuide(grupo) {
 
 function getExerciseAliases(nome) {
   const withoutParentheses = String(nome || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-  const aliases = [withoutParentheses, normalizeExerciseKey(nome)].filter(Boolean);
-  return [...new Set(aliases.filter(alias => normalizeExerciseKey(alias) !== normalizeExerciseKey(nome) || alias !== nome))];
+  const key = normalizeExerciseKey(nome);
+  const aliases = [withoutParentheses, key];
+  const knownAliases = [
+    ['supino', 'bench press'],
+    ['agachamento', 'squat'],
+    ['levantamento terra', 'deadlift'],
+    ['remada', 'row'],
+    ['puxada', 'pulldown'],
+    ['desenvolvimento', 'shoulder press'],
+    ['rosca', 'curl'],
+    ['triceps', 'triceps extension'],
+    ['flexao', 'push up']
+  ];
+  knownAliases.forEach(([term, alias]) => {
+    if (key.includes(term)) aliases.push(alias);
+  });
+  return [...new Set(aliases.filter(Boolean).map(alias => String(alias).trim()))];
 }
 
 function getExerciseId(nome) {
@@ -5191,55 +5598,146 @@ function getExerciseMedia(nome) {
   };
 }
 
+function getExerciseRestSuggestion(grupo, categoria, nivel) {
+  if (grupo === 'Cardio') return 60;
+  if (grupo === 'Core' || categoria === 'Isolador') return 60;
+  if (nivel === 'Avançado') return 120;
+  return 90;
+}
+
+function normalizeExercise(exercise) {
+  const raw = typeof exercise === 'string' ? { nome: exercise } : (exercise || {});
+  const nome = String(raw.nome || raw.name || '').trim();
+  if (!nome) return null;
+
+  const key = normalizeExerciseKey(nome);
+  const grupo = normalizeExerciseGroup(raw.grupo || MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(key) || 'Outros');
+  const categoria = String(raw.categoria || getExerciseCategory(nome, grupo));
+  const equipamento = String(raw.equipamento || getExerciseEquipment(nome, grupo));
+  const nivel = String(raw.nivel || raw.dificuldade || getExerciseDifficulty(nome, equipamento));
+  const prescription = getExercisePrescription(grupo, categoria);
+  const guide = getExerciseGuide(grupo);
+  const media = getExerciseMedia(nome);
+  const aliases = [...new Set([
+    ...getExerciseAliases(nome),
+    ...(Array.isArray(raw.aliases) ? raw.aliases : [])
+  ].map(alias => String(alias || '').trim()).filter(Boolean))];
+  const kcal = Number.isFinite(Number(raw.kcal ?? raw.gastoCalorico))
+    ? Math.max(0, Number(raw.kcal ?? raw.gastoCalorico))
+    : getExerciseKcalEstimate(nome, grupo);
+  const suggestedSeries = Number(raw.series_sugeridas ?? raw.seriesSugeridas);
+  const seriesSugeridas = suggestedSeries > 0 ? Math.round(suggestedSeries) : prescription.series;
+  const repsSugeridas = String(raw.reps_sugeridas || raw.repeticoesSugeridas || prescription.repeticoes).trim();
+  const suggestedRest = Number(raw.descanso_sugerido);
+  const descansoSugerido = suggestedRest > 0
+    ? Math.round(suggestedRest)
+    : getExerciseRestSuggestion(grupo, categoria, nivel);
+  const listOrFallback = (value, fallback) => Array.isArray(value) && value.length
+    ? value.map(item => String(item || '').trim()).filter(Boolean)
+    : [...fallback];
+
+  const normalized = {
+    id: String(raw.id || getExerciseId(nome)),
+    key,
+    nome,
+    aliases,
+    grupo,
+    categoria,
+    equipamento,
+    kcal,
+    nivel,
+    series_sugeridas: seriesSugeridas,
+    reps_sugeridas: repsSugeridas,
+    descanso_sugerido: descansoSugerido,
+    musculos_primarios: listOrFallback(raw.musculos_primarios, guide.primarios),
+    musculos_secundarios: listOrFallback(raw.musculos_secundarios, guide.secundarios),
+    instrucoes: listOrFallback(raw.instrucoes, guide.instrucoes),
+    dicas: listOrFallback(raw.dicas, guide.dicas),
+    observacoes: String(raw.observacoes ?? 'Ajuste carga e amplitude ao seu nível. Em caso de dor, interrompa e procure orientação profissional.'),
+    video_url: typeof raw.video_url === 'string' ? raw.video_url : media.video_url,
+    thumbnail_url: typeof raw.thumbnail_url === 'string' ? raw.thumbnail_url : media.thumbnail_url,
+    source_label: String(raw.source_label || media.source_label || 'Catálogo local FORJA'),
+    guide
+  };
+
+  normalized.search_text = normalizeExerciseKey([
+    normalized.nome,
+    ...normalized.aliases,
+    normalized.grupo,
+    normalized.categoria,
+    normalized.equipamento,
+    normalized.nivel
+  ].join(' '));
+
+  // Campos legados continuam disponíveis para testes e renderizações anteriores.
+  normalized.gastoCalorico = normalized.kcal;
+  normalized.dificuldade = normalized.nivel;
+  normalized.seriesSugeridas = normalized.series_sugeridas;
+  normalized.repeticoesSugeridas = normalized.reps_sugeridas;
+  normalized.videoUrl = normalized.video_url;
+  return normalized;
+}
+
 const EXERCICIOS_BASE = EXERCICIO_NOMES_BASE
   .filter(nome => !isExerciseTestData(nome))
   .reduce((items, nome) => {
-    const normalized = normalizeExerciseKey(nome);
-    if (!normalized || items.some(item => item.key === normalized)) return items;
-    const grupo = normalizeExerciseGroup(MAPA_MUSCULOS[nome] || muscleByNormalizedExercise.get(normalized) || 'Outros');
-    const kcal = getExerciseKcalEstimate(nome, grupo);
-    const categoria = getExerciseCategory(nome, grupo);
-    const equipamento = getExerciseEquipment(nome, grupo);
-    const prescription = getExercisePrescription(grupo, categoria);
-    const guide = getExerciseGuide(grupo);
-    const media = getExerciseMedia(nome);
-    const nivel = getExerciseDifficulty(nome, equipamento);
-    const aliases = getExerciseAliases(nome);
-    items.push({
-      id: getExerciseId(nome),
-      key: normalized,
-      nome,
-      aliases,
-      grupo,
-      categoria,
-      kcal,
-      equipamento,
-      nivel,
-      series_sugeridas: prescription.series,
-      reps_sugeridas: prescription.repeticoes,
-      musculos_primarios: [...guide.primarios],
-      musculos_secundarios: [...guide.secundarios],
-      instrucoes: [...guide.instrucoes],
-      dicas: [...guide.dicas],
-      observacoes: 'Ajuste carga e amplitude ao seu nível. Em caso de dor, interrompa e procure orientação profissional.',
-      video_url: media.video_url,
-      thumbnail_url: media.thumbnail_url,
-      source_label: media.source_label,
-      search_text: normalizeExerciseKey([nome, ...aliases, grupo, categoria, equipamento, nivel].join(' ')),
-
-      // Compatibilidade visual com as funções existentes; o formato salvo continua sendo apenas o nome.
-      gastoCalorico: kcal,
-      dificuldade: nivel,
-      seriesSugeridas: prescription.series,
-      repeticoesSugeridas: prescription.repeticoes,
-      videoUrl: media.video_url,
-      guide
-    });
+    const normalized = normalizeExercise(nome);
+    if (!normalized || items.some(item => item.id === normalized.id || item.key === normalized.key)) return items;
+    items.push(normalized);
     return items;
   }, [])
   .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
 const EXERCISE_LIBRARY = EXERCICIOS_BASE;
+
+function getWorkoutExerciseName(item) {
+  return String(item && typeof item === 'object' ? (item.nome || item.name || '') : (item || '')).trim();
+}
+
+function getWorkoutExerciseId(item) {
+  if (item && typeof item === 'object' && item.exerciseId) return String(item.exerciseId);
+  const catalogExercise = EXERCISE_LIBRARY.find(exercise => exercise.key === normalizeExerciseKey(item));
+  return catalogExercise?.id || getExerciseId(getWorkoutExerciseName(item));
+}
+
+function normalizeWorkoutExercise(item, index = 0) {
+  const source = typeof item === 'string' ? { nome: item } : (item || {});
+  const nome = getWorkoutExerciseName(source);
+  if (!nome) return null;
+
+  const requestedId = String(source.exerciseId || source.id || '');
+  const catalogExercise = EXERCISE_LIBRARY.find(exercise =>
+    (requestedId && exercise.id === requestedId) || exercise.key === normalizeExerciseKey(nome)
+  );
+  const definition = catalogExercise || normalizeExercise({
+    nome,
+    grupo: source.grupo,
+    equipamento: source.equipamento,
+    kcal: source.kcal
+  });
+  if (!definition) return null;
+
+  const seriesValue = Number(source.series);
+  const loadValue = source.carga === '' || source.carga == null ? null : Number(source.carga);
+  const restValue = Number(source.descanso);
+  const rpeValue = source.rpeAlvo === '' || source.rpeAlvo == null ? null : Number(source.rpeAlvo);
+  const orderValue = Number(source.ordem);
+
+  return {
+    exerciseId: catalogExercise?.id || requestedId || definition.id,
+    nome: nome || definition.nome,
+    grupo: String(source.grupo || definition.grupo),
+    equipamento: String(source.equipamento || definition.equipamento),
+    kcal: Number.isFinite(Number(source.kcal)) ? Math.max(0, Number(source.kcal)) : definition.kcal,
+    series: seriesValue > 0 ? Math.round(seriesValue) : definition.series_sugeridas,
+    reps: String(source.reps || definition.reps_sugeridas).trim(),
+    carga: Number.isFinite(loadValue) && loadValue >= 0 ? loadValue : null,
+    descanso: restValue > 0 ? Math.round(restValue) : definition.descanso_sugerido,
+    rpeAlvo: Number.isFinite(rpeValue) && rpeValue >= 1 && rpeValue <= 10 ? rpeValue : null,
+    observacoes: String(source.observacoes || '').slice(0, 500),
+    ordem: Number.isInteger(orderValue) && orderValue >= 0 ? orderValue : index
+  };
+}
 
 const LS = {
   perfil:    'forja_perfil',
@@ -5902,6 +6400,44 @@ function isSafeExerciseMediaUrl(value) {
   }
 }
 
+function isSafeExerciseVideoUrl(value) {
+  if (!isSafeExerciseMediaUrl(value)) return false;
+  try {
+    return /\.(mp4|webm)$/i.test(new URL(value, window.location.href).pathname);
+  } catch (error) {
+    return false;
+  }
+}
+
+function appendExerciseMediaFallback(media, exercise) {
+  const fallback = document.createElement('div');
+  fallback.className = 'exercise-media-fallback';
+
+  const content = document.createElement('div');
+  const icon = document.createElement('span');
+  icon.className = 'exercise-media-fallback-icon';
+  icon.innerHTML = '<i data-lucide="dumbbell"></i>';
+
+  const group = document.createElement('p');
+  group.className = 'text-[10px] uppercase font-semibold text-ember mb-2';
+  group.textContent = exercise?.grupo || 'Exercício';
+
+  const title = document.createElement('p');
+  title.className = 'text-sm font-semibold text-ink';
+  title.textContent = 'Demonstração em vídeo ainda não disponível.';
+
+  const description = document.createElement('p');
+  description.className = 'text-xs text-mute mt-2';
+  description.textContent = 'Consulte as instruções abaixo para executar o movimento.';
+
+  content.appendChild(icon);
+  content.appendChild(group);
+  content.appendChild(title);
+  content.appendChild(description);
+  fallback.appendChild(content);
+  media.appendChild(fallback);
+}
+
 function renderExerciseMediaState(exercise) {
   const media = document.getElementById('exercise-detail-media');
   if (!media) return;
@@ -5909,7 +6445,7 @@ function renderExerciseMediaState(exercise) {
   media.replaceChildren();
   if (closeButton) media.appendChild(closeButton);
 
-  const videoUrl = isSafeExerciseMediaUrl(exercise?.video_url) ? exercise.video_url : null;
+  const videoUrl = isSafeExerciseVideoUrl(exercise?.video_url) ? exercise.video_url : null;
   const thumbnailUrl = isSafeExerciseMediaUrl(exercise?.thumbnail_url) ? exercise.thumbnail_url : null;
 
   if (videoUrl) {
@@ -5928,31 +6464,16 @@ function renderExerciseMediaState(exercise) {
     image.src = thumbnailUrl;
     image.alt = `Demonstração de ${exercise.nome}`;
     image.loading = 'lazy';
+    image.addEventListener('error', () => {
+      image.remove();
+      if (!media.querySelector('.exercise-media-fallback')) appendExerciseMediaFallback(media, exercise);
+      if (window.lucide) lucide.createIcons();
+    }, { once: true });
     media.appendChild(image);
     return;
   }
 
-  const fallback = document.createElement('div');
-  fallback.className = 'exercise-media-fallback';
-
-  const content = document.createElement('div');
-  const icon = document.createElement('span');
-  icon.className = 'exercise-media-fallback-icon';
-  icon.innerHTML = '<i data-lucide="video-off"></i>';
-
-  const title = document.createElement('p');
-  title.className = 'text-sm font-semibold text-ink';
-  title.textContent = 'Vídeo ainda não cadastrado para este exercício.';
-
-  const description = document.createElement('p');
-  description.className = 'text-xs text-mute mt-2';
-  description.textContent = 'Este espaço já está preparado para demonstração em vídeo.';
-
-  content.appendChild(icon);
-  content.appendChild(title);
-  content.appendChild(description);
-  fallback.appendChild(content);
-  media.appendChild(fallback);
+  appendExerciseMediaFallback(media, exercise);
 }
 
 function renderExerciseDetailList(elementId, items) {
@@ -5978,7 +6499,12 @@ function renderExerciseDetails(exercise) {
 
   const badges = document.getElementById('exercise-detail-badges');
   badges.replaceChildren();
-  [exercise.nivel, exercise.series_sugeridas, exercise.reps_sugeridas].forEach(label => {
+  [
+    exercise.nivel,
+    `${exercise.series_sugeridas} séries`,
+    formatSuggestedReps(exercise.reps_sugeridas),
+    `${exercise.descanso_sugerido}s descanso`
+  ].forEach(label => {
     const badge = document.createElement('span');
     badge.className = 'exercise-badge';
     badge.textContent = label;
@@ -5995,10 +6521,13 @@ function renderExerciseDetails(exercise) {
   return true;
 }
 
+let exerciseModalReturnFocus = null;
+
 function openExerciseModal(exerciseId) {
   const exercise = typeof exerciseId === 'object' ? exerciseId : getExerciseById(exerciseId);
   const modal = document.getElementById('exercise-detail-modal');
   if (!exercise || !modal || !renderExerciseDetails(exercise)) return false;
+  exerciseModalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   if (typeof modal.showModal === 'function') {
     if (!modal.open) modal.showModal();
@@ -6007,6 +6536,7 @@ function openExerciseModal(exerciseId) {
   }
   document.body.classList.add('exercise-modal-open');
   if (window.lucide) lucide.createIcons();
+  document.getElementById('exercise-detail-close')?.focus({ preventScroll: true });
   return true;
 }
 
@@ -6016,6 +6546,37 @@ function closeExerciseModal() {
   if (typeof modal.close === 'function' && modal.open) modal.close();
   else modal.removeAttribute('open');
   document.body.classList.remove('exercise-modal-open');
+  if (exerciseModalReturnFocus?.isConnected) exerciseModalReturnFocus.focus({ preventScroll: true });
+  exerciseModalReturnFocus = null;
+}
+
+function createExerciseThumbnail(exercise, className = 'exercise-library-media') {
+  const container = document.createElement('div');
+  container.className = className;
+  const appendPlaceholder = () => {
+    container.replaceChildren();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'text-center';
+    wrapper.innerHTML = `<i data-lucide="${exercise?.guide?.icon || 'dumbbell'}"></i>`;
+    if (className.includes('exercise-library-media')) {
+      const label = document.createElement('span');
+      label.textContent = exercise?.grupo || 'Exercício';
+      wrapper.appendChild(label);
+    }
+    container.appendChild(wrapper);
+  };
+
+  if (isSafeExerciseMediaUrl(exercise?.thumbnail_url)) {
+    const image = document.createElement('img');
+    image.src = exercise.thumbnail_url;
+    image.alt = `Miniatura de ${exercise.nome}`;
+    image.loading = 'lazy';
+    image.addEventListener('error', appendPlaceholder, { once: true });
+    container.appendChild(image);
+  } else {
+    appendPlaceholder();
+  }
+  return container;
 }
 
 function renderExerciseResults() {
@@ -6063,9 +6624,7 @@ function renderExerciseResults() {
         }
       });
 
-      const mark = document.createElement('span');
-      mark.className = 'exercise-muscle-mark';
-      mark.innerHTML = `<i data-lucide="${item.guide?.icon || 'dumbbell'}"></i>`;
+      const mark = createExerciseThumbnail(item);
 
       const content = document.createElement('div');
       content.className = 'exercise-library-meta';
@@ -6085,7 +6644,7 @@ function renderExerciseResults() {
 
       const badges = document.createElement('div');
       badges.className = 'exercise-badges';
-      [item.nivel, item.series_sugeridas, item.reps_sugeridas].forEach(labelText => {
+      [item.nivel, `${item.series_sugeridas} séries`, formatSuggestedReps(item.reps_sugeridas), `${item.descanso_sugerido}s`].forEach(labelText => {
         const badge = document.createElement('span');
         badge.className = 'exercise-badge';
         badge.textContent = labelText;
@@ -6100,7 +6659,7 @@ function renderExerciseResults() {
       detailButton.className = 'exercise-detail-button';
       detailButton.title = `Ver detalhes de ${item.nome}`;
       detailButton.setAttribute('aria-label', `Ver detalhes de ${item.nome}`);
-      detailButton.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i><span>Ver</span>';
+      detailButton.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i><span>Ver exercício</span>';
       detailButton.addEventListener('click', () => openExerciseModal(item.id));
 
       const addButton = document.createElement('button');
@@ -6137,7 +6696,8 @@ function popularDatalistExercicios() {
 
 async function adicionarExercicioAoTreinoAtivo(selectedExercise, options = {}) {
   const { persist = true, notify = true } = options;
-  if (!selectedExercise) {
+  const exerciseDefinition = normalizeExercise(selectedExercise);
+  if (!exerciseDefinition) {
     if (notify) toast('Selecione um exercício da biblioteca.');
     return { added: false, reason: 'missing-exercise' };
   }
@@ -6152,19 +6712,30 @@ async function adicionarExercicioAoTreinoAtivo(selectedExercise, options = {}) {
   }
 
   const alreadyExists = (targetWorkout.exercicios || [])
-    .some(nome => normalizeExerciseKey(nome) === selectedExercise.key);
+    .some(item => getWorkoutExerciseId(item) === exerciseDefinition.id);
   if (alreadyExists) {
-    if (notify) toast(`${selectedExercise.nome} ja esta no ${getWorkoutLabel(targetWorkoutKey)}.`);
+    if (notify) toast(`Este exercício já está no ${getWorkoutLabel(targetWorkoutKey)}.`);
     return { added: false, reason: 'duplicate' };
   }
 
-  targetWorkout.exercicios.push(selectedExercise.nome);
+  const workoutExercise = normalizeWorkoutExercise({
+    exerciseId: exerciseDefinition.id,
+    nome: exerciseDefinition.nome,
+    grupo: exerciseDefinition.grupo,
+    equipamento: exerciseDefinition.equipamento,
+    kcal: exerciseDefinition.kcal,
+    series: exerciseDefinition.series_sugeridas,
+    reps: exerciseDefinition.reps_sugeridas,
+    descanso: exerciseDefinition.descanso_sugerido,
+    ordem: targetWorkout.exercicios.length
+  }, targetWorkout.exercicios.length);
+  targetWorkout.exercicios.push(workoutExercise);
   treinoAtivo = targetWorkoutKey;
   if (persist) await saveWorkoutState();
 
   renderTelaTreino({ divisao });
-  if (notify) toast(`${selectedExercise.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
-  return { added: true, treino: targetWorkoutKey, exercicio: selectedExercise.nome };
+  if (notify) toast(`${exerciseDefinition.nome} adicionado ao ${getWorkoutLabel(targetWorkoutKey)}.`);
+  return { added: true, treino: targetWorkoutKey, exercicio: exerciseDefinition.nome, instance: workoutExercise };
 }
 
 async function adicionarExercicioDaBiblioteca() {
@@ -6317,11 +6888,135 @@ function renderEstimativaCaloriasTreino(divisao = null) {
     return;
   }
 
-  const totalKcal = t.exercicios.reduce((soma, nome) => soma + calcularKcalExercicio(nome, peso), 0);
+  const totalKcal = t.exercicios.reduce((soma, item) => soma + calcularKcalExercicio(getWorkoutExerciseName(item), peso), 0);
   const notaPeso = pesoCadastrado ? '' : ' <span class="text-mute">(peso padrão 75kg — cadastre o seu no Perfil)</span>';
 
   el.innerHTML = `<i data-lucide="flame" class="w-3.5 h-3.5 text-ember shrink-0"></i><span>Estimativa de Gasto (Treino Atual): <span class="text-ember font-mono font-semibold">~${Math.round(totalKcal)} kcal</span>${notaPeso}</span>`;
   if(window.lucide) { lucide.createIcons(); }
+}
+
+let workoutConfigReturnFocus = null;
+
+function openWorkoutExerciseConfig(index) {
+  const workout = ensureActiveWorkout();
+  const itemIndex = Number(index);
+  const item = normalizeWorkoutExercise(workout?.exercicios?.[itemIndex], itemIndex);
+  const modal = document.getElementById('workout-exercise-config-modal');
+  if (!item || !modal) return false;
+
+  workout.exercicios[itemIndex] = item;
+  modal.dataset.exerciseIndex = String(itemIndex);
+  document.getElementById('workout-config-title').textContent = item.nome;
+  document.getElementById('workout-config-meta').textContent = `${item.grupo} · ${item.equipamento} · ${getWorkoutLabel(getActiveWorkoutKey())}`;
+  document.getElementById('workout-config-series').value = item.series;
+  document.getElementById('workout-config-reps').value = item.reps;
+  document.getElementById('workout-config-load').value = item.carga ?? '';
+  document.getElementById('workout-config-rest').value = item.descanso;
+  document.getElementById('workout-config-rpe').value = item.rpeAlvo ?? '';
+  document.getElementById('workout-config-notes').value = item.observacoes;
+
+  workoutConfigReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  if (typeof modal.showModal === 'function') {
+    if (!modal.open) modal.showModal();
+  } else {
+    modal.setAttribute('open', '');
+  }
+  document.body.classList.add('exercise-modal-open');
+  document.getElementById('workout-config-series')?.focus({ preventScroll: true });
+  return true;
+}
+
+function closeWorkoutExerciseConfig() {
+  const modal = document.getElementById('workout-exercise-config-modal');
+  if (!modal) return;
+  if (typeof modal.close === 'function' && modal.open) modal.close();
+  else modal.removeAttribute('open');
+  document.body.classList.remove('exercise-modal-open');
+  if (workoutConfigReturnFocus?.isConnected) workoutConfigReturnFocus.focus({ preventScroll: true });
+  workoutConfigReturnFocus = null;
+}
+
+async function updateWorkoutExerciseConfiguration(index, values = {}, options = {}) {
+  const { persist = true, notify = true } = options;
+  const workout = ensureActiveWorkout();
+  const itemIndex = Number(index);
+  const current = normalizeWorkoutExercise(workout?.exercicios?.[itemIndex], itemIndex);
+  if (!current || !Number.isInteger(itemIndex)) return { updated: false, reason: 'invalid-exercise' };
+
+  const series = Number(values.series);
+  const reps = String(values.reps || '').trim().slice(0, 24);
+  const carga = values.carga === '' || values.carga == null ? null : Number(values.carga);
+  const descanso = Number(values.descanso);
+  const rpeAlvo = values.rpeAlvo === '' || values.rpeAlvo == null ? null : Number(values.rpeAlvo);
+  if (!Number.isInteger(series) || series <= 0) return { updated: false, reason: 'invalid-series' };
+  if (!reps) return { updated: false, reason: 'invalid-reps' };
+  if (carga !== null && (!Number.isFinite(carga) || carga < 0)) return { updated: false, reason: 'invalid-load' };
+  if (!Number.isInteger(descanso) || descanso < 15) return { updated: false, reason: 'invalid-rest' };
+  if (rpeAlvo !== null && (!Number.isFinite(rpeAlvo) || rpeAlvo < 1 || rpeAlvo > 10)) {
+    return { updated: false, reason: 'invalid-rpe' };
+  }
+
+  workout.exercicios[itemIndex] = {
+    ...current,
+    series,
+    reps,
+    carga,
+    descanso,
+    rpeAlvo,
+    observacoes: String(values.observacoes || '').trim().slice(0, 500),
+    ordem: itemIndex
+  };
+  if (persist) await saveWorkoutState();
+  renderTelaTreino();
+  if (notify) toast(`Configuração de ${current.nome} salva.`);
+  return { updated: true, exercise: workout.exercicios[itemIndex] };
+}
+
+async function saveWorkoutExerciseConfigFromModal() {
+  const modal = document.getElementById('workout-exercise-config-modal');
+  const result = await updateWorkoutExerciseConfiguration(modal?.dataset.exerciseIndex, {
+    series: document.getElementById('workout-config-series')?.value,
+    reps: document.getElementById('workout-config-reps')?.value,
+    carga: document.getElementById('workout-config-load')?.value,
+    descanso: document.getElementById('workout-config-rest')?.value,
+    rpeAlvo: document.getElementById('workout-config-rpe')?.value,
+    observacoes: document.getElementById('workout-config-notes')?.value
+  });
+
+  if (result.updated) {
+    closeWorkoutExerciseConfig();
+    return result;
+  }
+  const messages = {
+    'invalid-series': 'Informe um número inteiro positivo de séries.',
+    'invalid-reps': 'Informe as repetições ou uma faixa válida.',
+    'invalid-load': 'A carga inicial não pode ser negativa.',
+    'invalid-rest': 'O descanso deve ser de pelo menos 15 segundos.',
+    'invalid-rpe': 'O RPE alvo deve ficar entre 1 e 10.'
+  };
+  toast(messages[result.reason] || 'Revise os dados da configuração.');
+  return result;
+}
+
+async function moveWorkoutExercise(index, direction, options = {}) {
+  const { persist = true, notify = false } = options;
+  const workout = ensureActiveWorkout();
+  const currentIndex = Number(index);
+  const offset = direction === 'up' || Number(direction) < 0 ? -1 : 1;
+  const nextIndex = currentIndex + offset;
+  if (!Number.isInteger(currentIndex) || nextIndex < 0 || nextIndex >= workout.exercicios.length) {
+    return { moved: false, reason: 'boundary' };
+  }
+
+  [workout.exercicios[currentIndex], workout.exercicios[nextIndex]] = [
+    workout.exercicios[nextIndex],
+    workout.exercicios[currentIndex]
+  ];
+  workout.exercicios = workout.exercicios.map((item, itemIndex) => normalizeWorkoutExercise(item, itemIndex));
+  if (persist) await saveWorkoutState();
+  renderTelaTreino();
+  if (notify) toast('Ordem da ficha atualizada.');
+  return { moved: true, from: currentIndex, to: nextIndex };
 }
 
 async function removerExercicioDoTreinoAtivo(index, options = {}) {
@@ -6334,8 +7029,9 @@ async function removerExercicioDoTreinoAtivo(index, options = {}) {
     return { removed: false, reason: 'invalid-index' };
   }
 
-  const nomeRemovido = treino.exercicios[idx];
+  const nomeRemovido = getWorkoutExerciseName(treino.exercicios[idx]);
   treino.exercicios.splice(idx, 1);
+  treino.exercicios = treino.exercicios.map((item, itemIndex) => normalizeWorkoutExercise(item, itemIndex));
   if (persist) await saveWorkoutState();
 
   renderTelaTreino({ divisao: activeDivision });
@@ -6350,76 +7046,132 @@ function renderExerciciosLista(divisao = null) {
   const t = ensureActiveWorkout(activeDivision);
   cont.replaceChildren();
 
-  if (t.exercicios.length === 0) {
-    const title = document.createElement('p');
-    title.className = 'font-display font-semibold text-xl mb-1';
-    title.textContent = t.nome;
-    cont.appendChild(title);
-
-    const empty = document.createElement('p');
-    empty.className = 'text-sm text-mute bg-card2 border border-line rounded-lg px-3 py-4';
-    empty.textContent = 'Este treino ainda não possui exercícios. Adicione exercícios pela biblioteca.';
-    cont.appendChild(empty);
-    return;
-  }
-
   const title = document.createElement('p');
   title.className = 'font-display font-semibold text-xl mb-1';
   title.textContent = t.nome;
   cont.appendChild(title);
 
-  t.exercicios.forEach((ex, idx) => {
-    const row = document.createElement('div');
-    row.className = 'flex items-center justify-between text-sm bg-card2 border border-line rounded-lg px-3 py-2';
+  if (t.exercicios.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'text-sm text-mute bg-card2 border border-line rounded-lg px-3 py-4';
+    const primary = document.createElement('p');
+    primary.className = 'font-semibold text-ink';
+    primary.textContent = 'Este treino ainda não possui exercícios.';
+    const secondary = document.createElement('p');
+    secondary.className = 'mt-1';
+    secondary.textContent = 'Adicione exercícios pela biblioteca para montar sua ficha.';
+    empty.appendChild(primary);
+    empty.appendChild(secondary);
+    cont.appendChild(empty);
+    return;
+  }
 
-    const details = document.createElement('div');
-    details.className = 'min-w-0';
+  const list = document.createElement('div');
+  list.className = 'workout-plan-list';
+  t.exercicios.forEach((rawExercise, idx) => {
+    const exercise = normalizeWorkoutExercise(rawExercise, idx);
+    t.exercicios[idx] = exercise;
+    const definition = getExerciseById(exercise.exerciseId) || normalizeExercise(exercise);
+    const row = document.createElement('article');
+    row.className = 'workout-plan-item bg-card2 border border-line rounded-lg';
 
-    const name = document.createElement('span');
-    name.className = 'block font-semibold text-ink truncate';
-    name.textContent = ex;
+    const order = document.createElement('span');
+    order.className = 'workout-order';
+    order.textContent = String(idx + 1).padStart(2, '0');
 
-    const exerciseMeta = EXERCISE_LIBRARY.find(item => normalizeExerciseKey(item.nome) === normalizeExerciseKey(ex));
-    const group = document.createElement('span');
-    group.className = 'block text-[11px] text-mute';
-    group.textContent = exerciseMeta?.grupo || normalizeExerciseGroup(MAPA_MUSCULOS[ex] || 'Outros');
+    const media = createExerciseThumbnail(definition, 'workout-plan-media');
+    const content = document.createElement('div');
+    content.className = 'workout-plan-content';
 
-    const actions = document.createElement('div');
-    actions.className = 'workout-exercise-actions';
+    const name = document.createElement('strong');
+    name.className = 'block text-sm font-semibold text-ink truncate';
+    name.textContent = exercise.nome;
 
-    if (exerciseMeta) {
-      const detailButton = document.createElement('button');
-      detailButton.type = 'button';
-      detailButton.className = 'workout-exercise-icon-button';
-      detailButton.title = `Ver detalhes de ${ex}`;
-      detailButton.setAttribute('aria-label', `Ver detalhes de ${ex}`);
-      detailButton.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i>';
-      detailButton.addEventListener('click', () => openExerciseModal(exerciseMeta.id));
-      actions.appendChild(detailButton);
+    const meta = document.createElement('span');
+    meta.className = 'block mt-1 text-[10px] text-mute';
+    meta.textContent = `${exercise.grupo} · ${exercise.equipamento}`;
+
+    const metrics = document.createElement('div');
+    metrics.className = 'workout-plan-metrics';
+    const metricLabels = [
+      `${exercise.series} × ${exercise.reps}`,
+      `${exercise.descanso}s descanso`
+    ];
+    if (exercise.carga !== null) metricLabels.push(`${exercise.carga} kg inicial`);
+    if (exercise.rpeAlvo !== null) metricLabels.push(`RPE ${exercise.rpeAlvo}`);
+    metricLabels.forEach(label => {
+      const badge = document.createElement('span');
+      badge.className = 'exercise-badge';
+      badge.textContent = label;
+      metrics.appendChild(badge);
+    });
+
+    content.appendChild(name);
+    content.appendChild(meta);
+    content.appendChild(metrics);
+    if (exercise.observacoes) {
+      const notes = document.createElement('p');
+      notes.className = 'mt-2 text-[10px] text-mute line-clamp-2';
+      notes.textContent = exercise.observacoes;
+      content.appendChild(notes);
     }
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.idx = String(idx);
-    button.className = 'del-exercicio workout-exercise-icon-button';
-    button.title = 'Remover exercício';
-    button.setAttribute('aria-label', `Remover ${ex}`);
-    button.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4"></i>';
-    actions.appendChild(button);
+    const actions = document.createElement('div');
+    actions.className = 'workout-plan-actions';
+    const createAction = ({ icon, label, title: buttonTitle, disabled = false, danger = false, handler }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `workout-action-button${danger ? ' workout-action-danger' : ''}`;
+      button.title = buttonTitle;
+      button.setAttribute('aria-label', buttonTitle);
+      button.disabled = disabled;
+      button.innerHTML = `<i data-lucide="${icon}" class="w-3.5 h-3.5"></i><span>${label}</span>`;
+      button.addEventListener('click', handler);
+      return button;
+    };
 
-    details.appendChild(name);
-    details.appendChild(group);
-    row.appendChild(details);
+    actions.appendChild(createAction({
+      icon: 'eye',
+      label: 'Ver',
+      title: `Ver detalhes de ${exercise.nome}`,
+      handler: () => openExerciseModal(definition.id)
+    }));
+    actions.appendChild(createAction({
+      icon: 'sliders-horizontal',
+      label: 'Configurar',
+      title: `Configurar ${exercise.nome}`,
+      handler: () => openWorkoutExerciseConfig(idx)
+    }));
+    actions.appendChild(createAction({
+      icon: 'arrow-up',
+      label: 'Subir',
+      title: `Mover ${exercise.nome} para cima`,
+      disabled: idx === 0,
+      handler: () => moveWorkoutExercise(idx, 'up')
+    }));
+    actions.appendChild(createAction({
+      icon: 'arrow-down',
+      label: 'Descer',
+      title: `Mover ${exercise.nome} para baixo`,
+      disabled: idx === t.exercicios.length - 1,
+      handler: () => moveWorkoutExercise(idx, 'down')
+    }));
+    actions.appendChild(createAction({
+      icon: 'trash-2',
+      label: 'Remover',
+      title: `Remover ${exercise.nome}`,
+      danger: true,
+      handler: () => removerExercicioDoTreinoAtivo(idx)
+    }));
+
+    row.appendChild(order);
+    row.appendChild(media);
+    row.appendChild(content);
     row.appendChild(actions);
-    cont.appendChild(row);
+    list.appendChild(row);
   });
-
+  cont.appendChild(list);
   if(window.lucide) { lucide.createIcons(); }
-  cont.querySelectorAll('.del-exercicio').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await removerExercicioDoTreinoAtivo(btn.dataset.idx);
-    });
-  });
 }
 
 function popularSelectExercicios(divisao = null) {
@@ -6435,8 +7187,9 @@ function popularSelectExercicios(divisao = null) {
     atualizarSugestaoProgressao();
     return;
   }
-  t.exercicios.forEach(ex => {
-    sel.appendChild(new Option(ex, ex));
+  t.exercicios.forEach(item => {
+    const name = getWorkoutExerciseName(item);
+    sel.appendChild(new Option(name, name));
   });
   atualizarSugestaoProgressao();
 }
@@ -6466,8 +7219,31 @@ document.getElementById('exercise-detail-add')?.addEventListener('click', async 
 document.getElementById('exercise-detail-modal')?.addEventListener('click', (event) => {
   if (event.target === event.currentTarget) closeExerciseModal();
 });
+document.getElementById('exercise-detail-modal')?.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeExerciseModal();
+  }
+});
 document.getElementById('exercise-detail-modal')?.addEventListener('close', () => {
   document.body.classList.remove('exercise-modal-open');
+});
+document.getElementById('workout-config-close')?.addEventListener('click', closeWorkoutExerciseConfig);
+document.getElementById('workout-config-cancel')?.addEventListener('click', closeWorkoutExerciseConfig);
+document.getElementById('workout-config-save')?.addEventListener('click', saveWorkoutExerciseConfigFromModal);
+document.getElementById('workout-exercise-config-modal')?.addEventListener('click', event => {
+  if (event.target === event.currentTarget) closeWorkoutExerciseConfig();
+});
+document.getElementById('workout-exercise-config-modal')?.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeWorkoutExerciseConfig();
+  }
+});
+document.getElementById('workout-exercise-config-modal')?.addEventListener('close', () => {
+  document.body.classList.remove('exercise-modal-open');
+  if (workoutConfigReturnFocus?.isConnected) workoutConfigReturnFocus.focus({ preventScroll: true });
+  workoutConfigReturnFocus = null;
 });
 
 function ultimaExecucao(exercicio) {
