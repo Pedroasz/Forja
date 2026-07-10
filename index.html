@@ -259,6 +259,33 @@
     border-radius: 9px !important;
     padding: 11px 12px;
   }
+  .workout-history-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 13px; }
+  .workout-history-metric { min-width: 0; padding: 9px; background: rgba(255,255,255,.025); border: 1px solid rgba(67,72,86,.55); border-radius: 8px; }
+  .workout-history-metric span { display: block; color: var(--forja-muted); font-size: 9px; line-height: 1.3; }
+  .workout-history-metric strong { display: block; overflow: hidden; margin-top: 3px; font: 700 13px/1.2 'JetBrains Mono', monospace; text-overflow: ellipsis; white-space: nowrap; }
+  .workout-history-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 13px; }
+  .workout-history-filters label { min-width: 0; display: grid; gap: 4px; }
+  .workout-history-filters span { color: var(--forja-muted); font-size: 10px; font-weight: 650; }
+  .workout-history-filters select,
+  .workout-history-filters input { width: 100%; min-width: 0; min-height: 38px; color: var(--forja-text); background: rgba(28,31,41,.9); border: 1px solid rgba(79,84,99,.62); border-radius: 7px; padding: 7px 9px; font-size: 11px; outline: none; }
+  .workout-history-filters select:focus,
+  .workout-history-filters input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+  .workout-history-search { grid-column: span 2; }
+  .workout-history-card .history-execution-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+  .history-execution-card h3 { font-size: 13px; font-weight: 750; }
+  .history-execution-meta { margin-top: 4px; color: var(--forja-muted); font-size: 10px; line-height: 1.5; }
+  .history-execution-stats { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .history-execution-stats span { padding: 3px 6px; color: var(--forja-muted); background: rgba(255,255,255,.035); border-radius: 5px; font: 650 10px/1.2 'JetBrains Mono', monospace; }
+  .history-status { display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; color: var(--forja-muted); font-size: 10px; }
+  .history-card-actions { display: grid; gap: 6px; justify-items: end; }
+  .history-detail-dialog { width: min(820px, calc(100vw - 28px)); }
+  .history-detail-panel { max-height: min(800px, calc(100dvh - 28px)); overflow-y: auto; padding: 21px; }
+  .history-detail-section { margin-top: 17px; }
+  .history-detail-section h3 { font-size: 14px; font-weight: 750; }
+  .history-detail-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+  .history-detail-series { display: grid; gap: 6px; margin-top: 9px; }
+  .history-detail-series p { padding: 8px 9px; color: var(--forja-muted); background: rgba(255,255,255,.025); border-radius: 7px; font-size: 11px; line-height: 1.45; }
+  #workout-exercise-history-summary { margin: 0 0 13px; padding: 11px; background: color-mix(in srgb, var(--color-primary) 7%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); border-radius: 8px; }
   .workout-exercise-actions { display: flex; align-items: center; gap: 6px; margin-left: 10px; }
   .workout-exercise-icon-button {
     width: 34px;
@@ -918,6 +945,9 @@
     .treino-tab-btn .workout-count { display: block; margin-top: 4px; }
     .treino-tab-btn .workout-status { display: none !important; }
     #exercicio-lista-biblioteca { max-height: 390px !important; }
+    .workout-history-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workout-history-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workout-history-search { grid-column: span 2; }
     .live-workout-header { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 13px 16px; }
     .live-workout-header-status { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(68,73,87,.55); }
     .live-workout-header-actions .live-danger-button span { display: none; }
@@ -973,6 +1003,10 @@
     .live-confirm-actions button { width: 100%; }
     .live-entry-banner { grid-template-columns: minmax(0, 1fr); }
     .live-entry-banner button { width: 100%; }
+    .workout-history-card .history-execution-card { grid-template-columns: minmax(0, 1fr); }
+    .history-card-actions { grid-template-columns: 1fr 1fr; justify-items: stretch; }
+    .history-card-actions button { width: 100%; }
+    .history-detail-comparison { grid-template-columns: 1fr; }
     .live-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .live-summary-actions { grid-template-columns: 1fr; }
     .live-preview-panel { padding: 17px; }
@@ -1541,8 +1575,18 @@
     </div>
 
     <div class="premium-card workout-history-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
-      <h2 class="font-display font-semibold text-lg mb-3">Histórico recente</h2>
+      <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-display font-semibold text-lg">Histórico de treinos</h2><i data-lucide="history" class="w-5 h-5 text-mute"></i></div>
+      <div id="workout-history-summary" class="workout-history-summary"></div>
+      <div class="workout-history-filters" aria-label="Filtros do histórico de treinos">
+        <label><span>Treino</span><select id="history-filter-workout"></select></label>
+        <label><span>Exercício</span><select id="history-filter-exercise"></select></label>
+        <label><span>Período</span><select id="history-filter-period"><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option><option value="all">Todo o período</option></select></label>
+        <label><span>Status</span><select id="history-filter-sync"><option value="all">Todos</option><option value="synced">Sincronizado</option><option value="pending">Pendente</option><option value="syncing">Sincronizando</option><option value="error">Erro</option></select></label>
+        <label class="workout-history-search"><span>Buscar</span><input id="history-filter-search" type="search" placeholder="Treino, exercício ou observação"></label>
+      </div>
+      <div id="workout-exercise-history-summary" class="hidden"></div>
       <div id="treino-historico" class="space-y-2"></div>
+      <button type="button" id="workout-history-load-more" class="hidden mt-3 w-full live-secondary-button">Carregar mais</button>
     </div>
 
     <div class="premium-card workout-volume-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
@@ -2016,6 +2060,13 @@
     </article>
   </main>
 </section>
+
+<dialog id="workout-history-details-dialog" class="exercise-detail-dialog history-detail-dialog" aria-modal="true" aria-labelledby="workout-history-details-title">
+  <div class="exercise-detail-panel history-detail-panel">
+    <div class="flex items-center justify-between gap-3"><div><p class="live-eyebrow">Execução registrada</p><h2 id="workout-history-details-title" class="font-display font-semibold text-xl">Detalhes do treino</h2></div><button type="button" id="workout-history-details-close" class="live-icon-button" aria-label="Fechar detalhes"><i data-lucide="x"></i></button></div>
+    <div id="workout-history-details-content"></div>
+  </div>
+</dialog>
 
 <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-card2 border border-ember/40 text-sm px-4 py-2.5 rounded-xl z-50 shadow-lg"></div>
 
@@ -2695,7 +2746,10 @@ const StorageService = (() => {
         const mappedWorkouts = DataMapper.workoutsFromSupabase(data || []);
         const loadedWorkouts = {
           treinos: cachedTreinos,
-          execucoes: Array.isArray(mappedWorkouts.execucoes) ? mappedWorkouts.execucoes : cachedWorkouts.execucoes
+          execucoes: mergeWorkoutExecutionLists(
+            cachedWorkouts.execucoes,
+            Array.isArray(mappedWorkouts.execucoes) ? mappedWorkouts.execucoes : []
+          )
         };
 
         await write(WORKOUTS_KEY, loadedWorkouts.treinos);
@@ -2721,6 +2775,8 @@ const StorageService = (() => {
       const savedExecutions = await write(WORKOUT_EXECUTIONS_KEY, workoutsToSave.execucoes);
       const localSaved = savedWorkouts && savedExecutions;
 
+      if (options?.localOnly) return localSaved;
+
       try {
         if (!navigator.onLine) {
           markSyncPending('workouts', options);
@@ -2741,10 +2797,12 @@ const StorageService = (() => {
 
         if (fetchError) throw fetchError;
 
-        const datesToDelete = Array.from(new Set((existingRows || [])
-          .filter(row => localDates.has(row.workout_date) || !localKeys.has(`${row.workout_date}::${row.name}`))
-          .map(row => row.workout_date)
-          .filter(Boolean)));
+        const datesToDelete = rowsToInsert.length > 0
+          ? Array.from(new Set((existingRows || [])
+            .filter(row => localDates.has(row.workout_date) || !localKeys.has(`${row.workout_date}::${row.name}`))
+            .map(row => row.workout_date)
+            .filter(Boolean)))
+          : [];
 
         if (datesToDelete.length > 0) {
           const { error: deleteError } = await supabaseClient
@@ -3016,10 +3074,12 @@ const SyncQueue = (() => {
     }
 
     if (moduleName === 'workouts') {
-      return await StorageService.saveWorkouts({
+      const legacySynced = await StorageService.saveWorkouts({
         treinos: readLocal(WORKOUTS_KEY, TREINOS_PADRAO),
         execucoes: readLocal(WORKOUT_EXECUTIONS_KEY, [])
       }, options);
+      const completedResult = await syncPendingWorkoutExecutions();
+      return legacySynced && completedResult.remainingPending === 0 && completedResult.failed === 0;
     }
 
     return false;
@@ -3322,7 +3382,8 @@ const DataMapper = (() => {
    * Cada grupo vira uma linha com exercises em JSONB e total_volume somado.
    */
   function workoutsToSupabase(workoutsData = {}, userId = null) {
-    const executions = cleanWorkoutExecutions(workoutsData.execucoes);
+    const executions = cleanWorkoutExecutions(workoutsData.execucoes)
+      .filter(execution => !execution?.liveWorkout && !execution?.sessionId);
     const grouped = executions.reduce((acc, execution) => {
       const workoutDate = execution?.data;
       const workoutName = execution?.treino;
@@ -3370,6 +3431,11 @@ const DataMapper = (() => {
         return byDate || String(a.name || '').localeCompare(String(b.name || ''));
       })
       .forEach(row => {
+        const versionedExecution = workoutExecutionFromSupabase(row);
+        if (versionedExecution?.sessionId) {
+          execucoes.push(versionedExecution);
+          return;
+        }
         const workoutName = row.name || 'A';
         const exercises = Array.isArray(row.exercises) ? row.exercises : [];
         exercises.forEach((exercise, index) => {
@@ -3386,6 +3452,104 @@ const DataMapper = (() => {
       });
 
     return { treinos: ensureValidWorkoutPlan(null), execucoes };
+  }
+
+  function workoutExecutionToSupabase(execution, userId = null) {
+    const normalized = normalizeWorkoutExecution(execution);
+    if (!normalized || !userId) return null;
+    const payload = normalized.sessionPayload || normalized;
+    const items = Array.isArray(payload.exercises)
+      ? payload.exercises.map(exercise => ({
+        exerciseId: exercise.exerciseId,
+        nome: exercise.nome,
+        grupo: exercise.grupo,
+        equipamento: exercise.equipamento,
+        ordem: exercise.ordem ?? 0,
+        targetSets: exercise.targetSets ?? exercise.completedSets,
+        targetReps: exercise.targetReps ?? null,
+        restSeconds: exercise.restSeconds ?? null,
+        sets: Array.isArray(exercise.sets) ? exercise.sets.filter(set => set.completed !== false).map(set => ({
+          setNumber: set.setNumber,
+          type: set.type || 'normal',
+          reps: set.reps,
+          load: set.load,
+          rpe: set.rpe ?? null,
+          completedAt: set.completedAt ?? null
+        })) : []
+      })) : [];
+    return {
+      user_id: userId,
+      workout_date: normalized.workout_date,
+      name: normalized.name,
+      exercises: {
+        schemaVersion: 2,
+        sessionId: normalized.sessionId,
+        workoutKey: normalized.workoutKey,
+        startedAt: normalized.startedAt,
+        completedAt: normalized.completedAt,
+        totalPausedMs: normalized.totalPausedMs,
+        completedSets: normalized.completedSets,
+        totalReps: normalized.totalReps,
+        averageRpe: normalized.averageRpe,
+        notes: normalized.notes,
+        items
+      },
+      total_volume: normalized.totalVolume,
+      duration_minutes: normalized.durationMinutes
+    };
+  }
+
+  function workoutExecutionFromSupabase(row = {}) {
+    const exercises = row?.exercises;
+    if (!exercises || Array.isArray(exercises) || exercises.schemaVersion !== 2) return null;
+    const items = Array.isArray(exercises.items) ? exercises.items : [];
+    const sessionId = exercises.sessionId;
+    if (!sessionId) return null;
+    const normalizedExercises = items.map((item, index) => ({
+      exerciseId: item.exerciseId || getExerciseId(item.nome || `exercise-${index + 1}`),
+      nome: String(item.nome || `Exercício ${index + 1}`),
+      grupo: String(item.grupo || 'Outros'),
+      equipamento: String(item.equipamento || 'Não informado'),
+      ordem: Number.isFinite(Number(item.ordem)) ? Number(item.ordem) : index,
+      targetSets: Number(item.targetSets) || (Array.isArray(item.sets) ? item.sets.length : 0),
+      targetReps: item.targetReps || null,
+      restSeconds: Number(item.restSeconds) || 0,
+      sets: (Array.isArray(item.sets) ? item.sets : []).map(set => ({ ...set, completed: true }))
+    }));
+    const payload = {
+      id: `workout-${sessionId}`,
+      sessionId,
+      workoutKey: exercises.workoutKey || row.name || 'A',
+      name: row.name || `Treino ${exercises.workoutKey || 'A'}`,
+      workout_date: row.workout_date,
+      startedAt: exercises.startedAt || null,
+      completedAt: exercises.completedAt || null,
+      durationMinutes: Number(row.duration_minutes) || 0,
+      totalPausedMs: Number(exercises.totalPausedMs) || 0,
+      totalVolume: Number(row.total_volume) || 0,
+      completedSets: Number(exercises.completedSets) || 0,
+      totalReps: Number(exercises.totalReps) || 0,
+      averageRpe: exercises.averageRpe == null ? null : Number(exercises.averageRpe),
+      notes: String(exercises.notes || ''),
+      exercises: normalizedExercises
+    };
+    return normalizeWorkoutExecution({
+      id: row.id || `remote-${sessionId}`,
+      data: row.workout_date,
+      treino: payload.workoutKey,
+      exercicio: payload.name,
+      series: payload.completedSets,
+      reps: payload.totalReps,
+      carga: 0,
+      rpe: payload.averageRpe,
+      volume: payload.totalVolume,
+      sessionId,
+      liveWorkout: true,
+      remoteId: row.id || null,
+      syncStatus: 'synced',
+      syncedAt: payload.completedAt || new Date().toISOString(),
+      sessionPayload: payload
+    });
   }
 
   /**
@@ -3481,6 +3645,8 @@ const DataMapper = (() => {
     mealsFromSupabaseRows,
     workoutsToSupabase,
     workoutsFromSupabase,
+    workoutExecutionToSupabase,
+    workoutExecutionFromSupabase,
     hydrationToSupabase,
     hydrationFromSupabase,
     evolutionToSupabase,
@@ -5120,9 +5286,12 @@ window.testLiveWorkoutPart2A1 = async function() {
     noBlockingErrors: false,
     passed: false
   };
-  let originalSave = null;
+  let originalSaveWorkouts = null;
+  let originalSync = null;
 
   try {
+    originalSync = syncCompletedWorkout;
+    syncCompletedWorkout = async () => ({ synced: false, alreadySynced: false, queued: true, remoteId: null, error: 'Teste isolado' });
     clearActiveWorkoutSession();
     state.configTreino = { divisao: 'ABCDE' };
     state.treinos = createEmptyWorkoutPlan('ABCDE');
@@ -5198,13 +5367,13 @@ window.testLiveWorkoutPart2A1 = async function() {
 
     const failureSession = createActiveWorkoutSession('A', { open: false });
     completeLiveWorkoutSet(0, 'normal', 1, { reps: 10, load: 40, rpe: 8 }, { render: false });
-    originalSave = save;
-    save = async () => { throw new Error('Teste de falha local'); };
+    originalSaveWorkouts = StorageService.saveWorkouts;
+    StorageService.saveWorkouts = async () => { throw new Error('Teste de falha local'); };
     const failureSaved = await finalizeActiveWorkoutSession();
     result.sessionPreservedOnFailure = failureSaved === false
       && Boolean(state.activeWorkoutSession)
       && state.activeWorkoutSession.id === failureSession.id;
-    save = originalSave;
+    StorageService.saveWorkouts = originalSaveWorkouts;
 
     result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1
       && Boolean(document.querySelector('.live-summary-metrics'))
@@ -5228,7 +5397,8 @@ window.testLiveWorkoutPart2A1 = async function() {
     console.warn('testLiveWorkoutPart2A1 failed:', error);
     return { ...result, passed: false, error: error.message };
   } finally {
-    if (originalSave) save = originalSave;
+    if (originalSaveWorkouts) StorageService.saveWorkouts = originalSaveWorkouts;
+    if (originalSync) syncCompletedWorkout = originalSync;
     isFinalizingLiveWorkout = false;
     closeLiveWorkoutPreview();
     closeLiveWorkoutSummary();
@@ -5255,6 +5425,309 @@ window.testLiveWorkoutPart2A1 = async function() {
     }
     renderTelaTreino();
   }
+};
+
+window.testWorkoutSyncV31 = async function() {
+  const original = {
+    treinos: JSON.parse(JSON.stringify(state.treinos || {})),
+    execucoes: JSON.parse(JSON.stringify(state.execucoes || [])),
+    activeWorkoutSession: state.activeWorkoutSession ? JSON.parse(JSON.stringify(state.activeWorkoutSession)) : null,
+    executionsStorage: localStorage.getItem(LS.execucoes),
+    queueStorage: localStorage.getItem(SYNC_QUEUE_KEY),
+    supabaseClient,
+    syncQueueMark: SyncQueue.markPending,
+    syncQueueClear: SyncQueue.clearPending,
+    navigatorOnLine: Object.getOwnPropertyDescriptor(window.navigator, 'onLine')
+  };
+  const result = {
+    stableIdentityOk: false,
+    normalizationOk: false,
+    legacyCompatibilityOk: false,
+    mapperToSupabaseOk: false,
+    mapperFromSupabaseOk: false,
+    localDeduplicationOk: false,
+    syncIdempotentOk: false,
+    localFirstSaveOk: false,
+    offlineHistoryAvailable: false,
+    pendingStatusOk: false,
+    queueIntegrationOk: false,
+    queueNotClearedEarly: false,
+    reconnectFlowOk: false,
+    retryOk: false,
+    completeMergeWinsOk: false,
+    oldExecutionsPreserved: false,
+    invalidThumbnailHandled: false,
+    plansABCDEPreserved: false,
+    liveWorkoutStillWorks: false,
+    dietStillWorks: false,
+    foodSearchStillWorks: false,
+    mobileStillWorks: false,
+    noBlockingErrors: false,
+    passed: false
+  };
+  const remoteRows = [];
+  let markCalls = 0;
+  let clearCalls = 0;
+
+  const setOnline = value => Object.defineProperty(window.navigator, 'onLine', { configurable: true, value });
+  const createExecution = (sessionId, overrides = {}) => normalizeWorkoutExecution({
+    id: `record-${sessionId}`,
+    sessionId,
+    workoutKey: 'A',
+    name: 'Treino A',
+    data: '2026-07-10',
+    startedAt: '2026-07-10T10:00:00.000Z',
+    completedAt: '2026-07-10T10:45:00.000Z',
+    durationMinutes: 45,
+    totalPausedMs: 300000,
+    totalVolume: 800,
+    completedSets: 2,
+    totalReps: 20,
+    averageRpe: 8,
+    notes: 'Teste',
+    liveWorkout: true,
+    syncStatus: 'pending',
+    sessionPayload: {
+      id: `workout-${sessionId}`,
+      sessionId,
+      workoutKey: 'A',
+      name: 'Treino A',
+      workout_date: '2026-07-10',
+      startedAt: '2026-07-10T10:00:00.000Z',
+      completedAt: '2026-07-10T10:45:00.000Z',
+      durationMinutes: 45,
+      totalPausedMs: 300000,
+      totalVolume: 800,
+      completedSets: 2,
+      totalReps: 20,
+      averageRpe: 8,
+      notes: 'Teste',
+      exercises: [{
+        exerciseId: 'test-supino', nome: 'Supino teste', grupo: 'Peito', equipamento: 'Barra', ordem: 0,
+        targetSets: 2, targetReps: '10', restSeconds: 90,
+        sets: [
+          { setNumber: 1, type: 'normal', reps: 10, load: 40, rpe: 8, completedAt: '2026-07-10T10:10:00.000Z', completed: true },
+          { setNumber: 2, type: 'normal', reps: 10, load: 40, rpe: 8, completedAt: '2026-07-10T10:15:00.000Z', completed: true }
+        ]
+      }]
+    },
+    ...overrides
+  });
+
+  try {
+    SyncQueue.markPending = () => { markCalls += 1; return true; };
+    SyncQueue.clearPending = () => { clearCalls += 1; return true; };
+    supabaseClient = {
+      auth: { getUser: async () => ({ data: { user: { id: 'test-user' } }, error: null }) },
+      from: () => {
+        const query = {
+          data: remoteRows,
+          error: null,
+          select() { return this; },
+          eq() { return this; },
+          insert(rows) {
+            return {
+              select: () => ({
+                single: async () => {
+                  const inserted = { id: `remote-${remoteRows.length + 1}`, ...rows[0] };
+                  remoteRows.push(inserted);
+                  return { data: { id: inserted.id }, error: null };
+                }
+              })
+            };
+          }
+        };
+        return query;
+      }
+    };
+
+    const execution = createExecution('sync-v31-main');
+    const identity = getExecutionIdentity(execution);
+    result.stableIdentityOk = identity === 'session:sync-v31-main'
+      && getExecutionIdentity({ ...execution, id: 'another-id' }) === identity;
+    const normalized = normalizeWorkoutExecution(execution);
+    result.normalizationOk = normalized.sessionId === execution.sessionId
+      && normalized.totalVolume === 800
+      && normalized.exercises.length === 1
+      && normalized.sessionPayload.exercises[0].sets.length === 2;
+    const legacy = normalizeWorkoutExecution({ id: 77, data: '2026-07-09', treino: 'B', exercicio: 'Remada', series: 3, reps: 12, carga: 30, rpe: 8, volume: 1080 });
+    result.legacyCompatibilityOk = legacy.workoutKey === 'B' && legacy.volume === 1080 && !legacy.sessionId;
+
+    const row = DataMapper.workoutExecutionToSupabase(execution, 'test-user');
+    result.mapperToSupabaseOk = row?.user_id === 'test-user'
+      && row?.exercises?.schemaVersion === 2
+      && row.exercises.sessionId === execution.sessionId
+      && row.exercises.items[0].sets.length === 2;
+    const fromRow = DataMapper.workoutExecutionFromSupabase({ id: 'remote-main', ...row });
+    result.mapperFromSupabaseOk = fromRow?.sessionId === execution.sessionId
+      && fromRow?.sessionPayload?.exercises?.[0]?.sets?.length === 2;
+
+    const mergedList = mergeWorkoutExecutionLists([execution], [{ ...fromRow, totalVolume: 0, exercises: [] }]);
+    result.localDeduplicationOk = mergedList.length === 1 && mergedList[0].totalVolume === 800;
+    result.completeMergeWinsOk = mergedList[0].sessionPayload.exercises[0].sets.length === 2;
+
+    state.execucoes = [...original.execucoes, execution];
+    await StorageService.saveWorkouts({ treinos: state.treinos, execucoes: state.execucoes }, { localOnly: true });
+    result.localFirstSaveOk = load(LS.execucoes, []).some(item => item.sessionId === execution.sessionId);
+
+    setOnline(false);
+    const offlineResult = await syncCompletedWorkout(execution);
+    const offlineStored = findExecutionByIdentity(execution);
+    result.offlineHistoryAvailable = Boolean(offlineStored) && offlineStored.totalVolume === 800;
+    result.pendingStatusOk = offlineResult.queued === true && offlineStored.syncStatus === 'pending';
+    result.queueIntegrationOk = markCalls > 0;
+    result.queueNotClearedEarly = clearCalls === 0;
+
+    setOnline(true);
+    const firstSync = await syncCompletedWorkout(execution);
+    const secondSync = await syncCompletedWorkout(execution);
+    result.syncIdempotentOk = firstSync.synced === true
+      && secondSync.alreadySynced === true
+      && remoteRows.filter(remote => remote.exercises?.sessionId === execution.sessionId).length === 1;
+
+    await updateWorkoutExecutionSyncMetadata(execution, { syncStatus: 'error', remoteId: null, lastSyncError: 'Teste' });
+    const retry = await syncCompletedWorkout(execution);
+    result.retryOk = retry.synced === true && findExecutionByIdentity(execution).syncStatus === 'synced';
+
+    const reconnectExecution = createExecution('sync-v31-reconnect');
+    state.execucoes.push(reconnectExecution);
+    await StorageService.saveWorkouts({ treinos: state.treinos, execucoes: state.execucoes }, { localOnly: true });
+    await handleForjaOnline();
+    result.reconnectFlowOk = findExecutionByIdentity(reconnectExecution).syncStatus === 'synced'
+      && remoteRows.filter(remote => remote.exercises?.sessionId === reconnectExecution.sessionId).length === 1;
+
+    result.oldExecutionsPreserved = original.execucoes.every(oldExecution => state.execucoes.some(item => item.id === oldExecution.id));
+    const invalidContainer = document.createElement('div');
+    renderThumbnailFallback(invalidContainer, { grupo: 'Peito' }, 'exercise-library-media');
+    result.invalidThumbnailHandled = !isValidMediaUrl('<svg></svg>')
+      && !isValidMediaUrl('data:text/html;base64,PHNjcmlwdD4=')
+      && isValidMediaUrl('data:image/png;base64,AAAA')
+      && !invalidContainer.querySelector('img');
+    result.plansABCDEPreserved = getAllWorkoutKeys().every(key => Array.isArray(state.treinos?.[key]?.exercicios));
+    result.liveWorkoutStillWorks = typeof createActiveWorkoutSession === 'function'
+      && typeof completeLiveWorkoutSet === 'function'
+      && typeof finalizeActiveWorkoutSession === 'function';
+    result.dietStillWorks = typeof renderDiarioHoje === 'function' && Boolean(document.getElementById('f-busca'));
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function'
+      && filtrarAlimentosLocal('banana').length > 0
+      && filtrarAlimentosLocal('arroz').length > 0
+      && filtrarAlimentosLocal('frango').length > 0;
+    result.mobileStillWorks = document.documentElement.scrollWidth <= window.innerWidth + 1
+      && Boolean(document.querySelector('meta[name="viewport"]'));
+    const requiredFunctions = [
+      getExecutionIdentity, findExecutionByIdentity, isExecutionAlreadySaved, isExecutionAlreadySynced,
+      normalizeWorkoutExecution, syncCompletedWorkout, syncPendingWorkoutExecutions, isValidMediaUrl, renderThumbnailFallback
+    ];
+    result.noBlockingErrors = requiredFunctions.every(fn => typeof fn === 'function')
+      && typeof DataMapper.workoutExecutionToSupabase === 'function'
+      && typeof DataMapper.workoutExecutionFromSupabase === 'function';
+    result.passed = Object.entries(result).filter(([key]) => key !== 'passed').every(([, value]) => value === true);
+    return { ...result };
+  } catch (error) {
+    console.warn('testWorkoutSyncV31 failed:', error);
+    return { ...result, passed: false, error: error.message };
+  } finally {
+    SyncQueue.markPending = original.syncQueueMark;
+    SyncQueue.clearPending = original.syncQueueClear;
+    supabaseClient = original.supabaseClient;
+    if (original.navigatorOnLine) Object.defineProperty(window.navigator, 'onLine', original.navigatorOnLine);
+    else delete window.navigator.onLine;
+    state.treinos = original.treinos;
+    state.execucoes = original.execucoes;
+    state.activeWorkoutSession = original.activeWorkoutSession;
+    try {
+      if (original.executionsStorage == null) localStorage.removeItem(LS.execucoes);
+      else localStorage.setItem(LS.execucoes, original.executionsStorage);
+      if (original.queueStorage == null) localStorage.removeItem(SYNC_QUEUE_KEY);
+      else localStorage.setItem(SYNC_QUEUE_KEY, original.queueStorage);
+    } catch (error) {
+      console.warn('testWorkoutSyncV31 restore failed:', error);
+    }
+    renderTelaTreino();
+  }
+};
+
+window.testWorkoutHistoryV32 = async function() {
+  const original = {
+    execucoes: JSON.parse(JSON.stringify(state.execucoes || [])),
+    filters: { ...(state.workoutHistoryFilters || {}) },
+    visibleCount: workoutHistoryVisibleCount,
+    treinos: JSON.parse(JSON.stringify(state.treinos || {}))
+  };
+  const result = {
+    historySummaryOk: false, workoutFilterOk: false, exerciseFilterOk: false, periodFilterOk: false, syncStatusFilterOk: false, searchAccentInsensitiveOk: false, newestFirstOrderingOk: false,
+    legacyExecutionsRendered: false, richExecutionsRendered: false, detailsOpenOk: false, detailsCloseOk: false, exerciseSetsRendered: false, exerciseVolumeCalculationOk: false,
+    previousComparableWorkoutOk: false, workoutComparisonOk: false, exerciseComparisonOk: false, personalRecordLoadOk: false, personalRecordVolumeOk: false, personalRecordRepsWithLoadOk: false,
+    tiesNotCountedAsRecords: false, warmupNotUsedForMainLoadRecord: false, bestSetOk: false, exerciseHistorySummaryOk: false, loadMoreOk: false, syncStatusPreserved: false,
+    retryStillAvailable: false, mobileNoOverflow: false, syncV31StillWorks: false, liveWorkoutStillWorks: false, dietStillWorks: false, foodSearchStillWorks: false, noBlockingErrors: false, passed: false
+  };
+  const makeExecution = (id, date, sets, status = 'synced', key = 'A') => normalizeWorkoutExecution({
+    id, sessionId: `history-${id}`, workoutKey: key, name: `Treino ${key}`, data: date, startedAt: `${date}T10:00:00.000Z`, completedAt: `${date}T10:45:00.000Z`, durationMinutes: 45,
+    totalPausedMs: 300000, totalVolume: sets.reduce((total, set) => total + set.reps * set.load, 0), completedSets: sets.length, totalReps: sets.reduce((total, set) => total + set.reps, 0), averageRpe: 8,
+    notes: 'Sessão com supino', liveWorkout: true, syncStatus: status,
+    sessionPayload: { id: `workout-history-${id}`, sessionId: `history-${id}`, workoutKey: key, name: `Treino ${key}`, workout_date: date, startedAt: `${date}T10:00:00.000Z`, completedAt: `${date}T10:45:00.000Z`, durationMinutes: 45, totalPausedMs: 300000,
+      totalVolume: sets.reduce((total, set) => total + set.reps * set.load, 0), completedSets: sets.length, totalReps: sets.reduce((total, set) => total + set.reps, 0), averageRpe: 8, notes: 'Sessão com supino',
+      exercises: [{ exerciseId: 'bench', nome: 'Supino reto', grupo: 'Peito', equipamento: 'Barra', ordem: 0, completedSets: sets.length, totalReps: sets.reduce((total, set) => total + set.reps, 0), volume: sets.reduce((total, set) => total + set.reps * set.load, 0), sets: sets.map((set, index) => ({ setNumber: index + 1, completed: true, completedAt: `${date}T10:${String(10 + index).padStart(2, '0')}:00.000Z`, ...set })) }]
+    }
+  });
+  try {
+    const previous = makeExecution(1, '2026-06-01', [{ type: 'normal', reps: 10, load: 40, rpe: 8 }]);
+    const current = makeExecution(2, '2026-06-08', [{ type: 'warmup', reps: 8, load: 100, rpe: 5 }, { type: 'normal', reps: 12, load: 40, rpe: 8 }, { type: 'normal', reps: 10, load: 45, rpe: 8 }]);
+    const pending = makeExecution(3, '2026-06-09', [{ type: 'normal', reps: 8, load: 42.5, rpe: 8 }], 'pending', 'B');
+    const legacy = { id: 4, data: '2026-05-20', treino: 'C', exercicio: 'Remada curvada', series: 3, reps: 10, carga: 50, rpe: 8, volume: 1500, syncStatus: 'synced' };
+    const extras = Array.from({ length: 10 }, (_, index) => makeExecution(10 + index, `2026-05-${String(10 + index).padStart(2, '0')}`, [{ type: 'normal', reps: 8, load: 30 + index, rpe: 7 }]));
+    state.execucoes = [previous, current, pending, legacy, ...extras];
+    state.workoutHistoryFilters = { workoutKey: 'all', exerciseId: 'all', period: 'all', syncStatus: 'all', search: '' };
+    workoutHistoryVisibleCount = 10;
+    const entries = getWorkoutHistoryEntries(state.execucoes);
+    const summary = calculateWorkoutHistorySummary(state.execucoes);
+    result.historySummaryOk = summary.workouts === entries.length && summary.totalVolume > 0 && Number.isFinite(summary.averageVolume);
+    result.workoutFilterOk = filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, workoutKey: 'A' }).every(entry => entry.workoutKey === 'A');
+    const benchKey = getHistoryExerciseKey(entries.find(entry => entry.sessionId === current.sessionId).exercises[0]);
+    result.exerciseFilterOk = filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, exerciseId: benchKey }).every(entry => entry.exercises.some(item => getHistoryExerciseKey(item) === benchKey));
+    result.periodFilterOk = filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, period: '7' }).every(entry => new Date(`${entry.workout_date}T12:00:00`) >= new Date(Date.now() - 7 * 86400000)) || filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, period: '7' }).length === 0;
+    result.syncStatusFilterOk = filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, syncStatus: 'pending' }).every(entry => entry.syncStatus === 'pending');
+    result.searchAccentInsensitiveOk = filterWorkoutExecutions(state.execucoes, { ...state.workoutHistoryFilters, search: 'supino' }).some(entry => entry.sessionId === current.sessionId);
+    result.newestFirstOrderingOk = entries.every((entry, index) => index === 0 || String(entries[index - 1].completedAt || entries[index - 1].workout_date) >= String(entry.completedAt || entry.workout_date));
+    renderTreinoHistorico();
+    const historyText = document.getElementById('treino-historico')?.textContent || '';
+    result.legacyExecutionsRendered = historyText.includes('Remada curvada');
+    result.richExecutionsRendered = historyText.includes('Treino A') && historyText.includes('Supino reto') === false;
+    result.detailsOpenOk = openWorkoutHistoryDetails(entries.find(entry => entry.sessionId === current.sessionId).identity) && Boolean(document.getElementById('workout-history-details-dialog')?.open);
+    const detailText = document.getElementById('workout-history-details-content')?.textContent || '';
+    result.exerciseSetsRendered = detailText.includes('Supino reto') && detailText.includes('Série 2');
+    result.exerciseVolumeCalculationOk = calculateExerciseExecutionVolume(extractExecutionItems(current)[0]) === (8 * 100) + (12 * 40) + (10 * 45);
+    closeWorkoutHistoryDetails(); result.detailsCloseOk = !document.getElementById('workout-history-details-dialog')?.open;
+    const comparable = findPreviousComparableWorkout(entries.find(entry => entry.sessionId === current.sessionId), state.execucoes);
+    result.previousComparableWorkoutOk = comparable?.sessionId === previous.sessionId;
+    const comparison = compareWorkoutExecutions(entries.find(entry => entry.sessionId === current.sessionId), comparable);
+    result.workoutComparisonOk = comparison?.volumeDifference > 0 && comparison?.completedSetsDifference > 0;
+    result.exerciseComparisonOk = comparison?.exerciseComparisons?.[0]?.maxLoadDifference === 5;
+    const records = detectExercisePersonalRecords(entries.find(entry => entry.sessionId === current.sessionId), state.execucoes);
+    result.personalRecordLoadOk = records.some(record => record.type === 'load');
+    result.personalRecordVolumeOk = records.some(record => record.type === 'exerciseVolume');
+    result.personalRecordRepsWithLoadOk = records.some(record => record.type === 'repsWithLoad');
+    const tie = makeExecution(99, '2026-06-10', [{ type: 'normal', reps: 10, load: 45, rpe: 8 }]);
+    const tieEntry = getWorkoutHistoryEntries([previous, current, tie]).find(entry => entry.sessionId === tie.sessionId);
+    result.tiesNotCountedAsRecords = !detectExercisePersonalRecords(tieEntry, [previous, current, tie]).some(record => record.type === 'load');
+    result.warmupNotUsedForMainLoadRecord = result.personalRecordLoadOk && !records.some(record => record.exercise === 'Supino reto' && /100/.test(record.message));
+    const best = getBestSetForExercise([extractExecutionItems(current)[0]]);
+    result.bestSetOk = best?.reps === 12 && best?.load === 40;
+    const exerciseSummary = buildExerciseHistorySummary(benchKey, state.execucoes);
+    result.exerciseHistorySummaryOk = exerciseSummary.sessions >= 2 && exerciseSummary.maxLoad === 45 && Boolean(exerciseSummary.bestSet);
+    workoutHistoryVisibleCount = 1; renderTreinoHistorico(); result.loadMoreOk = !document.getElementById('workout-history-load-more')?.classList.contains('hidden');
+    result.syncStatusPreserved = historyText.includes('Pendente');
+    result.retryStillAvailable = historyText.includes('Tentar novamente');
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1 && Boolean(document.querySelector('.workout-history-filters'));
+    result.syncV31StillWorks = typeof syncCompletedWorkout === 'function' && typeof normalizeWorkoutExecution === 'function';
+    result.liveWorkoutStillWorks = typeof createActiveWorkoutSession === 'function' && typeof finalizeActiveWorkoutSession === 'function';
+    result.dietStillWorks = Boolean(document.getElementById('f-busca')) && typeof renderDiarioHoje === 'function';
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function' && filtrarAlimentosLocal('banana').length > 0;
+    result.noBlockingErrors = typeof openWorkoutHistoryDetails === 'function' && typeof closeWorkoutHistoryDetails === 'function' && typeof calculateWorkoutHistorySummary === 'function';
+    result.passed = Object.entries(result).filter(([key]) => key !== 'passed').every(([, value]) => value === true);
+    return { ...result };
+  } catch (error) { console.warn('testWorkoutHistoryV32 failed:', error); return { ...result, passed: false, error: error.message }; }
+  finally { closeWorkoutHistoryDetails(); state.execucoes = original.execucoes; state.workoutHistoryFilters = original.filters; workoutHistoryVisibleCount = original.visibleCount; state.treinos = original.treinos; renderTreinoHistorico(); }
 };
 
 window.testMobileForjaUI = async function() {
@@ -5615,9 +6088,10 @@ window.testSyncQueue = testSyncQueue;
 window.testHydrationSync = testHydrationSync;
 window.testEvolutionSync = testEvolutionSync;
 
-window.addEventListener('online', async () => {
-  await SyncQueue.syncPending();
-});
+if (!window.__forjaWorkoutOnlineListenerAttached) {
+  window.addEventListener('online', handleForjaOnline);
+  window.__forjaWorkoutOnlineListenerAttached = true;
+}
 
 /* ============================================================
    INICIALIZACAO DO APP
@@ -6529,6 +7003,301 @@ function normalizeWorkoutExercise(item, index = 0) {
   };
 }
 
+function normalizeWorkoutExecution(execution) {
+  const source = execution && typeof execution === 'object' ? { ...execution } : {};
+  const payload = source.sessionPayload && typeof source.sessionPayload === 'object'
+    ? { ...source.sessionPayload }
+    : (source.exercises && !Array.isArray(source.exercises) && source.exercises.schemaVersion === 2
+      ? {
+        sessionId: source.exercises.sessionId,
+        workoutKey: source.exercises.workoutKey,
+        startedAt: source.exercises.startedAt,
+        completedAt: source.exercises.completedAt,
+        totalPausedMs: source.exercises.totalPausedMs,
+        completedSets: source.exercises.completedSets,
+        totalReps: source.exercises.totalReps,
+        averageRpe: source.exercises.averageRpe,
+        notes: source.exercises.notes,
+        exercises: source.exercises.items
+      }
+      : {});
+  const workoutKey = String(source.workoutKey || payload.workoutKey || source.treino || 'A').replace(/^Treino\s*/i, '').toUpperCase();
+  const name = String(source.name || payload.name || source.exercicio || `Treino ${workoutKey}`);
+  const workoutDate = String(source.workout_date || source.data || payload.workout_date || payload.completedAt || source.completedAt || todayISO()).slice(0, 10);
+  const sessionId = source.sessionId || payload.sessionId || null;
+  const exercises = Array.isArray(payload.exercises)
+    ? payload.exercises
+    : (Array.isArray(source.exercises) ? source.exercises : (source.exerciseDetails ? [source.exerciseDetails] : []));
+  const completedSets = Number(payload.completedSets ?? source.totalCompletedSets ?? source.completedSets ?? source.series) || 0;
+  const totalReps = Number(payload.totalReps ?? source.totalReps ?? source.reps) || 0;
+  const totalVolume = Number(payload.totalVolume ?? source.totalVolume ?? source.volume) || 0;
+  const durationMinutes = Number(payload.durationMinutes ?? source.durationMinutes) || 0;
+  const averageRpeRaw = payload.averageRpe ?? source.averageRpe ?? source.rpe;
+  const averageRpe = averageRpeRaw === '' || averageRpeRaw == null ? null : Number(averageRpeRaw);
+  return {
+    ...source,
+    id: source.id ?? (sessionId ? `workout-${sessionId}` : null),
+    sessionId,
+    workoutKey,
+    name,
+    workout_date: workoutDate,
+    data: workoutDate,
+    treino: source.treino || workoutKey,
+    exercicio: source.exercicio || name,
+    startedAt: payload.startedAt || source.startedAt || null,
+    completedAt: payload.completedAt || source.completedAt || null,
+    durationMinutes,
+    totalPausedMs: Number(payload.totalPausedMs ?? source.totalPausedMs) || 0,
+    totalVolume,
+    volume: totalVolume || Number(source.volume) || 0,
+    completedSets,
+    series: Number(source.series) || completedSets,
+    totalReps,
+    reps: Number(source.reps) || totalReps,
+    averageRpe: Number.isFinite(averageRpe) && averageRpe >= 1 && averageRpe <= 10 ? averageRpe : null,
+    rpe: Number.isFinite(averageRpe) && averageRpe >= 1 && averageRpe <= 10 ? averageRpe : (source.rpe ?? null),
+    notes: String(payload.notes ?? source.notes ?? ''),
+    exercises,
+    sessionPayload: sessionId ? {
+      ...payload,
+      id: payload.id || `workout-${sessionId}`,
+      sessionId,
+      workoutKey,
+      name,
+      workout_date: workoutDate,
+      startedAt: payload.startedAt || source.startedAt || null,
+      completedAt: payload.completedAt || source.completedAt || null,
+      durationMinutes,
+      totalPausedMs: Number(payload.totalPausedMs ?? source.totalPausedMs) || 0,
+      totalVolume,
+      completedSets,
+      totalReps,
+      averageRpe: Number.isFinite(averageRpe) ? averageRpe : null,
+      notes: String(payload.notes ?? source.notes ?? ''),
+      exercises
+    } : source.sessionPayload,
+    syncStatus: ['pending', 'syncing', 'synced', 'error'].includes(source.syncStatus) ? source.syncStatus : (source.remoteId ? 'synced' : 'pending'),
+    syncedAt: source.syncedAt || null,
+    remoteId: source.remoteId || null,
+    lastSyncError: source.lastSyncError || null,
+    lastSyncAttemptAt: source.lastSyncAttemptAt || null
+  };
+}
+
+function getExecutionIdentity(execution) {
+  const normalized = normalizeWorkoutExecution(execution);
+  if (normalized.sessionId) return `session:${normalized.sessionId}`;
+  if (normalized.id != null && normalized.id !== '') return `id:${normalized.id}`;
+  return `legacy:${normalized.startedAt || normalized.workout_date}:${normalized.workoutKey}:${normalized.name}`;
+}
+
+function getWorkoutExecutionCompleteness(execution) {
+  const normalized = normalizeWorkoutExecution(execution);
+  const exerciseCount = Array.isArray(normalized.exercises) ? normalized.exercises.length : 0;
+  return (normalized.sessionId ? 8 : 0)
+    + (normalized.remoteId ? 1 : 0)
+    + (normalized.completedAt ? 2 : 0)
+    + (normalized.completedSets > 0 ? 2 : 0)
+    + (normalized.totalVolume > 0 ? 2 : 0)
+    + (exerciseCount * 3);
+}
+
+function mergeWorkoutExecution(existing, incoming) {
+  const current = normalizeWorkoutExecution(existing);
+  const next = normalizeWorkoutExecution(incoming);
+  const preferred = getWorkoutExecutionCompleteness(next) >= getWorkoutExecutionCompleteness(current) ? next : current;
+  const secondary = preferred === next ? current : next;
+  return normalizeWorkoutExecution({
+    ...secondary,
+    ...preferred,
+    sessionPayload: preferred.sessionPayload || secondary.sessionPayload,
+    exercises: preferred.exercises?.length ? preferred.exercises : secondary.exercises,
+    remoteId: preferred.remoteId || secondary.remoteId || null,
+    syncedAt: preferred.syncedAt || secondary.syncedAt || null,
+    syncStatus: preferred.syncStatus === 'synced' || secondary.syncStatus === 'synced' ? 'synced' : preferred.syncStatus
+  });
+}
+
+function mergeWorkoutExecutionLists(localExecutions = [], remoteExecutions = []) {
+  const byIdentity = new Map();
+  [...(Array.isArray(localExecutions) ? localExecutions : []), ...(Array.isArray(remoteExecutions) ? remoteExecutions : [])]
+    .filter(Boolean)
+    .forEach(execution => {
+      const identity = getExecutionIdentity(execution);
+      byIdentity.set(identity, byIdentity.has(identity)
+        ? mergeWorkoutExecution(byIdentity.get(identity), execution)
+        : normalizeWorkoutExecution(execution));
+    });
+  return Array.from(byIdentity.values()).sort((a, b) => Number(b.id) - Number(a.id));
+}
+
+function findExecutionByIdentity(execution, executions = state?.execucoes || []) {
+  const identity = typeof execution === 'string' ? execution : getExecutionIdentity(execution);
+  return (Array.isArray(executions) ? executions : []).find(item => getExecutionIdentity(item) === identity) || null;
+}
+
+function isExecutionAlreadySaved(execution) {
+  return Boolean(findExecutionByIdentity(execution));
+}
+
+function isExecutionAlreadySynced(execution) {
+  const found = findExecutionByIdentity(execution);
+  return Boolean(found && (found.syncStatus === 'synced' || found.remoteId));
+}
+
+async function updateWorkoutExecutionSyncMetadata(execution, patch = {}) {
+  const identity = typeof execution === 'string' ? execution : getExecutionIdentity(execution);
+  const updatedExecutions = state.execucoes.map(item => (
+    getExecutionIdentity(item) === identity ? normalizeWorkoutExecution({ ...item, ...patch }) : item
+  ));
+  state.execucoes = updatedExecutions;
+  await StorageService.saveWorkouts({ treinos: state.treinos, execucoes: state.execucoes }, { localOnly: true });
+  if (typeof renderTreinoHistorico === 'function') renderTreinoHistorico();
+  return findExecutionByIdentity(identity, state.execucoes);
+}
+
+function getPendingWorkoutExecutionRepresentatives(executions = state.execucoes) {
+  const representatives = new Map();
+  (Array.isArray(executions) ? executions : []).forEach(execution => {
+    if (!execution?.sessionId && !execution?.liveWorkout) return;
+    const normalized = normalizeWorkoutExecution(execution);
+    if (!['pending', 'error', 'syncing'].includes(normalized.syncStatus)) return;
+    const identity = getExecutionIdentity(normalized);
+    if (!representatives.has(identity)) representatives.set(identity, normalized);
+  });
+  return Array.from(representatives.values());
+}
+
+async function getForjaWorkoutSyncUser() {
+  try {
+    if (!supabaseClient?.auth) return null;
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
+  } catch (error) {
+    console.warn('Workout sync auth check failed:', error);
+    return null;
+  }
+}
+
+async function syncCompletedWorkout(execution) {
+  const normalized = normalizeWorkoutExecution(execution);
+  if (!normalized?.sessionId) return { synced: false, alreadySynced: false, queued: false, remoteId: null, error: 'Execução sem sessionId.' };
+  const identity = getExecutionIdentity(normalized);
+  const localExecution = findExecutionByIdentity(identity) || normalized;
+
+  if (localExecution.remoteId || localExecution.syncStatus === 'synced') {
+    return { synced: true, alreadySynced: true, queued: false, remoteId: localExecution.remoteId || null, error: null };
+  }
+  if (localExecution.syncStatus === 'syncing') {
+    return { synced: false, alreadySynced: false, queued: true, remoteId: null, error: 'Sincronização em andamento.' };
+  }
+  if (!navigator.onLine) {
+    await updateWorkoutExecutionSyncMetadata(identity, {
+      syncStatus: 'pending',
+      lastSyncError: 'Offline',
+      lastSyncAttemptAt: new Date().toISOString()
+    });
+    SyncQueue.markPending('workouts');
+    return { synced: false, alreadySynced: false, queued: true, remoteId: null, error: 'Offline' };
+  }
+
+  try {
+    await updateWorkoutExecutionSyncMetadata(identity, {
+      syncStatus: 'syncing',
+      lastSyncError: null,
+      lastSyncAttemptAt: new Date().toISOString()
+    });
+    const user = await getForjaWorkoutSyncUser();
+    if (!user) {
+      await updateWorkoutExecutionSyncMetadata(identity, {
+        syncStatus: 'pending',
+        lastSyncError: 'Usuário não autenticado',
+        lastSyncAttemptAt: new Date().toISOString()
+      });
+      SyncQueue.markPending('workouts');
+      return { synced: false, alreadySynced: false, queued: true, remoteId: null, error: 'Usuário não autenticado' };
+    }
+
+    const current = findExecutionByIdentity(identity) || localExecution;
+    const row = DataMapper.workoutExecutionToSupabase(current, user.id);
+    if (!row) throw new Error('Payload de execução inválido.');
+
+    const { data: remoteRows, error: fetchError } = await supabaseClient
+      .from('workouts')
+      .select('id,workout_date,name,exercises,total_volume,duration_minutes')
+      .eq('user_id', user.id)
+      .eq('workout_date', row.workout_date)
+      .eq('name', row.name);
+    if (fetchError) throw fetchError;
+
+    const existingRemote = (remoteRows || []).find(remote => remote?.exercises?.sessionId === normalized.sessionId);
+    if (existingRemote) {
+      await updateWorkoutExecutionSyncMetadata(identity, {
+        syncStatus: 'synced',
+        syncedAt: new Date().toISOString(),
+        remoteId: existingRemote.id || `remote-${normalized.sessionId}`,
+        lastSyncError: null
+      });
+      return { synced: true, alreadySynced: true, queued: false, remoteId: existingRemote.id || null, error: null };
+    }
+
+    const { data: inserted, error: insertError } = await supabaseClient
+      .from('workouts')
+      .insert([row])
+      .select('id')
+      .single();
+    if (insertError) throw insertError;
+
+    await updateWorkoutExecutionSyncMetadata(identity, {
+      syncStatus: 'synced',
+      syncedAt: new Date().toISOString(),
+      remoteId: inserted?.id || `remote-${normalized.sessionId}`,
+      lastSyncError: null
+    });
+    return { synced: true, alreadySynced: false, queued: false, remoteId: inserted?.id || null, error: null };
+  } catch (error) {
+    const message = error?.message || 'Falha ao sincronizar';
+    await updateWorkoutExecutionSyncMetadata(identity, {
+      syncStatus: 'error',
+      lastSyncError: message,
+      lastSyncAttemptAt: new Date().toISOString()
+    });
+    SyncQueue.markPending('workouts');
+    console.warn('Completed workout sync failed:', error);
+    return { synced: false, alreadySynced: false, queued: true, remoteId: null, error: message };
+  }
+}
+
+async function syncPendingWorkoutExecutions() {
+  const pending = getPendingWorkoutExecutionRepresentatives();
+  let synced = 0;
+  let alreadySynced = 0;
+  let failed = 0;
+  for (const execution of pending) {
+    const result = await syncCompletedWorkout(execution);
+    if (result.synced && result.alreadySynced) alreadySynced += 1;
+    else if (result.synced) synced += 1;
+    else failed += 1;
+  }
+  const remainingPending = getPendingWorkoutExecutionRepresentatives().length;
+  if (remainingPending === 0) SyncQueue.clearPending('workouts');
+  else SyncQueue.markPending('workouts');
+  return { attempted: pending.length, synced, alreadySynced, failed, remainingPending };
+}
+
+async function handleForjaOnline() {
+  try {
+    const user = await getForjaWorkoutSyncUser();
+    if (!user) return;
+    await syncPendingWorkoutExecutions();
+    await SyncQueue.syncPending();
+    if (typeof renderTreinoHistorico === 'function') renderTreinoHistorico();
+  } catch (error) {
+    console.warn('Forja online workout sync failed:', error);
+  }
+}
+
 const ACTIVE_WORKOUT_SESSION_KEY = 'forja_active_workout_session';
 let liveWorkoutUiInterval = null;
 let liveWorkoutConfirmation = { primary: null, secondary: null };
@@ -7096,7 +7865,10 @@ let state = {
   agua:      [],
   configTreino: initialWorkoutConfig,
   activeWorkoutSession: loadActiveWorkoutSession(),
+  workoutHistoryFilters: { workoutKey: 'all', exerciseId: 'all', period: 'all', syncStatus: 'all', search: '' },
 };
+
+let workoutHistoryVisibleCount = 10;
 
 let treinoAtivo = 'A';
 const todayISO = () => new Date().toISOString().slice(0,10);
@@ -7689,13 +8461,37 @@ function getExerciseById(id) {
   return EXERCISE_LIBRARY.find(item => item.id === lookup || item.key === normalized || normalizeExerciseKey(item.nome) === normalized) || null;
 }
 
-function isSafeExerciseMediaUrl(value) {
-  if (!value) return false;
+function isValidMediaUrl(value) {
+  if (typeof value !== 'string' || !value.trim() || /<\/?(?:svg|html|script)\b/i.test(value)) return false;
+  const source = value.trim();
+  if (/^data:image\/(?:png|jpe?g|webp|gif|avif);base64,/i.test(source)) return true;
+  if (/^blob:/i.test(source)) return true;
   try {
-    return new URL(value, window.location.href).protocol === 'https:';
+    const url = new URL(source, window.location.href);
+    return url.protocol === 'https:' || url.protocol === 'http:';
   } catch (error) {
     return false;
   }
+}
+
+function isSafeExerciseMediaUrl(value) {
+  return isValidMediaUrl(value);
+}
+
+function renderThumbnailFallback(container, exercise, className = '') {
+  if (!container) return;
+  container.replaceChildren();
+  const wrapper = document.createElement('div');
+  wrapper.className = className || 'text-center';
+  const icon = document.createElement('i');
+  icon.setAttribute('data-lucide', exercise?.guide?.icon || 'dumbbell');
+  wrapper.appendChild(icon);
+  if (className.includes('exercise-library-media')) {
+    const label = document.createElement('span');
+    label.textContent = exercise?.grupo || 'Exercício';
+    wrapper.appendChild(label);
+  }
+  container.appendChild(wrapper);
 }
 
 function isSafeExerciseVideoUrl(value) {
@@ -7852,16 +8648,7 @@ function createExerciseThumbnail(exercise, className = 'exercise-library-media')
   const container = document.createElement('div');
   container.className = className;
   const appendPlaceholder = () => {
-    container.replaceChildren();
-    const wrapper = document.createElement('div');
-    wrapper.className = 'text-center';
-    wrapper.innerHTML = `<i data-lucide="${exercise?.guide?.icon || 'dumbbell'}"></i>`;
-    if (className.includes('exercise-library-media')) {
-      const label = document.createElement('span');
-      label.textContent = exercise?.grupo || 'Exercício';
-      wrapper.appendChild(label);
-    }
-    container.appendChild(wrapper);
+    renderThumbnailFallback(container, exercise, className);
   };
 
   if (isSafeExerciseMediaUrl(exercise?.thumbnail_url)) {
@@ -8645,6 +9432,11 @@ function createLiveWorkoutHistoryRecords(payload) {
       rm1: null,
       sessionId: payload.sessionId,
       liveWorkout: true,
+      syncStatus: 'pending',
+      syncedAt: null,
+      remoteId: null,
+      lastSyncError: null,
+      lastSyncAttemptAt: null,
       completedAt: payload.completedAt,
       durationMinutes: payload.durationMinutes,
       totalPausedMs: payload.totalPausedMs,
@@ -8692,7 +9484,10 @@ async function finalizeActiveWorkoutSession() {
 
   try {
     state.execucoes.push(...records);
-    await save(LS.execucoes, state.execucoes);
+    await StorageService.saveWorkouts({
+      treinos: state.treinos,
+      execucoes: state.execucoes
+    }, { localOnly: true });
     const persisted = load(LS.execucoes, []);
     if (!Array.isArray(persisted) || !persisted.some(execution => execution?.sessionId === session.id)) {
       throw new Error('Registro local não confirmado.');
@@ -8703,6 +9498,10 @@ async function finalizeActiveWorkoutSession() {
     closeLiveWorkoutScreen();
     renderTelaTreino();
     openLiveWorkoutSummary(payload);
+    const savedExecution = findExecutionByIdentity(records[0]);
+    Promise.resolve(syncCompletedWorkout(savedExecution)).catch(error => {
+      console.warn('Completed workout sync failed:', error);
+    });
     return true;
   } catch (error) {
     state.execucoes = previousExecutions;
@@ -9340,6 +10139,192 @@ document.getElementById('btn-add-treino').addEventListener('click', async () => 
   toast(`Execução salva — Volume: ${volume.toFixed(1)} kg`);
 });
 
+function getHistoryExerciseKey(exercise) {
+  return String(exercise?.exerciseId || normalizeExerciseKey(`${exercise?.nome || ''} ${exercise?.grupo || ''}`));
+}
+
+function extractExecutionItems(execution) {
+  const normalized = normalizeWorkoutExecution(execution);
+  const sourceItems = Array.isArray(normalized.sessionPayload?.exercises)
+    ? normalized.sessionPayload.exercises
+    : (Array.isArray(normalized.exercises) ? normalized.exercises : []);
+  if (sourceItems.length) {
+    return sourceItems.map((item, index) => {
+      const sets = Array.isArray(item.sets) ? item.sets.filter(set => set.completed !== false).map(set => ({ ...set })) : [];
+      return {
+        exerciseId: item.exerciseId || getExerciseId(item.nome || `exercise-${index + 1}`),
+        nome: String(item.nome || `Exercício ${index + 1}`),
+        grupo: String(item.grupo || 'Outros'),
+        equipamento: String(item.equipamento || '—'),
+        ordem: Number.isFinite(Number(item.ordem)) ? Number(item.ordem) : index,
+        sets,
+        completedSets: Number(item.completedSets) || sets.length,
+        totalReps: Number(item.totalReps) || sets.reduce((total, set) => total + (Number(set.reps) || 0), 0),
+        volume: Number(item.volume) || sets.reduce((total, set) => total + Math.max(0, Number(set.reps) || 0) * Math.max(0, Number(set.load) || 0), 0),
+        averageRpe: item.averageRpe ?? null
+      };
+    });
+  }
+  if (!normalized.exercicio || /^treino\s+[A-E]$/i.test(normalized.exercicio)) return [];
+  const series = Math.max(0, Number(normalized.series) || 0);
+  const reps = Math.max(0, Number(normalized.reps) || 0);
+  const load = Math.max(0, Number(normalized.carga) || 0);
+  return [{
+    exerciseId: getExerciseId(normalized.exercicio), nome: normalized.exercicio, grupo: normalizeExerciseGroup(MAPA_MUSCULOS[normalized.exercicio] || 'Outros'), equipamento: '—', ordem: 0,
+    sets: series ? Array.from({ length: series }, (_, index) => ({ setNumber: index + 1, type: 'normal', reps, load, rpe: normalized.rpe ?? null, completedAt: normalized.completedAt || null })) : [],
+    completedSets: series, totalReps: series * reps, volume: Number(normalized.volume) || (series * reps * load), averageRpe: normalized.rpe ?? null
+  }];
+}
+
+function getWorkoutHistoryEntries(executions = state.execucoes) {
+  const groups = new Map();
+  (Array.isArray(executions) ? executions : []).forEach(raw => {
+    const normalized = normalizeWorkoutExecution(raw);
+    const key = normalized.sessionId ? `session:${normalized.sessionId}` : getExecutionIdentity(normalized);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(normalized);
+  });
+  return Array.from(groups.entries()).map(([identity, items]) => {
+    const source = items.find(item => item.sessionPayload?.exercises?.length) || items[0];
+    const normalized = normalizeWorkoutExecution(source);
+    const exerciseItems = extractExecutionItems(normalized);
+    const totalVolume = normalized.totalVolume || items.reduce((total, item) => total + (Number(item.volume) || 0), 0);
+    const completedSets = normalized.completedSets || items.reduce((total, item) => total + (Number(item.series) || 0), 0);
+    const totalReps = normalized.totalReps || exerciseItems.reduce((total, item) => total + item.totalReps, 0);
+    return {
+      ...normalized,
+      identity,
+      items,
+      exercises: exerciseItems,
+      totalVolume,
+      completedSets,
+      totalReps,
+      durationMinutes: Number(normalized.durationMinutes) || 0,
+      syncStatus: items.some(item => item.syncStatus === 'error') ? 'error' : items.some(item => item.syncStatus === 'pending') ? 'pending' : items.some(item => item.syncStatus === 'syncing') ? 'syncing' : 'synced'
+    };
+  }).sort((a, b) => String(b.completedAt || b.workout_date || '').localeCompare(String(a.completedAt || a.workout_date || '')));
+}
+
+function calculateWorkoutHistorySummary(executions) {
+  const entries = getWorkoutHistoryEntries(executions);
+  const totalDuration = entries.reduce((total, entry) => total + Math.max(0, Number(entry.durationMinutes) || 0), 0);
+  const totalSets = entries.reduce((total, entry) => total + Math.max(0, Number(entry.completedSets) || 0), 0);
+  const totalReps = entries.reduce((total, entry) => total + Math.max(0, Number(entry.totalReps) || 0), 0);
+  const totalVolume = entries.reduce((total, entry) => total + Math.max(0, Number(entry.totalVolume) || 0), 0);
+  const exercises = new Set(entries.flatMap(entry => entry.exercises.map(getHistoryExerciseKey)).filter(Boolean));
+  return { workouts: entries.length, totalDuration, averageDuration: entries.length ? totalDuration / entries.length : 0, totalSets, totalReps, totalVolume, averageVolume: entries.length ? totalVolume / entries.length : 0, uniqueExercises: exercises.size };
+}
+
+function calculateWorkoutFrequency(executions) {
+  const entries = getWorkoutHistoryEntries(executions);
+  if (!entries.length) return 0;
+  const dates = entries.map(entry => new Date(`${entry.workout_date || entry.data}T12:00:00`).getTime()).filter(Number.isFinite);
+  if (!dates.length) return 0;
+  const spanWeeks = Math.max(1, (Math.max(...dates) - Math.min(...dates)) / 604800000 + 1);
+  return +(entries.length / spanWeeks).toFixed(1);
+}
+
+function filterWorkoutExecutions(executions, filters = state.workoutHistoryFilters) {
+  const normalizedFilters = { workoutKey: 'all', exerciseId: 'all', period: 'all', syncStatus: 'all', search: '', ...(filters || {}) };
+  const now = new Date();
+  const cutoff = normalizedFilters.period === 'all' ? null : new Date(now.getTime() - Number(normalizedFilters.period) * 86400000);
+  const search = normalizeExerciseKey(normalizedFilters.search || '');
+  return getWorkoutHistoryEntries(executions).filter(entry => {
+    if (normalizedFilters.workoutKey !== 'all' && entry.workoutKey !== normalizedFilters.workoutKey) return false;
+    if (normalizedFilters.exerciseId !== 'all' && !entry.exercises.some(item => getHistoryExerciseKey(item) === normalizedFilters.exerciseId)) return false;
+    if (normalizedFilters.syncStatus !== 'all' && entry.syncStatus !== normalizedFilters.syncStatus) return false;
+    if (cutoff && new Date(`${entry.workout_date || entry.data}T23:59:59`) < cutoff) return false;
+    if (search) {
+      const searchable = normalizeExerciseKey([entry.name, entry.workoutKey, entry.notes, ...entry.exercises.map(item => item.nome)].join(' '));
+      if (!searchable.includes(search)) return false;
+    }
+    return true;
+  }).sort((a, b) => String(b.completedAt || b.workout_date || '').localeCompare(String(a.completedAt || a.workout_date || '')));
+}
+
+function calculateExerciseExecutionVolume(exercise) {
+  return (Array.isArray(exercise?.sets) ? exercise.sets : []).reduce((total, set) => total + Math.max(0, Number(set.reps) || 0) * Math.max(0, Number(set.load) || 0), 0) || Number(exercise?.volume) || 0;
+}
+
+function getBestSetForExercise(exerciseExecutions = []) {
+  const sets = exerciseExecutions.flatMap(exercise => Array.isArray(exercise?.sets) ? exercise.sets : []).filter(set => set.completed !== false && Number(set.reps) > 0 && Number(set.load) >= 0);
+  const preferred = sets.filter(set => set.type !== 'warmup');
+  return (preferred.length ? preferred : sets).sort((a, b) => (Number(b.reps) * Number(b.load)) - (Number(a.reps) * Number(a.load)) || Number(b.load) - Number(a.load) || Number(b.reps) - Number(a.reps))[0] || null;
+}
+
+function getMaxRecordedLoad(exercise) {
+  const sets = (Array.isArray(exercise?.sets) ? exercise.sets : []).filter(set => set.completed !== false && Number(set.load) >= 0);
+  const normalSets = sets.filter(set => set.type !== 'warmup');
+  return Math.max(0, ...(normalSets.length ? normalSets : sets).map(set => Number(set.load) || 0));
+}
+
+function findPreviousComparableWorkout(currentExecution, executions = state.execucoes) {
+  const current = typeof currentExecution?.identity === 'string' ? currentExecution : getWorkoutHistoryEntries([currentExecution])[0];
+  if (!current) return null;
+  const currentDate = String(current.completedAt || current.workout_date || '');
+  const currentExerciseKeys = new Set(current.exercises.map(getHistoryExerciseKey));
+  return getWorkoutHistoryEntries(executions).filter(candidate => candidate.identity !== current.identity && String(candidate.completedAt || candidate.workout_date || '') < currentDate)
+    .filter(candidate => !current.workoutKey || candidate.workoutKey === current.workoutKey)
+    .sort((a, b) => {
+      const overlapA = a.exercises.filter(item => currentExerciseKeys.has(getHistoryExerciseKey(item))).length;
+      const overlapB = b.exercises.filter(item => currentExerciseKeys.has(getHistoryExerciseKey(item))).length;
+      return overlapB - overlapA || String(b.completedAt || b.workout_date || '').localeCompare(String(a.completedAt || a.workout_date || ''));
+    })[0] || null;
+}
+
+function compareWorkoutExecutions(currentExecution, previousExecution) {
+  const current = currentExecution;
+  const previous = previousExecution;
+  if (!current || !previous) return null;
+  const previousItems = new Map(previous.exercises.map(item => [getHistoryExerciseKey(item), item]));
+  return {
+    durationDifferenceMinutes: (Number(current.durationMinutes) || 0) - (Number(previous.durationMinutes) || 0),
+    volumeDifference: (Number(current.totalVolume) || 0) - (Number(previous.totalVolume) || 0),
+    completedSetsDifference: (Number(current.completedSets) || 0) - (Number(previous.completedSets) || 0),
+    totalRepsDifference: (Number(current.totalReps) || 0) - (Number(previous.totalReps) || 0),
+    averageRpeDifference: current.averageRpe != null && previous.averageRpe != null ? Number(current.averageRpe) - Number(previous.averageRpe) : null,
+    exerciseComparisons: current.exercises.map(item => {
+      const prior = previousItems.get(getHistoryExerciseKey(item));
+      if (!prior) return { key: getHistoryExerciseKey(item), nome: item.nome, previous: null, current: item };
+      return { key: getHistoryExerciseKey(item), nome: item.nome, previous: prior, current: item, volumeDifference: calculateExerciseExecutionVolume(item) - calculateExerciseExecutionVolume(prior), completedSetsDifference: item.completedSets - prior.completedSets, totalRepsDifference: item.totalReps - prior.totalReps, averageRpeDifference: item.averageRpe != null && prior.averageRpe != null ? item.averageRpe - prior.averageRpe : null, maxLoadDifference: getMaxRecordedLoad(item) - getMaxRecordedLoad(prior) };
+    })
+  };
+}
+
+function detectExercisePersonalRecords(currentExecution, previousExecutions = state.execucoes) {
+  const current = currentExecution;
+  const previous = getWorkoutHistoryEntries(previousExecutions).filter(entry => entry.identity !== current.identity && String(entry.completedAt || entry.workout_date || '') < String(current.completedAt || current.workout_date || ''));
+  const records = [];
+  current.exercises.forEach(exercise => {
+    const key = getHistoryExerciseKey(exercise);
+    const priorItems = previous.flatMap(entry => entry.exercises).filter(item => getHistoryExerciseKey(item) === key);
+    const mainSets = exercise.sets.filter(set => set.completed !== false && set.type !== 'warmup');
+    const usableSets = mainSets.length ? mainSets : exercise.sets.filter(set => set.completed !== false);
+    const priorSets = priorItems.flatMap(item => item.sets).filter(set => set.completed !== false && (set.type !== 'warmup' || !priorItems.some(item => item.sets.some(candidate => candidate.type !== 'warmup'))));
+    const currentMaxLoad = Math.max(0, ...usableSets.map(set => Number(set.load) || 0));
+    const priorMaxLoad = Math.max(0, ...priorSets.map(set => Number(set.load) || 0));
+    if (currentMaxLoad > priorMaxLoad && priorSets.length) records.push({ type: 'load', exercise: exercise.nome, message: 'Nova maior carga registrada neste exercício.' });
+    const currentVolume = calculateExerciseExecutionVolume(exercise);
+    const priorVolume = Math.max(0, ...priorItems.map(calculateExerciseExecutionVolume));
+    if (currentVolume > priorVolume && priorItems.length) records.push({ type: 'exerciseVolume', exercise: exercise.nome, message: 'Maior volume registrado para este exercício.' });
+    usableSets.forEach(set => {
+      const priorSameLoad = priorSets.filter(candidate => Number(candidate.load) === Number(set.load));
+      const priorReps = Math.max(0, ...priorSameLoad.map(candidate => Number(candidate.reps) || 0));
+      if (priorSameLoad.length && Number(set.reps) > priorReps) records.push({ type: 'repsWithLoad', exercise: exercise.nome, message: 'Maior número de repetições registrado com esta carga.' });
+    });
+  });
+  const priorWorkoutVolume = Math.max(0, ...previous.map(entry => Number(entry.totalVolume) || 0));
+  if (previous.length && Number(current.totalVolume) > priorWorkoutVolume) records.push({ type: 'workoutVolume', exercise: null, message: 'Maior volume total registrado para o treino.' });
+  return records;
+}
+
+function buildExerciseHistorySummary(exerciseId, executions = state.execucoes) {
+  const entries = getWorkoutHistoryEntries(executions).filter(entry => entry.exercises.some(item => getHistoryExerciseKey(item) === exerciseId));
+  const items = entries.map(entry => ({ entry, item: entry.exercises.find(exercise => getHistoryExerciseKey(exercise) === exerciseId) })).filter(pair => pair.item);
+  const sets = items.flatMap(pair => pair.item.sets);
+  return { sessions: items.length, first: items.at(-1)?.entry || null, latest: items[0]?.entry || null, maxLoad: Math.max(0, ...sets.filter(set => set.type !== 'warmup').map(set => Number(set.load) || 0)), maxSessionVolume: Math.max(0, ...items.map(pair => calculateExerciseExecutionVolume(pair.item))), bestSet: getBestSetForExercise(items.map(pair => pair.item)), latestFive: items.slice(0, 5) };
+}
+
 function renderTreinoHistorico() {
   const cont = document.getElementById('treino-historico');
   if (!cont) return;
@@ -9394,12 +10379,33 @@ function renderTreinoHistorico() {
       const volume = document.createElement('p');
       volume.className = 'font-mono text-sm text-ember whitespace-nowrap';
       volume.textContent = formatLiveVolume(totalVolume);
+      const status = document.createElement('p');
+      const syncStatus = item.records.some(record => record.syncStatus === 'error') ? 'error'
+        : item.records.some(record => record.syncStatus === 'pending') ? 'pending'
+          : item.records.some(record => record.syncStatus === 'syncing') ? 'syncing' : 'synced';
+      status.className = `text-[10px] mt-1 ${syncStatus === 'synced' ? 'text-mint' : syncStatus === 'error' ? 'text-rose-300' : 'text-amber-300'}`;
+      status.textContent = syncStatus === 'synced' ? 'Sincronizado'
+        : syncStatus === 'syncing' ? 'Sincronizando'
+          : syncStatus === 'error' ? 'Falha ao sincronizar' : 'Pendente';
       const detailButton = document.createElement('button');
       detailButton.type = 'button';
       detailButton.className = 'live-history-detail text-[11px] text-mute hover:text-ember mt-1 underline';
       detailButton.textContent = 'Detalhes';
       detailButton.addEventListener('click', () => openLiveWorkoutHistoryDetails(item.sessionId));
-      actions.append(volume, detailButton);
+      actions.append(volume, status, detailButton);
+      if (syncStatus === 'pending' || syncStatus === 'error') {
+        const retryButton = document.createElement('button');
+        retryButton.type = 'button';
+        retryButton.className = 'block ml-auto text-[11px] text-mute hover:text-ember mt-1 underline';
+        retryButton.textContent = 'Tentar novamente';
+        retryButton.addEventListener('click', async () => {
+          retryButton.disabled = true;
+          retryButton.textContent = 'Tentando...';
+          await syncCompletedWorkout(item.records[0]);
+          renderTreinoHistorico();
+        });
+        actions.appendChild(retryButton);
+      }
       row.append(details, actions);
       cont.appendChild(row);
       return;
@@ -9439,6 +10445,125 @@ function renderTreinoHistorico() {
     cont.appendChild(row);
   });
 }
+
+function historyMetric(label, value) {
+  const box = document.createElement('div'); box.className = 'workout-history-metric';
+  const name = document.createElement('span'); name.textContent = label;
+  const number = document.createElement('strong'); number.textContent = String(value ?? '—');
+  box.append(name, number); return box;
+}
+
+function renderWorkoutHistoryFiltersV32() {
+  const filters = state.workoutHistoryFilters ||= { workoutKey: 'all', exerciseId: 'all', period: 'all', syncStatus: 'all', search: '' };
+  const workout = document.getElementById('history-filter-workout');
+  const exercise = document.getElementById('history-filter-exercise');
+  const period = document.getElementById('history-filter-period');
+  const sync = document.getElementById('history-filter-sync');
+  const search = document.getElementById('history-filter-search');
+  if (!workout || !exercise || !period || !sync || !search) return;
+  const entries = getWorkoutHistoryEntries(state.execucoes);
+  const workoutKeys = ['all', ...getAllWorkoutKeys()];
+  workout.replaceChildren(...workoutKeys.map(value => new Option(value === 'all' ? 'Todos' : `Treino ${value}`, value)));
+  const exerciseMap = new Map(); entries.forEach(entry => entry.exercises.forEach(item => exerciseMap.set(getHistoryExerciseKey(item), item.nome)));
+  exercise.replaceChildren(new Option('Todos os exercícios', 'all'), ...Array.from(exerciseMap.entries()).sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).map(([value, label]) => new Option(label, value)));
+  workout.value = workoutKeys.includes(filters.workoutKey) ? filters.workoutKey : 'all';
+  exercise.value = exerciseMap.has(filters.exerciseId) ? filters.exerciseId : 'all';
+  period.value = ['7', '30', '90', 'all'].includes(String(filters.period)) ? String(filters.period) : 'all';
+  sync.value = filters.syncStatus || 'all'; search.value = filters.search || '';
+}
+
+function renderWorkoutExerciseHistorySummaryV32() {
+  const container = document.getElementById('workout-exercise-history-summary');
+  const key = state.workoutHistoryFilters?.exerciseId;
+  if (!container) return;
+  container.replaceChildren(); container.classList.toggle('hidden', !key || key === 'all');
+  if (!key || key === 'all') return;
+  const summary = buildExerciseHistorySummary(key);
+  const title = document.createElement('p'); title.className = 'text-xs font-semibold'; title.textContent = `Histórico do exercício · ${summary.sessions} sessões`;
+  const info = document.createElement('p'); info.className = 'text-[11px] text-mute mt-1';
+  info.textContent = summary.sessions < 2 ? 'Registre mais sessões para visualizar uma evolução mais completa.' : `Maior carga: ${summary.maxLoad} kg · Maior volume por sessão: ${formatLiveVolume(summary.maxSessionVolume)} · Melhor série: ${summary.bestSet ? `${summary.bestSet.reps} reps × ${summary.bestSet.load} kg` : '—'}`;
+  container.append(title, info);
+}
+
+function renderTreinoHistoricoV32() {
+  const cont = document.getElementById('treino-historico');
+  const summaryContainer = document.getElementById('workout-history-summary');
+  const loadMore = document.getElementById('workout-history-load-more');
+  if (!cont) return;
+  renderWorkoutHistoryFiltersV32();
+  const filtered = filterWorkoutExecutions(state.execucoes, state.workoutHistoryFilters);
+  const summary = calculateWorkoutHistorySummary(filtered);
+  if (summaryContainer) summaryContainer.replaceChildren(
+    historyMetric('Treinos', summary.workouts), historyMetric('Duração total', formatLiveDuration(summary.totalDuration * 60000)),
+    historyMetric('Duração média', formatLiveDuration(summary.averageDuration * 60000)), historyMetric('Séries', summary.totalSets),
+    historyMetric('Repetições', summary.totalReps), historyMetric('Volume', formatLiveVolume(summary.totalVolume)),
+    historyMetric('Média por treino', formatLiveVolume(summary.averageVolume)), historyMetric('Frequência semanal', `${calculateWorkoutFrequency(filtered)}x`), historyMetric('Exercícios', summary.uniqueExercises)
+  );
+  renderWorkoutExerciseHistorySummaryV32();
+  cont.replaceChildren();
+  if (!filtered.length) {
+    const empty = document.createElement('p'); empty.className = 'text-xs text-mute text-center py-4'; empty.textContent = state.execucoes.length ? 'Nenhuma execução corresponde aos filtros atuais.' : 'Nenhuma execução registrada ainda.'; cont.appendChild(empty);
+    loadMore?.classList.add('hidden'); return;
+  }
+  filtered.slice(0, workoutHistoryVisibleCount).forEach(entry => {
+    const card = document.createElement('div'); card.className = 'history-execution-card';
+    const content = document.createElement('div');
+    const title = document.createElement('h3'); title.textContent = entry.name || `Treino ${entry.workoutKey}`;
+    const meta = document.createElement('p'); meta.className = 'history-execution-meta';
+    const date = entry.workout_date ? new Date(`${entry.workout_date}T12:00:00`).toLocaleDateString('pt-BR') : '—';
+    meta.textContent = `${date} · Bloco ${entry.workoutKey || '—'} · ${entry.durationMinutes ? formatLiveDuration(entry.durationMinutes * 60000) : 'Duração —'}`;
+    const stats = document.createElement('div'); stats.className = 'history-execution-stats';
+    [`${entry.exercises.length} exercícios`, `${entry.completedSets} séries`, `${entry.totalReps} reps`, formatLiveVolume(entry.totalVolume), entry.averageRpe == null ? 'RPE —' : `RPE ${entry.averageRpe}`].forEach(text => { const stat = document.createElement('span'); stat.textContent = text; stats.appendChild(stat); });
+    const status = document.createElement('p'); status.className = 'history-status'; status.textContent = entry.syncStatus === 'synced' ? 'Sincronizado' : entry.syncStatus === 'syncing' ? 'Sincronizando' : entry.syncStatus === 'error' ? 'Falha ao sincronizar' : 'Pendente';
+    content.append(title, meta, stats, status);
+    const actions = document.createElement('div'); actions.className = 'history-card-actions';
+    const details = document.createElement('button'); details.type = 'button'; details.className = 'live-secondary-button'; details.textContent = 'Ver Detalhes'; details.addEventListener('click', () => openWorkoutHistoryDetails(entry.identity)); actions.appendChild(details);
+    if (entry.syncStatus === 'pending' || entry.syncStatus === 'error') { const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'live-secondary-button'; retry.textContent = 'Tentar novamente'; retry.addEventListener('click', () => syncCompletedWorkout(entry.items[0])); actions.appendChild(retry); }
+    card.append(content, actions); cont.appendChild(card);
+  });
+  loadMore?.classList.toggle('hidden', filtered.length <= workoutHistoryVisibleCount);
+  if (window.lucide) lucide.createIcons();
+}
+
+function formatHistoryDifference(label, value, unit = '') {
+  if (value == null || !Number.isFinite(Number(value))) return `${label}: —`;
+  const numeric = Number(value); return `${label}: ${numeric > 0 ? '+' : ''}${numeric.toFixed(unit === 'kg' ? 0 : 1)}${unit ? ` ${unit}` : ''}`;
+}
+
+function openWorkoutHistoryDetails(executionId) {
+  const entry = getWorkoutHistoryEntries(state.execucoes).find(item => item.identity === executionId || item.sessionId === executionId || String(item.id) === String(executionId));
+  const dialog = document.getElementById('workout-history-details-dialog');
+  const content = document.getElementById('workout-history-details-content');
+  if (!entry || !dialog || !content) return false;
+  document.getElementById('workout-history-details-title').textContent = entry.name || `Treino ${entry.workoutKey}`;
+  content.replaceChildren();
+  const meta = document.createElement('p'); meta.className = 'history-execution-meta mt-3'; meta.textContent = `${entry.workout_date ? new Date(`${entry.workout_date}T12:00:00`).toLocaleDateString('pt-BR') : '—'} · Início: ${entry.startedAt ? new Date(entry.startedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'} · Término: ${entry.completedAt ? new Date(entry.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'} · ${entry.syncStatus === 'synced' ? 'Sincronizado' : entry.syncStatus === 'error' ? 'Falha ao sincronizar' : entry.syncStatus === 'pending' ? 'Pendente' : 'Sincronizando'}`; content.appendChild(meta);
+  if (entry.notes) { const notes = document.createElement('p'); notes.className = 'live-exercise-notes'; notes.textContent = entry.notes; content.appendChild(notes); }
+  const summary = document.createElement('div'); summary.className = 'live-summary-metrics'; summary.append(historyMetric('Exercícios', entry.exercises.length), historyMetric('Séries', entry.completedSets), historyMetric('Repetições', entry.totalReps), historyMetric('Volume', formatLiveVolume(entry.totalVolume)), historyMetric('RPE médio', entry.averageRpe == null ? '—' : entry.averageRpe), historyMetric('Pausa', formatLiveDuration(entry.totalPausedMs || 0))); content.appendChild(summary);
+  const previous = findPreviousComparableWorkout(entry, state.execucoes);
+  const comparisonSection = document.createElement('section'); comparisonSection.className = 'history-detail-section';
+  const comparisonTitle = document.createElement('h3'); comparisonTitle.textContent = 'Comparação anterior'; comparisonSection.appendChild(comparisonTitle);
+  if (!previous) { const first = document.createElement('p'); first.className = 'history-execution-meta'; first.textContent = 'Esta é a primeira execução comparável registrada.'; comparisonSection.appendChild(first); }
+  else { const comparison = compareWorkoutExecutions(entry, previous); const grid = document.createElement('div'); grid.className = 'history-detail-comparison'; [formatHistoryDifference('Volume', comparison.volumeDifference, 'kg'), formatHistoryDifference('Séries concluídas', comparison.completedSetsDifference), formatHistoryDifference('Repetições', comparison.totalRepsDifference), formatHistoryDifference('Duração', comparison.durationDifferenceMinutes, 'min'), formatHistoryDifference('RPE médio', comparison.averageRpeDifference)].forEach(text => { const box = document.createElement('p'); box.className = 'history-execution-meta'; box.textContent = text; grid.appendChild(box); }); comparisonSection.appendChild(grid); } content.appendChild(comparisonSection);
+  const records = detectExercisePersonalRecords(entry, state.execucoes);
+  if (records.length) { const recordSection = document.createElement('section'); recordSection.className = 'history-detail-section'; const title = document.createElement('h3'); title.textContent = 'Indicadores do histórico'; recordSection.appendChild(title); records.forEach(record => { const item = document.createElement('p'); item.className = 'history-execution-meta'; item.textContent = record.message; recordSection.appendChild(item); }); content.appendChild(recordSection); }
+  const exercisesSection = document.createElement('section'); exercisesSection.className = 'history-detail-section'; const exercisesTitle = document.createElement('h3'); exercisesTitle.textContent = 'Exercícios e séries'; exercisesSection.appendChild(exercisesTitle);
+  entry.exercises.sort((a,b) => a.ordem - b.ordem).forEach(exercise => { const article = document.createElement('article'); article.className = 'live-preview-exercise'; const title = document.createElement('h3'); title.textContent = `${exercise.ordem + 1}. ${exercise.nome}`; const meta = document.createElement('p'); meta.textContent = `${exercise.grupo} · ${exercise.equipamento} · ${formatLiveVolume(calculateExerciseExecutionVolume(exercise))}`; const sets = document.createElement('div'); sets.className = 'history-detail-series'; exercise.sets.forEach(set => { const line = document.createElement('p'); const volume = Math.max(0, Number(set.reps) || 0) * Math.max(0, Number(set.load) || 0); line.textContent = `${set.type === 'warmup' ? 'Aquecimento' : 'Série'} ${set.setNumber}: ${set.reps ?? '—'} reps · ${set.load ?? '—'} kg · RPE ${set.rpe ?? '—'} · ${formatLiveVolume(volume)}${set.completedAt ? ` · ${new Date(set.completedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : ''}`; sets.appendChild(line); }); article.append(title, meta, sets); exercisesSection.appendChild(article); }); content.appendChild(exercisesSection);
+  if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); } else dialog.setAttribute('open', '');
+  document.getElementById('workout-history-details-close')?.focus({ preventScroll: true }); if (window.lucide) lucide.createIcons(); return true;
+}
+
+function closeWorkoutHistoryDetails() { const dialog = document.getElementById('workout-history-details-dialog'); if (typeof dialog?.close === 'function' && dialog.open) dialog.close(); else dialog?.removeAttribute('open'); }
+
+renderTreinoHistorico = renderTreinoHistoricoV32;
+
+[['history-filter-workout', 'workoutKey'], ['history-filter-exercise', 'exerciseId'], ['history-filter-period', 'period'], ['history-filter-sync', 'syncStatus']].forEach(([id, key]) => {
+  document.getElementById(id)?.addEventListener('change', event => { state.workoutHistoryFilters[key] = event.target.value; workoutHistoryVisibleCount = 10; renderTreinoHistorico(); });
+});
+document.getElementById('history-filter-search')?.addEventListener('input', event => { state.workoutHistoryFilters.search = event.target.value; workoutHistoryVisibleCount = 10; renderTreinoHistorico(); });
+document.getElementById('workout-history-load-more')?.addEventListener('click', () => { workoutHistoryVisibleCount += 10; renderTreinoHistorico(); });
+document.getElementById('workout-history-details-close')?.addEventListener('click', closeWorkoutHistoryDetails);
+document.getElementById('workout-history-details-dialog')?.addEventListener('cancel', event => { event.preventDefault(); closeWorkoutHistoryDetails(); });
 
 const CORES_MUSCULO = {
   'Peito':   'bg-ember',
