@@ -225,6 +225,16 @@
     box-shadow: 0 0 0 18px rgba(59,167,255,.035);
     pointer-events: none;
   }
+  .food-search-wrap { z-index: 20; }
+  .food-search-wrap:focus-within { z-index: 60; }
+  #f-resultados {
+    z-index: 70 !important;
+    max-width: 100%;
+    border-color: rgba(88,94,108,.8) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 18px 42px rgba(0,0,0,.38);
+  }
+  #f-resultados .opcao-alimento { min-height: 44px; }
   .workout-layout > div { min-width: 0; }
   .workout-column { display: flex; flex-direction: column; gap: 18px; }
   #treino-tabs { display: grid; gap: 9px; }
@@ -980,7 +990,7 @@
           </select>
         </div>
         <div id="busca-padrao-wrap" class="contents">
-          <div class="col-span-2 relative">
+          <div class="food-search-wrap col-span-2 relative">
             <label class="text-xs text-mute">Alimento</label>
             <input id="f-busca" type="text" autocomplete="off" placeholder="Digite para buscar (ex: arroz, banana, ovo...)" class="w-full mt-1 bg-card2 border border-line rounded-lg px-3 py-2 text-sm">
             <div id="f-resultados" class="hidden absolute left-0 right-0 mt-1 z-20 bg-card2 border border-line rounded-lg max-h-56 overflow-y-auto shadow-lg"></div>
@@ -5144,7 +5154,7 @@ document.getElementById('btn-calc-perfil').addEventListener('click', calcularPer
 let alimentoSelecionado = null;
 
 function normalizar(txt) {
-  return txt.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return String(txt ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function resetBuscaAlimento() {
@@ -5161,27 +5171,79 @@ function resetBuscaAlimento() {
   if (qtdInput) qtdInput.value = '';
 }
 
+function filtrarAlimentosLocal(termo) {
+  const termoNorm = normalizar(termo).trim();
+  if (!termoNorm) return [];
+  return TACO.filter(alimento => normalizar(alimento.nome).includes(termoNorm)).slice(0, 8);
+}
+
 function renderResultadosBusca(termo) {
   const resultados = document.getElementById('f-resultados');
-  const termoNorm = normalizar(termo).trim();
-  if (!termoNorm) { resultados.classList.add('hidden'); resultados.innerHTML = ''; return; }
+  if (!resultados) return [];
 
-  const encontrados = TACO.filter(a => normalizar(a.nome).includes(termoNorm)).slice(0, 8);
-  if (encontrados.length === 0) {
-    resultados.innerHTML = `<div class="px-3 py-2 text-xs text-mute">Nenhum alimento encontrado.</div>`;
-    resultados.classList.remove('hidden');
-    return;
+  const encontrados = filtrarAlimentosLocal(termo);
+  resultados.replaceChildren();
+  if (!normalizar(termo).trim()) {
+    resultados.classList.add('hidden');
+    return encontrados;
   }
 
-  resultados.innerHTML = encontrados.map((a, i) => `
-    <button type="button" data-idx="${TACO.indexOf(a)}" class="opcao-alimento w-full text-left px-3 py-2 text-sm hover:bg-card border-b border-line/60 last:border-b-0">
-      ${a.nome} <span class="text-[10px] text-mute font-mono">${a.tipo_medida === 'unidade' ? '(por unidade)' : '(por grama)'}</span>
-    </button>
-  `).join('');
-  resultados.classList.remove('hidden');
+  if (encontrados.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'px-3 py-3 text-xs text-mute';
+    empty.textContent = 'Nenhum alimento encontrado.';
+    resultados.appendChild(empty);
+    resultados.classList.remove('hidden');
+    return encontrados;
+  }
 
-  resultados.querySelectorAll('.opcao-alimento').forEach(btn => {
-    btn.addEventListener('click', () => selecionarAlimento(TACO[Number(btn.dataset.idx)]));
+  encontrados.forEach(alimento => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.idx = String(TACO.indexOf(alimento));
+    button.className = 'opcao-alimento w-full text-left px-3 py-2 text-sm hover:bg-card border-b border-line/60 last:border-b-0';
+
+    const name = document.createElement('span');
+    name.className = 'font-medium text-ink';
+    name.textContent = alimento.nome;
+
+    const measure = document.createElement('span');
+    measure.className = 'ml-1 text-[10px] text-mute font-mono';
+    measure.textContent = alimento.tipo_medida === 'unidade' ? '(por unidade)' : '(por grama)';
+
+    button.appendChild(name);
+    button.appendChild(measure);
+    resultados.appendChild(button);
+  });
+  resultados.classList.remove('hidden');
+  return encontrados;
+}
+
+function inicializarBuscaAlimentos() {
+  const busca = document.getElementById('f-busca');
+  const resultados = document.getElementById('f-resultados');
+  if (!busca || !resultados || busca.dataset.foodSearchBound === 'true') return;
+
+  busca.dataset.foodSearchBound = 'true';
+  busca.addEventListener('input', () => {
+    alimentoSelecionado = null;
+    document.getElementById('f-qtd-wrap')?.classList.add('hidden');
+    document.getElementById('food-preview')?.classList.add('hidden');
+    renderResultadosBusca(busca.value);
+  });
+  busca.addEventListener('focus', () => {
+    if (busca.value) renderResultadosBusca(busca.value);
+  });
+  resultados.addEventListener('click', event => {
+    const button = event.target.closest('.opcao-alimento');
+    const alimento = button ? TACO[Number(button.dataset.idx)] : null;
+    if (!alimento) return;
+    event.stopPropagation();
+    selecionarAlimento(alimento);
+  });
+  document.addEventListener('click', event => {
+    const wrap = busca.closest('.food-search-wrap') || busca.parentElement;
+    if (wrap && !wrap.contains(event.target)) resultados.classList.add('hidden');
   });
 }
 
@@ -5234,19 +5296,7 @@ function atualizarPreviewAlimento() {
   preview.classList.remove('hidden');
 }
 
-document.getElementById('f-busca').addEventListener('input', (e) => {
-  alimentoSelecionado = null;
-  document.getElementById('f-qtd-wrap').classList.add('hidden');
-  document.getElementById('food-preview').classList.add('hidden');
-  renderResultadosBusca(e.target.value);
-});
-document.getElementById('f-busca').addEventListener('focus', (e) => {
-  if (e.target.value) renderResultadosBusca(e.target.value);
-});
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('f-busca').parentElement;
-  if (wrap && !wrap.contains(e.target)) document.getElementById('f-resultados').classList.add('hidden');
-});
+inicializarBuscaAlimentos();
 document.getElementById('f-qtd').addEventListener('input', atualizarPreviewAlimento);
 
 document.getElementById('btn-add-food').addEventListener('click', async () => {
@@ -6510,6 +6560,120 @@ function renderTudo() {
   renderContadores();
   if (window.lucide) lucide.createIcons();
 }
+
+window.testFoodSearchUI = async function() {
+  let searchInputExists = false;
+  let foodBaseExists = false;
+  let foodBaseHasItems = false;
+  let bananaSearchOk = false;
+  let arrozSearchOk = false;
+  let frangoSearchOk = false;
+  let suggestionClickOk = false;
+  let addFoodOk = false;
+  let diaryUpdatedOk = false;
+  let mobileStillOk = false;
+  let noBlockingErrors = false;
+
+  const previousDiary = Array.isArray(state?.diario) ? [...state.diario] : [];
+  const previousSelected = alimentoSelecionado;
+  const busca = document.getElementById('f-busca');
+  const qtd = document.getElementById('f-qtd');
+  const resultados = document.getElementById('f-resultados');
+  const addButton = document.getElementById('btn-add-food');
+  const previousSearchValue = busca?.value || '';
+  const previousQuantity = qtd?.value || '';
+  const originalSaveMeals = StorageService?.saveMeals;
+
+  try {
+    searchInputExists = Boolean(busca && resultados && addButton);
+    foodBaseExists = typeof TACO !== 'undefined' && Array.isArray(TACO);
+    foodBaseHasItems = foodBaseExists && TACO.length > 0;
+    bananaSearchOk = filtrarAlimentosLocal('banana').length > 0;
+    arrozSearchOk = filtrarAlimentosLocal('arroz').length > 0;
+    frangoSearchOk = filtrarAlimentosLocal('frango').length > 0;
+
+    if (searchInputExists && bananaSearchOk) {
+      busca.value = 'banana';
+      busca.dispatchEvent(new Event('input', { bubbles: true }));
+      const suggestion = resultados.querySelector('.opcao-alimento');
+      if (suggestion) {
+        suggestion.click();
+        suggestionClickOk = Boolean(alimentoSelecionado?.nome) && busca.value === alimentoSelecionado.nome;
+      }
+    }
+
+    const selectedName = alimentoSelecionado?.nome || '';
+    if (suggestionClickOk && qtd && addButton) {
+      qtd.value = '1';
+      StorageService.saveMeals = async () => {};
+      const beforeCount = state.diario.length;
+      addButton.click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      addFoodOk = state.diario.length === beforeCount + 1;
+      diaryUpdatedOk = addFoodOk && (document.getElementById('diario-hoje')?.textContent || '').includes(selectedName);
+    }
+
+    mobileStillOk = document.documentElement.scrollWidth <= window.innerWidth + 1
+      && Boolean(document.querySelector('#screen-dieta .card-food'))
+      && Boolean(resultados?.classList.contains('absolute'));
+    noBlockingErrors = searchInputExists
+      && foodBaseExists
+      && foodBaseHasItems
+      && typeof renderResultadosBusca === 'function'
+      && typeof selecionarAlimento === 'function';
+
+    const passed = searchInputExists
+      && foodBaseExists
+      && foodBaseHasItems
+      && bananaSearchOk
+      && arrozSearchOk
+      && frangoSearchOk
+      && suggestionClickOk
+      && addFoodOk
+      && diaryUpdatedOk
+      && mobileStillOk
+      && noBlockingErrors;
+
+    return {
+      searchInputExists,
+      foodBaseExists,
+      foodBaseHasItems,
+      bananaSearchOk,
+      arrozSearchOk,
+      frangoSearchOk,
+      suggestionClickOk,
+      addFoodOk,
+      diaryUpdatedOk,
+      mobileStillOk,
+      noBlockingErrors,
+      passed
+    };
+  } catch (error) {
+    console.warn('testFoodSearchUI failed:', error);
+    return {
+      searchInputExists,
+      foodBaseExists,
+      foodBaseHasItems,
+      bananaSearchOk,
+      arrozSearchOk,
+      frangoSearchOk,
+      suggestionClickOk,
+      addFoodOk,
+      diaryUpdatedOk,
+      mobileStillOk,
+      noBlockingErrors,
+      passed: false
+    };
+  } finally {
+    if (typeof originalSaveMeals === 'function') StorageService.saveMeals = originalSaveMeals;
+    state.diario = previousDiary;
+    alimentoSelecionado = previousSelected;
+    if (busca) busca.value = previousSearchValue;
+    if (qtd) qtd.value = previousQuantity;
+    renderDiarioHoje();
+  }
+}
+
 checkSession();
 </script>
 </body>
