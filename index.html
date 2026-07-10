@@ -733,6 +733,27 @@
   .live-confirm-panel h2 { font-size: 19px; font-weight: 750; }
   .live-confirm-panel > p { margin-top: 9px; color: var(--forja-muted); font-size: 13px; line-height: 1.55; }
   .live-confirm-actions { flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .live-preview-dialog { width: min(720px, calc(100vw - 28px)); }
+  .live-preview-panel { max-height: min(780px, calc(100dvh - 32px)); overflow-y: auto; padding: 22px; }
+  .live-summary-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+  .live-summary-metric { min-width: 0; padding: 11px 10px; background: rgba(255,255,255,.03); border: 1px solid rgba(69,74,88,.66); border-radius: 8px; }
+  .live-summary-metric span { display: block; color: var(--forja-muted); font-size: 10px; line-height: 1.35; }
+  .live-summary-metric strong { display: block; overflow: hidden; margin-top: 4px; color: var(--forja-text); font: 700 14px/1.25 'JetBrains Mono', monospace; text-overflow: ellipsis; white-space: nowrap; }
+  .live-preview-exercises { display: grid; gap: 8px; margin-top: 16px; }
+  .live-preview-exercise { padding: 12px; background: rgba(11,13,18,.58); border: 1px solid rgba(69,74,88,.66); border-radius: 8px; }
+  .live-preview-exercise h3 { font-size: 13px; font-weight: 700; }
+  .live-preview-exercise p { margin-top: 5px; color: var(--forja-muted); font-size: 11px; line-height: 1.5; }
+  .live-finish-notes { width: 100%; min-height: 82px; margin-top: 6px; padding: 10px 12px; color: var(--forja-text); background: rgba(28,31,41,.9); border: 1px solid rgba(79,84,99,.62); border-radius: 8px; outline: none; resize: vertical; }
+  .live-finish-notes:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent); }
+  .live-summary-screen { display: grid; place-items: center; padding: 24px; }
+  .live-summary-screen.hidden { display: none; }
+  .live-summary-wrap { width: min(620px, 100%); }
+  .live-summary-panel { text-align: center; }
+  .live-summary-panel > .live-confirm-icon { margin: 0 auto 15px; }
+  .live-summary-message { margin-top: 8px; color: var(--forja-muted); font-size: 13px; }
+  .live-summary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px; }
+  .live-history-session { align-items: center; gap: 12px; }
+  .live-history-session .live-history-detail { flex: 0 0 auto; }
   #live-workout-entry:empty { display: none; }
   .live-entry-banner { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 13px; background: color-mix(in srgb, var(--color-primary) 7%, rgba(20,22,29,.96)); border: 1px solid color-mix(in srgb, var(--color-primary) 31%, transparent); border-radius: 8px; }
   .live-entry-banner strong { display: block; font-size: 13px; }
@@ -952,6 +973,9 @@
     .live-confirm-actions button { width: 100%; }
     .live-entry-banner { grid-template-columns: minmax(0, 1fr); }
     .live-entry-banner button { width: 100%; }
+    .live-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .live-summary-actions { grid-template-columns: 1fr; }
+    .live-preview-panel { padding: 17px; }
   }
 
   /* Mobile premium layer: 360px to 430px first, desktop remains untouched. */
@@ -1867,6 +1891,7 @@
     </div>
     <div class="live-workout-header-actions">
       <button type="button" id="live-workout-pause" class="live-secondary-button"><i data-lucide="pause"></i><span>Pausar</span></button>
+      <button type="button" id="live-workout-finish" class="live-primary-button"><i data-lucide="check-circle-2"></i><span>Finalizar treino</span></button>
       <button type="button" id="live-workout-cancel" class="live-danger-button"><i data-lucide="trash-2"></i><span>Cancelar treino</span></button>
     </div>
   </header>
@@ -1948,6 +1973,49 @@
     </div>
   </div>
 </dialog>
+
+<dialog id="live-workout-preview-dialog" class="exercise-detail-dialog live-preview-dialog" aria-labelledby="live-preview-title" aria-describedby="live-preview-description">
+  <div class="exercise-detail-panel live-preview-panel">
+    <div class="live-confirm-icon"><i data-lucide="clipboard-check"></i></div>
+    <h2 id="live-preview-title" class="font-display font-semibold text-xl">Prévia do treino</h2>
+    <p id="live-preview-description" class="text-sm text-mute mt-2">Revise os registros concluídos antes de salvar.</p>
+    <div id="live-preview-metrics" class="live-summary-metrics"></div>
+    <div id="live-preview-exercises" class="live-preview-exercises"></div>
+    <div class="mt-4">
+      <label for="live-workout-finish-notes" class="text-xs text-mute">Observações opcionais</label>
+      <textarea id="live-workout-finish-notes" class="live-finish-notes" maxlength="500" placeholder="Como foi o treino hoje?"></textarea>
+    </div>
+    <div class="live-confirm-actions">
+      <button type="button" id="live-preview-back" class="live-secondary-button">Voltar ao treino</button>
+      <button type="button" id="live-preview-save" class="live-primary-button">Confirmar e salvar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="live-workout-history-dialog" class="exercise-detail-dialog live-preview-dialog" aria-labelledby="live-history-detail-title">
+  <div class="exercise-detail-panel live-preview-panel">
+    <div class="live-confirm-icon"><i data-lucide="history"></i></div>
+    <h2 id="live-history-detail-title" class="font-display font-semibold text-xl">Detalhes do treino</h2>
+    <div id="live-history-detail-content" class="live-preview-exercises mt-4"></div>
+    <div class="live-confirm-actions"><button type="button" id="live-history-detail-close" class="live-primary-button">Fechar</button></div>
+  </div>
+</dialog>
+
+<section id="live-workout-summary-screen" class="live-workout-screen live-summary-screen hidden" aria-hidden="true" aria-labelledby="live-summary-title">
+  <main class="live-summary-wrap">
+    <article class="live-panel live-summary-panel">
+      <div class="live-confirm-icon"><i data-lucide="check-circle-2"></i></div>
+      <p class="live-eyebrow">Sessão concluída</p>
+      <h1 id="live-summary-title" class="live-exercise-name">Treino concluído</h1>
+      <p class="live-summary-message">Treino registrado com sucesso.</p>
+      <div id="live-summary-metrics" class="live-summary-metrics"></div>
+      <div class="live-summary-actions">
+        <button type="button" id="live-summary-history" class="live-secondary-button"><i data-lucide="history"></i><span>Ver histórico</span></button>
+        <button type="button" id="live-summary-back" class="live-primary-button"><span>Voltar aos treinos</span><i data-lucide="arrow-right"></i></button>
+      </div>
+    </article>
+  </main>
+</section>
 
 <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-card2 border border-ember/40 text-sm px-4 py-2.5 rounded-xl z-50 shadow-lg"></div>
 
@@ -5019,6 +5087,176 @@ window.testLiveWorkoutPart1 = async function() {
   }
 };
 
+window.testLiveWorkoutPart2A1 = async function() {
+  const original = {
+    configTreino: { ...(state.configTreino || {}) },
+    treinos: JSON.parse(JSON.stringify(state.treinos || {})),
+    execucoes: JSON.parse(JSON.stringify(state.execucoes || [])),
+    activeWorkoutSession: state.activeWorkoutSession ? JSON.parse(JSON.stringify(state.activeWorkoutSession)) : null,
+    treinoAtivo,
+    executionsStorage: localStorage.getItem(LS.execucoes),
+    sessionStorage: localStorage.getItem(ACTIVE_WORKOUT_SESSION_KEY),
+    lastPayload: lastCompletedWorkoutPayload
+  };
+  const result = {
+    finishButtonExists: false,
+    emptySessionBlocked: false,
+    previewOpens: false,
+    completedSetsOnly: false,
+    durationCalculationOk: false,
+    pausedTimeExcluded: false,
+    volumeCalculationOk: false,
+    averageRpeCalculationOk: false,
+    payloadValid: false,
+    duplicatePreventionOk: false,
+    localSaveOk: false,
+    sessionClearedAfterSave: false,
+    sessionPreservedOnFailure: false,
+    summaryOpens: false,
+    historyUpdates: false,
+    plansPreserved: false,
+    oldExecutionsPreserved: false,
+    mobileNoOverflow: false,
+    noBlockingErrors: false,
+    passed: false
+  };
+  let originalSave = null;
+
+  try {
+    clearActiveWorkoutSession();
+    state.configTreino = { divisao: 'ABCDE' };
+    state.treinos = createEmptyWorkoutPlan('ABCDE');
+    treinoAtivo = 'A';
+    const catalog = EXERCISE_LIBRARY.slice(0, 2);
+    state.treinos.A.exercicios = catalog.map((exercise, index) => normalizeWorkoutExercise({
+      ...exercise,
+      series: index === 0 ? 2 : 1,
+      reps: '10',
+      carga: index === 0 ? 40 : 20,
+      descanso: 45,
+      rpeAlvo: 8
+    }, index));
+    const planBefore = JSON.stringify(state.treinos);
+    const oldExecutions = JSON.parse(JSON.stringify(original.execucoes));
+    renderTelaTreino({ divisao: 'ABCDE' });
+    result.finishButtonExists = Boolean(document.getElementById('live-workout-finish'));
+
+    const emptySession = createActiveWorkoutSession('A', { open: false });
+    result.emptySessionBlocked = Boolean(emptySession)
+      && requestFinishLiveWorkout() === false
+      && getCompletedSessionSets(state.activeWorkoutSession).length === 0;
+    clearActiveWorkoutSession();
+
+    let session = createActiveWorkoutSession('A', { open: false });
+    const fixedNow = Date.now();
+    session.startedAt = new Date(fixedNow - 120000).toISOString();
+    session.totalPausedMs = 30000;
+    saveActiveWorkoutSession(session);
+    session = state.activeWorkoutSession;
+    completeLiveWorkoutSet(0, 'normal', 1, { reps: 10, load: 40, rpe: 8 }, { render: false });
+    session = state.activeWorkoutSession;
+    saveLiveWorkoutSetDraft(0, 'normal', 2, { reps: 8, load: 42.5, rpe: 9 });
+    session = state.activeWorkoutSession;
+    const payload = buildCompletedWorkoutPayload(session, { endedAtMs: fixedNow, previewOnly: true });
+    result.completedSetsOnly = payload.completedSets === 1
+      && payload.exercises.length === 1
+      && payload.exercises[0].sets.length === 1
+      && getPendingFilledSessionSets(session).length === 1;
+    result.durationCalculationOk = calculateCompletedSessionDuration(session, fixedNow) === 90000;
+    const pausedSession = { ...session, status: 'paused', pausedAt: new Date(fixedNow - 10000).toISOString() };
+    result.pausedTimeExcluded = calculateCompletedSessionDuration(pausedSession, fixedNow) === 80000;
+    result.volumeCalculationOk = calculateCompletedSessionVolume(session) === 400;
+    result.averageRpeCalculationOk = calculateCompletedSessionAverageRpe(session) === 8;
+    result.payloadValid = Boolean(payload)
+      && payload.sessionId === session.id
+      && payload.workoutKey === 'A'
+      && payload.totalReps === 10
+      && payload.totalVolume === 400
+      && Array.isArray(payload.exercises);
+
+    result.previewOpens = openLiveWorkoutPreview()
+      && Boolean(document.getElementById('live-workout-preview-dialog')?.open || document.getElementById('live-workout-preview-dialog')?.hasAttribute('open'))
+      && Boolean(state.activeWorkoutSession);
+    closeLiveWorkoutPreview();
+
+    const sessionId = session.id;
+    const saved = await finalizeActiveWorkoutSession();
+    result.localSaveOk = saved
+      && state.execucoes.some(execution => execution.sessionId === sessionId)
+      && load(LS.execucoes, []).some(execution => execution.sessionId === sessionId);
+    result.sessionClearedAfterSave = !state.activeWorkoutSession
+      && !localStorage.getItem(ACTIVE_WORKOUT_SESSION_KEY);
+    result.duplicatePreventionOk = isSessionAlreadyCompleted(sessionId)
+      && state.execucoes.filter(execution => execution.sessionId === sessionId).length === 1;
+    result.summaryOpens = !document.getElementById('live-workout-summary-screen')?.classList.contains('hidden');
+    closeLiveWorkoutSummary();
+    renderTreinoHistorico();
+    result.historyUpdates = (document.getElementById('treino-historico')?.textContent || '').includes('Treino A')
+      && (document.getElementById('treino-historico')?.textContent || '').includes('Detalhes');
+    result.plansPreserved = JSON.stringify(state.treinos) === planBefore;
+    result.oldExecutionsPreserved = oldExecutions.every(oldExecution => state.execucoes.some(execution => execution.id === oldExecution.id));
+
+    const failureSession = createActiveWorkoutSession('A', { open: false });
+    completeLiveWorkoutSet(0, 'normal', 1, { reps: 10, load: 40, rpe: 8 }, { render: false });
+    originalSave = save;
+    save = async () => { throw new Error('Teste de falha local'); };
+    const failureSaved = await finalizeActiveWorkoutSession();
+    result.sessionPreservedOnFailure = failureSaved === false
+      && Boolean(state.activeWorkoutSession)
+      && state.activeWorkoutSession.id === failureSession.id;
+    save = originalSave;
+
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1
+      && Boolean(document.querySelector('.live-summary-metrics'))
+      && Boolean(document.getElementById('live-workout-preview-dialog'));
+    const requiredFunctions = [
+      getCompletedSessionSets, calculateCompletedSessionVolume, calculateCompletedSessionDuration,
+      calculateCompletedSessionAverageRpe, buildCompletedWorkoutPayload, isSessionAlreadyCompleted,
+      requestFinishLiveWorkout, finalizeActiveWorkoutSession, openLiveWorkoutPreview
+    ];
+    const requiredIds = [
+      'live-workout-finish', 'live-workout-preview-dialog', 'live-preview-save',
+      'live-workout-summary-screen', 'live-workout-history-dialog'
+    ];
+    result.noBlockingErrors = requiredFunctions.every(fn => typeof fn === 'function')
+      && requiredIds.every(id => Boolean(document.getElementById(id)));
+    result.passed = Object.entries(result)
+      .filter(([key]) => key !== 'passed')
+      .every(([, value]) => value === true);
+    return { ...result };
+  } catch (error) {
+    console.warn('testLiveWorkoutPart2A1 failed:', error);
+    return { ...result, passed: false, error: error.message };
+  } finally {
+    if (originalSave) save = originalSave;
+    isFinalizingLiveWorkout = false;
+    closeLiveWorkoutPreview();
+    closeLiveWorkoutSummary();
+    closeLiveWorkoutConfirmation();
+    document.getElementById('live-workout-history-dialog')?.close?.();
+    clearInterval(liveWorkoutUiInterval);
+    liveWorkoutUiInterval = null;
+    document.getElementById('live-workout-screen')?.classList.add('hidden');
+    document.getElementById('live-workout-screen')?.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('live-workout-active');
+    state.configTreino = original.configTreino;
+    state.treinos = original.treinos;
+    state.execucoes = original.execucoes;
+    state.activeWorkoutSession = original.activeWorkoutSession;
+    treinoAtivo = original.treinoAtivo;
+    lastCompletedWorkoutPayload = original.lastPayload;
+    try {
+      if (original.executionsStorage == null) localStorage.removeItem(LS.execucoes);
+      else localStorage.setItem(LS.execucoes, original.executionsStorage);
+      if (original.sessionStorage == null) localStorage.removeItem(ACTIVE_WORKOUT_SESSION_KEY);
+      else localStorage.setItem(ACTIVE_WORKOUT_SESSION_KEY, original.sessionStorage);
+    } catch (error) {
+      console.warn('testLiveWorkoutPart2A1 restore failed:', error);
+    }
+    renderTelaTreino();
+  }
+};
+
 window.testMobileForjaUI = async function() {
   let noHorizontalOverflow = false;
   let bottomNavOk = false;
@@ -6319,7 +6557,8 @@ function normalizeLiveWorkoutSet(set, index = 0) {
     load,
     rpe: Number.isFinite(rawRpe) && rawRpe >= 1 && rawRpe <= 10 ? rawRpe : null,
     completed: source.completed === true,
-    completedAt: source.completed === true && source.completedAt ? String(source.completedAt) : null
+    completedAt: source.completed === true && source.completedAt ? String(source.completedAt) : null,
+    hasUserInput: source.completed !== true && source.hasUserInput === true
   };
 }
 
@@ -6681,28 +6920,120 @@ function navigateLiveWorkoutExercise(targetIndex, options = {}) {
   return true;
 }
 
-function buildCompletedWorkoutPayload(session = state?.activeWorkoutSession) {
+function getCompletedSessionSets(session) {
+  const normalized = normalizeActiveWorkoutSession(session);
+  if (!normalized) return [];
+  return normalized.exercises.flatMap((exercise, exerciseIndex) => exercise.sets
+    .filter(set => set.completed)
+    .map(set => ({ ...set, exerciseId: exercise.exerciseId, exerciseName: exercise.nome, exerciseGroup: exercise.grupo, exerciseIndex })));
+}
+
+function calculateCompletedSessionVolume(session) {
+  return getCompletedSessionSets(session).reduce((total, set) => {
+    const reps = Number(set.reps);
+    const load = Number(set.load);
+    return Number.isFinite(reps) && reps > 0 && Number.isFinite(load) && load >= 0
+      ? total + (reps * load)
+      : total;
+  }, 0);
+}
+
+function calculateCompletedSessionDuration(session, endedAtMs = Date.now()) {
+  return getActiveWorkoutElapsedMs(session, endedAtMs);
+}
+
+function calculateCompletedSessionAverageRpe(session) {
+  const rpes = getCompletedSessionSets(session)
+    .map(set => Number(set.rpe))
+    .filter(rpe => Number.isFinite(rpe) && rpe >= 1 && rpe <= 10);
+  if (rpes.length === 0) return null;
+  return +(rpes.reduce((total, rpe) => total + rpe, 0) / rpes.length).toFixed(1);
+}
+
+function getPendingFilledSessionSets(session) {
+  const normalized = normalizeActiveWorkoutSession(session);
+  if (!normalized) return [];
+  return normalized.exercises.flatMap((exercise, exerciseIndex) => exercise.sets
+    .filter(set => !set.completed && set.hasUserInput === true)
+    .filter(set => Number(set.reps) > 0 || Number(set.load) > 0 || (Number(set.rpe) >= 1 && Number(set.rpe) <= 10))
+    .map(set => ({ ...set, exerciseId: exercise.exerciseId, exerciseName: exercise.nome, exerciseIndex })));
+}
+
+function buildCompletedWorkoutPayload(session = state?.activeWorkoutSession, options = {}) {
   const normalized = normalizeActiveWorkoutSession(session);
   if (!normalized) return null;
-  const exercises = normalized.exercises.map(exercise => ({
-    exerciseId: exercise.exerciseId,
-    nome: exercise.nome,
-    sets: exercise.sets.filter(set => set.completed).map(set => ({ ...set })),
-    volume: exercise.sets
-      .filter(set => set.completed && set.type === 'normal')
-      .reduce((total, set) => total + (set.reps * set.load), 0)
-  }));
+  const endedAtMs = Number.isFinite(Number(options.endedAtMs)) ? Number(options.endedAtMs) : Date.now();
+  const completedSets = getCompletedSessionSets(normalized);
+  const exercises = normalized.exercises
+    .map(exercise => {
+      const sets = exercise.sets.filter(set => set.completed).map(set => ({ ...set }));
+      const totalReps = sets.reduce((total, set) => total + (Number(set.reps) > 0 ? Number(set.reps) : 0), 0);
+      const volume = sets.reduce((total, set) => (
+        Number(set.reps) > 0 && Number(set.load) >= 0 ? total + (Number(set.reps) * Number(set.load)) : total
+      ), 0);
+      const rpes = sets.map(set => Number(set.rpe)).filter(rpe => Number.isFinite(rpe) && rpe >= 1 && rpe <= 10);
+      return {
+        exerciseId: exercise.exerciseId,
+        nome: exercise.nome,
+        grupo: exercise.grupo,
+        equipamento: exercise.equipamento,
+        sets,
+        completedSets: sets.length,
+        totalReps,
+        volume,
+        averageRpe: rpes.length ? +(rpes.reduce((total, rpe) => total + rpe, 0) / rpes.length).toFixed(1) : null
+      };
+    })
+    .filter(exercise => exercise.completedSets > 0);
+  const durationMs = calculateCompletedSessionDuration(normalized, endedAtMs);
+  const completedAt = options.completedAt || new Date(endedAtMs).toISOString();
   return {
+    id: `workout-${normalized.id}`,
     sessionId: normalized.id,
     workoutKey: normalized.workoutKey,
-    workoutName: normalized.workoutName,
+    name: normalized.workoutName,
+    workout_date: new Date(completedAt).toISOString().slice(0, 10),
     startedAt: normalized.startedAt,
-    durationMs: getActiveWorkoutElapsedMs(normalized),
+    completedAt,
+    durationMinutes: +(durationMs / 60000).toFixed(2),
+    durationMs,
+    totalPausedMs: Math.max(0, Number(normalized.totalPausedMs) || 0),
+    totalVolume: calculateCompletedSessionVolume(normalized),
+    completedSets: completedSets.length,
+    totalReps: completedSets.reduce((total, set) => total + (Number(set.reps) > 0 ? Number(set.reps) : 0), 0),
+    averageRpe: calculateCompletedSessionAverageRpe(normalized),
+    notes: String(options.notes || '').slice(0, 500),
     exercises,
-    totalVolume: exercises.reduce((total, exercise) => total + exercise.volume, 0),
-    completedSets: getLiveWorkoutProgress(normalized).completedSets,
-    previewOnly: true
+    previewOnly: options.previewOnly !== false
   };
+}
+
+function saveLiveWorkoutSetDraft(exerciseIndex, setType, setNumber, values = {}) {
+  const session = state.activeWorkoutSession;
+  const exercise = session?.exercises?.[exerciseIndex];
+  if (!exercise) return false;
+  const type = setType === 'warmup' ? 'warmup' : 'normal';
+  const number = Math.max(1, Math.round(Number(setNumber) || 1));
+  const existingIndex = exercise.sets.findIndex(set => set.type === type && set.setNumber === number);
+  const existing = existingIndex >= 0 ? exercise.sets[existingIndex] : {};
+  const draft = normalizeLiveWorkoutSet({
+    ...existing,
+    setNumber: number,
+    type,
+    reps: values.reps,
+    load: values.load,
+    rpe: values.rpe,
+    completed: false,
+    hasUserInput: true
+  });
+  if (existingIndex >= 0) exercise.sets[existingIndex] = draft;
+  else exercise.sets.push(draft);
+  saveActiveWorkoutSession(session);
+  return true;
+}
+
+function isSessionAlreadyCompleted(sessionId) {
+  return Boolean(sessionId) && state.execucoes.some(execution => execution?.sessionId === sessionId);
 }
 
 const LS = {
@@ -8025,6 +8356,15 @@ function renderLiveWorkoutSeries() {
     const reps = createField('reps', 'Repetições', set.reps || getInitialLiveReps(exercise.targetReps), { min: 1, step: 1 });
     const load = createField('load', 'Carga (kg)', set.load ?? exercise.targetLoad, { min: 0, step: 0.5 });
     const rpe = createField('rpe', 'RPE', set.rpe ?? exercise.targetRpe ?? '', { min: 1, max: 10, step: 0.5 });
+    [reps.input, load.input, rpe.input].forEach(input => {
+      input.addEventListener('change', () => {
+        if (!set.completed) saveLiveWorkoutSetDraft(exerciseIndex, set.type, set.setNumber, {
+          reps: reps.input.value,
+          load: load.input.value,
+          rpe: rpe.input.value
+        });
+      });
+    });
     const complete = document.createElement('button');
     complete.type = 'button';
     complete.className = 'live-secondary-button live-set-complete';
@@ -8185,8 +8525,259 @@ function cancelActiveWorkoutSession(options = {}) {
   return true;
 }
 
+let liveWorkoutPreviewPayload = null;
+let lastCompletedWorkoutPayload = null;
+let isFinalizingLiveWorkout = false;
+
+function createLiveSummaryMetric(label, value) {
+  const metric = document.createElement('div');
+  metric.className = 'live-summary-metric';
+  const metricLabel = document.createElement('span');
+  metricLabel.textContent = label;
+  const metricValue = document.createElement('strong');
+  metricValue.textContent = value;
+  metric.append(metricLabel, metricValue);
+  return metric;
+}
+
+function formatLiveVolume(volume) {
+  return `${Math.round(Number(volume) || 0).toLocaleString('pt-BR')} kg`;
+}
+
+function renderLiveWorkoutPreview(payload) {
+  const metrics = document.getElementById('live-preview-metrics');
+  const exercises = document.getElementById('live-preview-exercises');
+  if (!payload || !metrics || !exercises) return false;
+  metrics.replaceChildren(
+    createLiveSummaryMetric('Duração ativa', formatLiveDuration(payload.durationMs)),
+    createLiveSummaryMetric('Tempo pausado', formatLiveDuration(payload.totalPausedMs)),
+    createLiveSummaryMetric('Exercícios realizados', String(payload.exercises.length)),
+    createLiveSummaryMetric('Exercícios ignorados', String(Math.max(0, state.activeWorkoutSession.exercises.length - payload.exercises.length))),
+    createLiveSummaryMetric('Séries concluídas', String(payload.completedSets)),
+    createLiveSummaryMetric('Repetições', String(payload.totalReps)),
+    createLiveSummaryMetric('Volume total', formatLiveVolume(payload.totalVolume)),
+    createLiveSummaryMetric('RPE médio', payload.averageRpe == null ? '—' : String(payload.averageRpe))
+  );
+  exercises.replaceChildren();
+  payload.exercises.forEach(exercise => {
+    const row = document.createElement('article');
+    row.className = 'live-preview-exercise';
+    const title = document.createElement('h3');
+    title.textContent = exercise.nome;
+    const details = document.createElement('p');
+    const setDescription = exercise.sets
+      .map(set => `${set.type === 'warmup' ? 'Aquec.' : 'Série'} ${set.setNumber}: ${set.reps} reps · ${set.load} kg${set.rpe == null ? '' : ` · RPE ${set.rpe}`}`)
+      .join(' | ');
+    details.textContent = `${exercise.completedSets} séries · ${exercise.totalReps} reps · ${formatLiveVolume(exercise.volume)}${exercise.averageRpe == null ? '' : ` · RPE médio ${exercise.averageRpe}`}\n${setDescription}`;
+    row.append(title, details);
+    exercises.appendChild(row);
+  });
+  return true;
+}
+
+function openLiveWorkoutPreview() {
+  const session = state.activeWorkoutSession;
+  const payload = buildCompletedWorkoutPayload(session, { previewOnly: true });
+  if (!payload || payload.completedSets === 0) {
+    toast('Conclua pelo menos uma série antes de finalizar o treino.');
+    return false;
+  }
+  liveWorkoutPreviewPayload = payload;
+  const notes = document.getElementById('live-workout-finish-notes');
+  if (notes) notes.value = payload.notes || '';
+  if (!renderLiveWorkoutPreview(payload)) return false;
+  const dialog = document.getElementById('live-workout-preview-dialog');
+  if (typeof dialog?.showModal === 'function') {
+    if (!dialog.open) dialog.showModal();
+  } else {
+    dialog?.setAttribute('open', '');
+  }
+  if (window.lucide) lucide.createIcons();
+  document.getElementById('live-preview-save')?.focus({ preventScroll: true });
+  return true;
+}
+
+function closeLiveWorkoutPreview() {
+  const dialog = document.getElementById('live-workout-preview-dialog');
+  if (typeof dialog?.close === 'function' && dialog.open) dialog.close();
+  else dialog?.removeAttribute('open');
+  liveWorkoutPreviewPayload = null;
+}
+
+function requestFinishLiveWorkout() {
+  const session = state.activeWorkoutSession;
+  if (!session) {
+    toast('Não existe uma sessão ativa para finalizar.');
+    return false;
+  }
+  if (getCompletedSessionSets(session).length === 0) {
+    toast('Conclua pelo menos uma série antes de finalizar o treino.');
+    return false;
+  }
+  if (getPendingFilledSessionSets(session).length > 0) {
+    return openLiveWorkoutConfirmation({
+      title: 'Séries pendentes',
+      message: 'Existem séries preenchidas que ainda não foram concluídas.',
+      primaryLabel: 'Voltar ao treino',
+      secondaryLabel: 'Finalizar somente séries concluídas',
+      onPrimary: () => {},
+      onSecondary: openLiveWorkoutPreview
+    });
+  }
+  return openLiveWorkoutPreview();
+}
+
+function createLiveWorkoutHistoryRecords(payload) {
+  const baseId = Date.now();
+  return payload.exercises.map((exercise, index) => {
+    const averageLoad = exercise.totalReps > 0 ? +(exercise.volume / exercise.totalReps).toFixed(2) : 0;
+    const averageReps = exercise.completedSets > 0 ? +(exercise.totalReps / exercise.completedSets).toFixed(2) : 0;
+    return {
+      id: baseId + index,
+      data: payload.workout_date,
+      treino: payload.workoutKey,
+      exercicio: exercise.nome,
+      series: exercise.completedSets,
+      reps: averageReps,
+      carga: averageLoad,
+      rpe: exercise.averageRpe,
+      volume: exercise.volume,
+      rm1: null,
+      sessionId: payload.sessionId,
+      liveWorkout: true,
+      completedAt: payload.completedAt,
+      durationMinutes: payload.durationMinutes,
+      totalPausedMs: payload.totalPausedMs,
+      totalVolume: payload.totalVolume,
+      totalCompletedSets: payload.completedSets,
+      totalReps: payload.totalReps,
+      averageRpe: payload.averageRpe,
+      notes: payload.notes,
+      exerciseDetails: exercise,
+      sessionPayload: index === 0 ? payload : null
+    };
+  });
+}
+
+async function finalizeActiveWorkoutSession() {
+  if (isFinalizingLiveWorkout) return false;
+  const session = state.activeWorkoutSession;
+  if (!session) {
+    toast('Não existe uma sessão ativa para finalizar.');
+    return false;
+  }
+  if (isSessionAlreadyCompleted(session.id)) {
+    toast('Este treino já foi finalizado.');
+    return false;
+  }
+  const notes = document.getElementById('live-workout-finish-notes')?.value || '';
+  const payload = buildCompletedWorkoutPayload(session, { notes, completedAt: new Date().toISOString(), previewOnly: false });
+  if (!payload || payload.completedSets === 0 || payload.exercises.length === 0) {
+    toast('Conclua pelo menos uma série antes de finalizar o treino.');
+    return false;
+  }
+  const records = createLiveWorkoutHistoryRecords(payload);
+  if (records.length === 0) {
+    toast('Não foi possível salvar o treino. Sua sessão continua preservada.');
+    return false;
+  }
+
+  const saveButton = document.getElementById('live-preview-save');
+  const previousExecutions = state.execucoes.slice();
+  isFinalizingLiveWorkout = true;
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = 'Salvando...';
+  }
+
+  try {
+    state.execucoes.push(...records);
+    await save(LS.execucoes, state.execucoes);
+    const persisted = load(LS.execucoes, []);
+    if (!Array.isArray(persisted) || !persisted.some(execution => execution?.sessionId === session.id)) {
+      throw new Error('Registro local não confirmado.');
+    }
+    lastCompletedWorkoutPayload = payload;
+    clearActiveWorkoutSession();
+    closeLiveWorkoutPreview();
+    closeLiveWorkoutScreen();
+    renderTelaTreino();
+    openLiveWorkoutSummary(payload);
+    return true;
+  } catch (error) {
+    state.execucoes = previousExecutions;
+    try { localStorage.setItem(LS.execucoes, JSON.stringify(previousExecutions)); } catch (storageError) { console.warn('Workout history rollback failed:', storageError); }
+    console.warn('Live workout finalization failed:', error);
+    toast('Não foi possível salvar o treino. Sua sessão continua preservada.');
+    return false;
+  } finally {
+    isFinalizingLiveWorkout = false;
+    if (saveButton?.isConnected) {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Confirmar e salvar';
+    }
+  }
+}
+
+function openLiveWorkoutSummary(payload = lastCompletedWorkoutPayload) {
+  if (!payload) return false;
+  const screen = document.getElementById('live-workout-summary-screen');
+  const metrics = document.getElementById('live-summary-metrics');
+  if (!screen || !metrics) return false;
+  metrics.replaceChildren(
+    createLiveSummaryMetric('Duração ativa', formatLiveDuration(payload.durationMs)),
+    createLiveSummaryMetric('Exercícios realizados', String(payload.exercises.length)),
+    createLiveSummaryMetric('Séries concluídas', String(payload.completedSets)),
+    createLiveSummaryMetric('Repetições', String(payload.totalReps)),
+    createLiveSummaryMetric('Volume total', formatLiveVolume(payload.totalVolume)),
+    createLiveSummaryMetric('RPE médio', payload.averageRpe == null ? '—' : String(payload.averageRpe))
+  );
+  screen.classList.remove('hidden');
+  screen.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('live-workout-active');
+  if (window.lucide) lucide.createIcons();
+  document.getElementById('live-summary-back')?.focus({ preventScroll: true });
+  return true;
+}
+
+function closeLiveWorkoutSummary() {
+  const screen = document.getElementById('live-workout-summary-screen');
+  screen?.classList.add('hidden');
+  screen?.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('live-workout-active');
+}
+
+function openLiveWorkoutHistoryDetails(sessionId) {
+  const records = state.execucoes.filter(execution => execution?.sessionId === sessionId);
+  const payload = records.find(record => record.sessionPayload)?.sessionPayload;
+  const container = document.getElementById('live-history-detail-content');
+  const dialog = document.getElementById('live-workout-history-dialog');
+  if (!records.length || !container || !dialog) return false;
+  container.replaceChildren();
+  const exercises = payload?.exercises || records.map(record => record.exerciseDetails).filter(Boolean);
+  exercises.forEach(exercise => {
+    const row = document.createElement('article');
+    row.className = 'live-preview-exercise';
+    const title = document.createElement('h3');
+    title.textContent = exercise.nome;
+    const details = document.createElement('p');
+    const setDetails = exercise.sets.map(set => `${set.type === 'warmup' ? 'Aquec.' : 'Série'} ${set.setNumber}: ${set.reps} reps · ${set.load} kg${set.rpe == null ? '' : ` · RPE ${set.rpe}`}`).join(' | ');
+    details.textContent = `${exercise.completedSets} séries · ${exercise.totalReps} reps · ${formatLiveVolume(exercise.volume)}\n${setDetails}`;
+    row.append(title, details);
+    container.appendChild(row);
+  });
+  if (typeof dialog.showModal === 'function') {
+    if (!dialog.open) dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  document.getElementById('live-history-detail-close')?.focus({ preventScroll: true });
+  return true;
+}
+
 document.getElementById('live-workout-close')?.addEventListener('click', closeLiveWorkoutScreen);
 document.getElementById('live-workout-cancel')?.addEventListener('click', requestCancelLiveWorkout);
+document.getElementById('live-workout-finish')?.addEventListener('click', requestFinishLiveWorkout);
 document.getElementById('live-workout-pause')?.addEventListener('click', () => {
   if (state.activeWorkoutSession?.status === 'paused') resumeActiveWorkoutSession();
   else pauseActiveWorkoutSession();
@@ -8222,9 +8813,35 @@ document.getElementById('live-confirm-secondary')?.addEventListener('click', () 
   if (callback) callback();
 });
 document.getElementById('live-confirm-dismiss')?.addEventListener('click', closeLiveWorkoutConfirmation);
+document.getElementById('live-preview-back')?.addEventListener('click', closeLiveWorkoutPreview);
+document.getElementById('live-preview-save')?.addEventListener('click', finalizeActiveWorkoutSession);
+document.getElementById('live-history-detail-close')?.addEventListener('click', () => {
+  const dialog = document.getElementById('live-workout-history-dialog');
+  if (typeof dialog?.close === 'function' && dialog.open) dialog.close();
+  else dialog?.removeAttribute('open');
+});
+document.getElementById('live-summary-back')?.addEventListener('click', () => {
+  closeLiveWorkoutSummary();
+  renderTelaTreino();
+});
+document.getElementById('live-summary-history')?.addEventListener('click', () => {
+  closeLiveWorkoutSummary();
+  renderTelaTreino();
+  document.getElementById('treino-historico')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 document.getElementById('live-workout-confirm-dialog')?.addEventListener('cancel', event => {
   event.preventDefault();
   closeLiveWorkoutConfirmation();
+});
+document.getElementById('live-workout-preview-dialog')?.addEventListener('cancel', event => {
+  event.preventDefault();
+  closeLiveWorkoutPreview();
+});
+document.getElementById('live-workout-history-dialog')?.addEventListener('cancel', event => {
+  event.preventDefault();
+  const dialog = event.currentTarget;
+  if (typeof dialog.close === 'function' && dialog.open) dialog.close();
+  else dialog.removeAttribute('open');
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && state.activeWorkoutSession) saveActiveWorkoutSession(state.activeWorkoutSession);
@@ -8725,10 +9342,10 @@ document.getElementById('btn-add-treino').addEventListener('click', async () => 
 
 function renderTreinoHistorico() {
   const cont = document.getElementById('treino-historico');
-  const historico = state.execucoes.slice().sort((a,b) => b.id - a.id).slice(0, 15);
   if (!cont) return;
   cont.replaceChildren();
-  if (historico.length === 0) {
+  const ordered = state.execucoes.slice().sort((a, b) => Number(b.id) - Number(a.id));
+  if (ordered.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'text-xs text-mute text-center py-4';
     empty.textContent = 'Nenhuma execução registrada ainda.';
@@ -8736,7 +9353,59 @@ function renderTreinoHistorico() {
     return;
   }
 
-  historico.forEach(e => {
+  const renderedSessions = new Set();
+  const historico = ordered.reduce((items, execution) => {
+    if (!execution?.sessionId) {
+      items.push({ type: 'legacy', execution });
+      return items;
+    }
+    if (renderedSessions.has(execution.sessionId)) return items;
+    renderedSessions.add(execution.sessionId);
+    items.push({
+      type: 'live-session',
+      sessionId: execution.sessionId,
+      records: ordered.filter(item => item?.sessionId === execution.sessionId)
+    });
+    return items;
+  }, []).slice(0, 15);
+
+  historico.forEach(item => {
+    if (item.type === 'live-session') {
+      const payload = item.records.find(record => record.sessionPayload)?.sessionPayload;
+      const first = item.records[0];
+      const totalVolume = payload?.totalVolume ?? item.records.reduce((total, record) => total + (Number(record.volume) || 0), 0);
+      const completedSets = payload?.completedSets ?? item.records.reduce((total, record) => total + (Number(record.series) || 0), 0);
+      const exerciseCount = payload?.exercises?.length ?? item.records.length;
+      const row = document.createElement('div');
+      row.className = 'live-history-session flex bg-card2 rounded-lg px-3 py-3';
+
+      const details = document.createElement('div');
+      details.className = 'min-w-0 flex-1';
+      const title = document.createElement('p');
+      title.className = 'text-sm font-semibold';
+      title.textContent = payload?.name || `Treino ${first.treino}`;
+      const meta = document.createElement('p');
+      meta.className = 'text-[11px] text-mute font-mono mt-1';
+      meta.textContent = `${fmtDataBR(first.data)} · ${exerciseCount} exercícios · ${completedSets} séries · ${formatLiveDuration((payload?.durationMs ?? Number(first.durationMinutes || 0) * 60000))}`;
+      details.append(title, meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'text-right shrink-0';
+      const volume = document.createElement('p');
+      volume.className = 'font-mono text-sm text-ember whitespace-nowrap';
+      volume.textContent = formatLiveVolume(totalVolume);
+      const detailButton = document.createElement('button');
+      detailButton.type = 'button';
+      detailButton.className = 'live-history-detail text-[11px] text-mute hover:text-ember mt-1 underline';
+      detailButton.textContent = 'Detalhes';
+      detailButton.addEventListener('click', () => openLiveWorkoutHistoryDetails(item.sessionId));
+      actions.append(volume, detailButton);
+      row.append(details, actions);
+      cont.appendChild(row);
+      return;
+    }
+
+    const e = item.execution;
     const row = document.createElement('div');
     row.className = 'flex items-center justify-between bg-card2 rounded-lg px-3 py-2';
 
