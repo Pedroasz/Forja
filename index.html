@@ -615,6 +615,206 @@
     #exercicio-lista-biblioteca { grid-template-columns: minmax(0, 1fr) !important; }
     .card-diary #diario-hoje { max-height: none; }
   }
+
+  /* Mobile premium layer: 360px to 430px first, desktop remains untouched. */
+  @media (max-width: 767px) {
+    :root { --mobile-nav-height: 82px; }
+    html, body { max-width: 100%; overflow-x: clip; }
+    body { padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 18px) !important; }
+
+    .app-header {
+      min-height: 66px;
+      padding: 12px 16px !important;
+      background: rgba(9,10,15,.96) !important;
+      border-color: rgba(63,68,81,.62) !important;
+    }
+    .app-header .header-inner { min-height: 42px; }
+    .app-header .mobile-brand { gap: 9px; min-width: 0; }
+    .app-header .forja-mark { width: 34px; height: 34px; border-radius: 10px; }
+    .app-header .forja-wordmark { font-size: 21px; }
+    .app-header .forja-tagline { display: none; }
+    .header-actions { gap: 6px; }
+    .logout-button { width: 40px; min-height: 40px; padding: 0; justify-content: center; border-radius: 10px; }
+    .logout-button .logout-label { display: none; }
+
+    .app-content { max-width: 100% !important; padding: 17px 14px 116px !important; }
+    .screen-intro { margin: 2px 2px 2px; }
+    .screen-intro h2 { font-size: 25px; line-height: 1.15; }
+    .screen-intro p { font-size: 13px; line-height: 1.45; }
+    .premium-card,
+    main .bg-card { border-radius: 16px !important; padding: 17px !important; }
+    .card-heading { align-items: center; margin-bottom: 14px; }
+    .card-heading-icon { width: 34px; height: 34px; border-radius: 10px; }
+    main input,
+    main select { min-height: 48px; font-size: 16px !important; }
+    main button { min-height: 46px; }
+
+    .app-nav {
+      min-height: var(--mobile-nav-height);
+      padding: 7px 8px max(7px, env(safe-area-inset-bottom)) !important;
+      background: rgba(18,21,29,.98) !important;
+      border-top-color: rgba(74,79,92,.68) !important;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -12px 36px rgba(0,0,0,.32) !important;
+    }
+    .nav-items { height: 100%; align-items: center; }
+    .app-nav .tab-btn {
+      position: relative;
+      min-height: 64px;
+      gap: 2px !important;
+      padding: 5px 2px !important;
+      color: #969baa;
+      font-size: 10px !important;
+      font-weight: 600;
+    }
+    .app-nav .tab-btn::before {
+      content: '';
+      position: absolute;
+      top: 1px;
+      width: 22px;
+      height: 2px;
+      background: transparent;
+      border-radius: 99px;
+    }
+    .app-nav .tab-btn.active::before { background: var(--color-primary); }
+    .app-nav .tab-btn.active .tab-icon-wrap {
+      color: var(--color-primary);
+      background: color-mix(in srgb, var(--color-primary) 13%, transparent) !important;
+    }
+    .app-nav .tab-icon-wrap { width: 36px !important; height: 34px !important; border-radius: 10px; }
+    .app-nav .tab-icon-wrap svg { width: 19px; height: 19px; }
+
+    .screen.active.diet-grid {
+      gap: 15px;
+      grid-template-areas:
+        "intro"
+        "profile"
+        "food"
+        "diary"
+        "hydration"
+        "nutrition";
+    }
+    #screen-dieta .card-profile .grid { gap: 10px; }
+    #screen-dieta .card-profile > .grid + .grid { margin-top: 10px; }
+    #screen-dieta .card-profile #btn-calc-perfil { min-height: 50px; margin-top: 14px; }
+    #perfil-resultado { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
+    #perfil-resultado > div { min-height: 72px; display: flex; flex-direction: column; justify-content: center; }
+    #screen-dieta .card-food .grid { gap: 10px; }
+    #screen-dieta .card-food #btn-add-food { min-height: 50px; border-radius: 10px; }
+    #form-alimento-custom { border-radius: 12px !important; padding: 13px !important; }
+    #food-preview { gap: 5px !important; border-radius: 10px !important; }
+    #food-preview > div { min-width: 0; overflow: hidden; }
+    #food-preview p { overflow: hidden; text-overflow: ellipsis; }
+    #screen-dieta .card-diary { min-height: 240px; }
+    #screen-dieta .card-diary .card-heading { margin-bottom: 10px; }
+    #screen-dieta .card-diary #label-data-dieta { font-size: 16px; }
+    #diario-hoje > div { border-radius: 10px; }
+    #screen-dieta .card-hydration { min-height: 178px; }
+    #screen-dieta .card-hydration .grid { gap: 9px; }
+    #screen-dieta .card-hydration button { min-height: 48px; border-radius: 10px; }
+    #screen-dieta .card-nutrition { min-height: 230px; }
+    #screen-dieta .card-nutrition .space-y-4 { gap: 15px; }
+    #screen-dieta .card-nutrition .h-2 { height: 8px; }
+
+    #screen-treino .screen-intro { margin-bottom: 3px; }
+    #screen-treino .premium-card { border-radius: 16px !important; }
+    .workout-layout { gap: 15px !important; }
+    .workout-config-card select { min-height: 50px; }
+    .workout-config-card p { line-height: 1.5; }
+    #treino-tabs {
+      display: flex !important;
+      overflow-x: auto;
+      gap: 9px !important;
+      margin: 0 -2px;
+      padding: 2px 2px 8px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    #treino-tabs::-webkit-scrollbar { display: none; }
+    .treino-tab-btn {
+      flex: 0 0 118px;
+      min-height: 100px;
+      padding: 13px 12px !important;
+      text-align: left !important;
+      scroll-snap-align: start;
+      border-radius: 13px !important;
+    }
+    .treino-tab-btn > div { display: flex !important; }
+    .treino-tab-btn .workout-name { font-size: 13px !important; }
+    .treino-tab-btn .workout-count { display: block; margin-top: 7px; font-size: 10px !important; }
+    .treino-tab-btn .workout-status {
+      display: inline-flex !important;
+      margin-top: 8px !important;
+      padding: 3px 6px !important;
+      font-size: 9px !important;
+    }
+    .workout-selected-card #treino-estimativa-calorias { min-height: 42px; line-height: 1.45; }
+    #treino-exercicios-lista > div { min-height: 62px; }
+    .workout-exercise-icon-button { width: 38px; height: 38px; min-height: 38px !important; }
+    .workout-library-card .grid.grid-cols-1 { gap: 10px; }
+    .exercise-library-count { margin-top: 7px; }
+    .exercise-filter-chips { margin-inline: -1px; padding-bottom: 7px; }
+    .exercise-filter-chip { min-height: 38px !important; padding: 0 13px; font-size: 11px; }
+    #exercicio-lista-biblioteca { max-height: 440px !important; gap: 10px !important; }
+    #exercicio-lista-biblioteca > .exercise-library-item { padding: 13px !important; }
+    .exercise-muscle-mark { width: 42px; height: 42px; flex-basis: 42px; }
+    .exercise-library-actions { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+    .exercise-video-button,
+    .exercise-add-button { min-height: 42px !important; font-size: 11px; }
+    #btn-add-exercicio { min-height: 50px; border-radius: 10px; }
+    .workout-execution-card input,
+    .workout-execution-card select { min-height: 50px; }
+    .workout-execution-card #btn-add-treino { min-height: 52px; border-radius: 10px; }
+    .workout-timer-card #cronometro-display { font-size: 48px; }
+    .workout-timer-card .cronometro-add { min-height: 42px; }
+    .workout-history-card,
+    .workout-volume-card { overflow: hidden; }
+
+    .screen.active.evolution-grid,
+    .screen.active.export-grid { gap: 15px; }
+    .evolution-form .grid { gap: 10px; }
+    .evolution-form #btn-add-evolucao { min-height: 52px; }
+    .evolution-chart { min-height: 270px !important; height: 270px !important; }
+    .evolution-history { padding: 0 !important; }
+    .evolution-history > h2 { padding: 17px 17px 0; }
+    .evolution-history .overflow-x-auto { padding: 0 17px 12px; }
+    #tabela-evolucao { min-width: 620px; }
+    .export-action-card { min-height: auto; }
+    .export-main { padding: 22px 17px !important; }
+    .export-main #btn-export { min-height: 52px; }
+    .export-backup .grid { gap: 9px; }
+    .export-backup button { min-height: 48px; }
+    .export-data .grid { gap: 7px; }
+    .data-counter { min-height: 78px; display: flex; flex-direction: column; justify-content: center; }
+    #btn-reset { min-height: 46px; }
+
+    #tela-auth { padding: 20px 16px max(28px, env(safe-area-inset-bottom)); align-items: stretch; }
+    #tela-auth::before { inset: 12px; border-radius: 18px; }
+    .auth-card { width: 100%; max-width: 430px; margin: auto; padding: 25px 20px !important; border-radius: 18px !important; }
+    .auth-card .forja-brand { margin-bottom: 26px !important; }
+    .auth-card .forja-wordmark { font-size: 25px; }
+    .auth-card input { min-height: 52px; font-size: 16px !important; }
+    .auth-card #btn-entrar,
+    .auth-card #btn-cadastrar { min-height: 52px; border-radius: 11px; }
+
+    .exercise-video-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: min(88vh, 720px); margin: 0; }
+    .exercise-video-panel { max-height: min(88vh, 720px); overflow-y: auto; border-radius: 20px 20px 0 0; }
+    .exercise-video-hero { min-height: 142px; }
+    .exercise-video-body { padding: 18px 17px max(21px, env(safe-area-inset-bottom)); }
+    .exercise-video-link { min-height: 50px; }
+    #toast { max-width: calc(100vw - 28px); width: max-content; bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px) !important; }
+  }
+
+  @media (max-width: 374px) {
+    .app-content { padding-inline: 12px !important; }
+    .premium-card,
+    main .bg-card { padding: 15px !important; }
+    #screen-dieta .card-profile .grid.grid-cols-2 { gap: 8px; }
+    #screen-dieta .card-profile label,
+    #screen-dieta .card-food label { font-size: 10px; }
+    .treino-tab-btn { flex-basis: 112px; }
+    .exercise-add-button span { font-size: 10px; }
+  }
 </style>
 </head>
 <body class="font-body text-ink min-h-screen pb-24">
@@ -3638,6 +3838,160 @@ window.testExerciseVideoLibrary = async function() {
   } catch (error) {
     console.warn('testExerciseVideoLibrary failed:', error);
     return { passed: false, error: error.message };
+  }
+};
+
+window.testMobileForjaUI = async function() {
+  let noHorizontalOverflow = false;
+  let bottomNavOk = false;
+  let headerMobileOk = false;
+  let loginMobileOk = false;
+  let dietMobileOk = false;
+  let workoutMobileOk = false;
+  let evolutionMobileOk = false;
+  let exportMobileOk = false;
+  let workoutBlocksOk = false;
+  let noExtraLabel = false;
+  let touchTargetsOk = false;
+  let modalMobileReady = false;
+  let desktopStillOk = false;
+  let authStillWorks = false;
+  let syncStillWorks = false;
+  let noBlockingErrors = false;
+
+  try {
+    await loadAppState();
+    renderTudo();
+
+    const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
+    const root = document.documentElement;
+    const nav = document.querySelector('nav.app-nav');
+    const navButtons = Array.from(document.querySelectorAll('nav.app-nav .tab-btn'));
+    const header = document.querySelector('header.app-header');
+    const diet = document.getElementById('screen-dieta');
+    const workout = document.getElementById('screen-treino');
+    const evolution = document.getElementById('screen-evolucao');
+    const exportScreen = document.getElementById('screen-exportar');
+    const workoutButtons = Array.from(document.querySelectorAll('#treino-tabs .treino-tab-btn'));
+    const modal = document.getElementById('exercise-video-modal');
+    const requiredIds = [
+      'tela-auth', 'app-principal', 'btn-entrar', 'btn-cadastrar', 'btn-offline', 'btn-logout',
+      'screen-dieta', 'screen-treino', 'screen-evolucao', 'screen-exportar', 'treino-tabs',
+      'treino-divisao', 't-exercicio', 'exercise-filter-chips', 'exercise-video-modal',
+      'grafico-peso', 'tabela-evolucao', 'btn-export'
+    ];
+
+    noHorizontalOverflow = root.scrollWidth <= window.innerWidth + 1;
+    bottomNavOk = Boolean(nav)
+      && navButtons.length === 4
+      && navButtons.every(button => ['dieta', 'treino', 'evolucao', 'exportar'].includes(button.dataset.screen))
+      && getComputedStyle(nav).position === 'fixed';
+    headerMobileOk = Boolean(header?.querySelector('.mobile-brand .forja-wordmark'))
+      && Boolean(header?.querySelector('#btn-logout'))
+      && (!isMobileViewport || getComputedStyle(header).minHeight !== '0px');
+    loginMobileOk = Boolean(document.querySelector('#tela-auth .auth-card'))
+      && ['btn-entrar', 'btn-cadastrar', 'btn-recuperar-senha', 'btn-offline'].every(id => Boolean(document.getElementById(id)));
+    dietMobileOk = ['card-profile', 'card-food', 'card-diary', 'card-hydration', 'card-nutrition']
+      .every(className => Boolean(diet?.querySelector(`.${className}`)));
+    workoutMobileOk = [
+      'workout-config-card', 'workout-blocks-card', 'workout-selected-card', 'workout-library-card',
+      'workout-execution-card', 'workout-timer-card', 'workout-history-card', 'workout-volume-card'
+    ].every(className => Boolean(workout?.querySelector(`.${className}`)));
+    evolutionMobileOk = ['evolution-form', 'evolution-chart-card', 'evolution-history']
+      .every(className => Boolean(evolution?.querySelector(`.${className}`)));
+    exportMobileOk = ['export-main', 'export-backup', 'export-data']
+      .every(className => Boolean(exportScreen?.querySelector(`.${className}`)));
+    workoutBlocksOk = workoutButtons.length === 5
+      && ['A', 'B', 'C', 'D', 'E'].every(key => workoutButtons.some(button => button.dataset.treino === key));
+    noExtraLabel = !/\bextra\b/i.test(workout?.textContent || '')
+      && workoutButtons.every(button => button.dataset.status === 'disponivel');
+
+    const primaryTouchIds = ['btn-calc-perfil', 'btn-add-food', 'btn-agua-250', 'btn-add-treino', 'btn-add-evolucao', 'btn-export'];
+    const minimumTouchHeight = isMobileViewport ? 44 : 40;
+    const controlsHaveMobileHeight = primaryTouchIds.every(id => {
+      const element = document.getElementById(id);
+      return element && parseFloat(getComputedStyle(element).minHeight || '0') >= minimumTouchHeight;
+    });
+    const navHasTouchTargets = navButtons.every(button => {
+      const rect = button.getBoundingClientRect();
+      return rect.width >= minimumTouchHeight && rect.height >= minimumTouchHeight;
+    });
+    touchTargetsOk = controlsHaveMobileHeight && navHasTouchTargets;
+    modalMobileReady = Boolean(modal?.querySelector('.exercise-video-panel'))
+      && Boolean(document.getElementById('exercise-video-close'))
+      && Boolean(document.getElementById('exercise-video-link'))
+      && (!isMobileViewport || getComputedStyle(modal).position === 'fixed');
+    desktopStillOk = Boolean(document.querySelector('main.app-content'))
+      && Boolean(document.querySelector('nav.app-nav .sidebar-brand'))
+      && Boolean(workout?.querySelector('.workout-layout'))
+      && Boolean(diet?.classList.contains('diet-grid'));
+    authStillWorks = typeof checkSession === 'function'
+      && typeof login === 'function'
+      && typeof register === 'function';
+    syncStillWorks = typeof StorageService === 'object'
+      && typeof DataMapper === 'object'
+      && typeof SyncQueue === 'object'
+      && typeof StorageService.loadWorkouts === 'function'
+      && typeof SyncQueue.syncPending === 'function';
+    noBlockingErrors = requiredIds.every(id => Boolean(document.getElementById(id)));
+
+    const passed = noHorizontalOverflow
+      && bottomNavOk
+      && headerMobileOk
+      && loginMobileOk
+      && dietMobileOk
+      && workoutMobileOk
+      && evolutionMobileOk
+      && exportMobileOk
+      && workoutBlocksOk
+      && noExtraLabel
+      && touchTargetsOk
+      && modalMobileReady
+      && desktopStillOk
+      && authStillWorks
+      && syncStillWorks
+      && noBlockingErrors;
+
+    return {
+      noHorizontalOverflow,
+      bottomNavOk,
+      headerMobileOk,
+      loginMobileOk,
+      dietMobileOk,
+      workoutMobileOk,
+      evolutionMobileOk,
+      exportMobileOk,
+      workoutBlocksOk,
+      noExtraLabel,
+      touchTargetsOk,
+      modalMobileReady,
+      desktopStillOk,
+      authStillWorks,
+      syncStillWorks,
+      noBlockingErrors,
+      passed
+    };
+  } catch (error) {
+    console.warn('testMobileForjaUI failed:', error);
+    return {
+      noHorizontalOverflow,
+      bottomNavOk,
+      headerMobileOk,
+      loginMobileOk,
+      dietMobileOk,
+      workoutMobileOk,
+      evolutionMobileOk,
+      exportMobileOk,
+      workoutBlocksOk,
+      noExtraLabel,
+      touchTargetsOk,
+      modalMobileReady,
+      desktopStillOk,
+      authStillWorks,
+      syncStillWorks,
+      noBlockingErrors,
+      passed: false
+    };
   }
 };
 
