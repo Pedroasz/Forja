@@ -1221,6 +1221,16 @@
     .treino-tab-btn { flex-basis: 112px; }
     .exercise-add-button span { font-size: 10px; }
   }
+  .next-workout-summary { display: flex; flex-wrap: wrap; gap: 7px; }
+  .next-workout-summary span,
+  .next-workout-evidence span { padding: 5px 8px; border: 1px solid rgba(84,89,104,.65); border-radius: 999px; color: var(--forja-muted); font-size: 11px; }
+  .next-workout-plan-list { display: grid; gap: 12px; }
+  .next-workout-plan-item { padding: 14px; border: 1px solid rgba(84,89,104,.65); border-radius: 12px; background: rgba(255,255,255,.025); }
+  .next-workout-plan-item h3 { font-weight: 700; font-size: 15px; }
+  .next-workout-plan-item p { font-size: 12px; color: var(--forja-muted); margin-top: 6px; line-height: 1.5; }
+  .next-workout-plan-item strong { color: var(--forja-text); }
+  .next-workout-evidence { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .next-workout-safety { margin-top: 14px; padding: 11px 12px; border-left: 3px solid var(--color-primary); color: var(--forja-muted); background: rgba(255,255,255,.03); border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.5; }
 </style>
 </head>
 <body class="font-body text-ink min-h-screen pb-24">
@@ -1574,6 +1584,15 @@
       <div id="treino-exercicios-lista" class="space-y-1.5"></div>
     </div>
 
+    <div id="next-workout-card" class="premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20 hidden">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div><h2 class="font-display font-semibold text-lg">Proximo treino</h2><p id="next-workout-subtitle" class="text-xs text-mute mt-1"></p></div>
+        <i data-lucide="route" class="w-5 h-5 text-ember"></i>
+      </div>
+      <div id="next-workout-summary" class="next-workout-summary mt-3"></div>
+      <button type="button" id="next-workout-open" class="mt-4 w-full live-primary-button"><i data-lucide="clipboard-list"></i><span>Ver planejamento</span></button>
+    </div>
+
     <div class="premium-card workout-history-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
       <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-display font-semibold text-lg">Histórico de treinos</h2><i data-lucide="history" class="w-5 h-5 text-mute"></i></div>
       <div id="workout-history-summary" class="workout-history-summary"></div>
@@ -1911,6 +1930,17 @@
         <button type="button" id="workout-config-save" class="bg-ember text-bg rounded-lg px-4 py-2.5 text-sm font-semibold">Salvar configuração</button>
       </div>
     </div>
+  </div>
+</dialog>
+
+<dialog id="next-workout-plan-modal" class="exercise-detail-dialog" aria-modal="true" aria-labelledby="next-workout-plan-title">
+  <div class="exercise-detail-panel p-5 sm:p-6">
+    <div class="flex items-start justify-between gap-3">
+      <div><p class="text-[10px] uppercase font-semibold text-ember">Planejamento conservador</p><h2 id="next-workout-plan-title" class="font-display font-semibold text-xl mt-1">Proximo treino</h2><p id="next-workout-plan-subtitle" class="text-xs text-mute mt-2"></p></div>
+      <button type="button" id="next-workout-plan-close" class="exercise-detail-close relative" title="Fechar" aria-label="Fechar planejamento"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div id="next-workout-plan-content" class="next-workout-plan-list mt-5"></div>
+    <p class="next-workout-safety">Priorize tecnica, controle e conforto. Interrompa o exercicio se sentir dor.</p>
   </div>
 </dialog>
 
@@ -9662,6 +9692,7 @@ function renderTelaTreino(options = {}) {
   renderWorkoutDivisionSelector();
   renderTreinoTabs(activeDivision);
   renderExerciciosLista(activeDivision);
+  renderNextWorkoutCard();
   renderLiveWorkoutEntry();
   renderBibliotecaExercicios();
   popularSelectExercicios(activeDivision);
@@ -9816,6 +9847,231 @@ async function saveWorkoutExerciseConfigFromModal() {
   };
   toast(messages[result.reason] || 'Revise os dados da configuração.');
   return result;
+}
+
+function parseRepRange(value) {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    const rounded = Math.round(value);
+    return { min: rounded, max: rounded, valid: true };
+  }
+  const text = String(value ?? '').trim().toLowerCase();
+  if (!text) return { min: null, max: null, valid: false };
+  const normalized = text.replace(/[\u2013\u2014]/g, '-').replace(/\s*(?:a|ate|to)\s*/g, '-').replace(/reps?|repeticoes?/g, '').trim();
+  const matches = normalized.match(/\d+(?:[.,]\d+)?/g) || [];
+  if (!matches.length) return { min: null, max: null, valid: false };
+  const numbers = matches.slice(0, 2).map(item => Number(item.replace(',', '.'))).filter(item => Number.isFinite(item) && item > 0);
+  if (!numbers.length) return { min: null, max: null, valid: false };
+  const min = Math.round(Math.min(...numbers));
+  const max = Math.round(Math.max(...numbers));
+  return { min, max, valid: min > 0 && max >= min };
+}
+
+function buildExerciseHistoryIndex(executions = state?.execucoes || []) {
+  const byId = new Map();
+  const byName = new Map();
+  getWorkoutHistoryEntries(executions).forEach(entry => {
+    entry.exercises.forEach(exercise => {
+      const item = { entry, exercise };
+      const id = String(exercise.exerciseId || '');
+      const name = normalizeExerciseKey(exercise.nome);
+      if (id) byId.set(id, [...(byId.get(id) || []), item]);
+      if (name) byName.set(name, [...(byName.get(name) || []), item]);
+    });
+  });
+  return { byId, byName };
+}
+
+function getComparableExerciseSessions(exercise, executions = state?.execucoes || []) {
+  const target = normalizeWorkoutExercise(exercise, 0) || exercise || {};
+  const targetId = String(target.exerciseId || target.id || '');
+  const targetName = normalizeExerciseKey(target.nome || target.name || exercise);
+  const targetGroup = normalizeExerciseGroup(target.grupo || 'Outros');
+  const index = buildExerciseHistoryIndex(executions);
+  const candidates = targetId && index.byId.has(targetId)
+    ? index.byId.get(targetId)
+    : (index.byName.get(targetName) || []);
+  const seen = new Set();
+  return candidates.map(({ entry, exercise: item }) => {
+    const itemName = normalizeExerciseKey(item.nome);
+    const idMatches = Boolean(targetId && item.exerciseId && String(item.exerciseId) === targetId);
+    const nameMatches = Boolean(targetName && itemName === targetName);
+    if (!idMatches && !nameMatches) return null;
+    const validSets = (Array.isArray(item.sets) ? item.sets : []).filter(set => {
+      const reps = Number(set?.reps);
+      const load = Number(set?.load);
+      return set?.completed !== false && Number.isFinite(reps) && reps > 0 && Number.isFinite(load) && load >= 0;
+    });
+    const normalSets = validSets.filter(set => set.type !== 'warmup');
+    if (!normalSets.length) return null;
+    const key = entry.identity || entry.sessionId || `${entry.workout_date}:${entry.workoutKey}:${item.exerciseId || item.nome}`;
+    if (seen.has(key)) return null;
+    seen.add(key);
+    const rpes = normalSets.map(set => Number(set.rpe)).filter(value => Number.isFinite(value) && value >= 1 && value <= 10);
+    return {
+      sessionKey: key,
+      date: entry.workout_date || entry.data || '',
+      completedAt: entry.completedAt || null,
+      workoutKey: entry.workoutKey || entry.treino || '',
+      exerciseId: item.exerciseId || null,
+      nome: item.nome,
+      grupo: item.grupo || targetGroup,
+      sets: normalSets.map(set => ({ ...set, type: 'normal' })),
+      averageRpe: rpes.length ? rpes.reduce((sum, value) => sum + value, 0) / rpes.length : null
+    };
+  }).filter(Boolean).sort((a, b) => {
+    const aTime = Date.parse(a.completedAt || `${a.date}T12:00:00`) || 0;
+    const bTime = Date.parse(b.completedAt || `${b.date}T12:00:00`) || 0;
+    return bTime - aTime;
+  });
+}
+
+function getRecentComparableExerciseSessions(exercise, executions = state?.execucoes || [], limit = 3) {
+  return getComparableExerciseSessions(exercise, executions).slice(0, Math.max(1, Number(limit) || 3));
+}
+
+function getProgressionConfig(exercise, sessions = []) {
+  const normalized = normalizeWorkoutExercise(exercise, 0) || {};
+  const latestSets = sessions[0]?.sets || [];
+  const latestLoad = latestSets.length ? Number(latestSets[0].load) : null;
+  return {
+    load: Number.isFinite(Number(normalized.carga)) ? Number(normalized.carga) : (Number.isFinite(latestLoad) ? latestLoad : null),
+    reps: normalized.reps || null,
+    sets: Number.isFinite(Number(normalized.series)) ? Number(normalized.series) : null,
+    rest: Number.isFinite(Number(normalized.descanso)) ? Number(normalized.descanso) : null
+  };
+}
+
+function getProgressionConfidence(sessions, range, hasCompleteRpe) {
+  if (!range.valid || sessions.length < 2) return 'low';
+  if (sessions.length >= 3 && hasCompleteRpe) return 'high';
+  return 'medium';
+}
+
+function hasImportantRepDrop(sessions) {
+  return sessions.some(session => {
+    const reps = session.sets.map(set => Number(set.reps)).filter(Number.isFinite);
+    return reps.length >= 2 && reps.at(-1) <= reps[0] * 0.7;
+  });
+}
+
+function buildExerciseProgressionSuggestion(exercise, executions = state?.execucoes || []) {
+  const sessions = getRecentComparableExerciseSessions(exercise, executions, 3);
+  const currentConfig = getProgressionConfig(exercise, sessions);
+  const range = parseRepRange(currentConfig.reps);
+  const allRpes = sessions.flatMap(session => session.sets.map(set => Number(set.rpe)).filter(value => Number.isFinite(value) && value >= 1 && value <= 10));
+  const averageRpe = allRpes.length ? allRpes.reduce((sum, value) => sum + value, 0) / allRpes.length : null;
+  const allSets = sessions.flatMap(session => session.sets);
+  const belowMin = range.valid ? allSets.filter(set => Number(set.reps) < range.min).length : 0;
+  const targetRangeReached = range.valid && allSets.length > 0 && allSets.every(set => Number(set.reps) >= range.max);
+  const topLastTwo = range.valid && sessions.length >= 2 && sessions.slice(0, 2).every(session => session.sets.length && session.sets.every(set => Number(set.reps) >= range.max));
+  const repDrop = hasImportantRepDrop(sessions.slice(0, 2));
+  const highEffort = averageRpe != null && averageRpe > 9;
+  const suggestedConfig = { ...currentConfig, load: null };
+  const evidence = {
+    comparableSessions: sessions.length,
+    averageRpe: averageRpe == null ? null : Number(averageRpe.toFixed(1)),
+    targetRangeReached,
+    completedNormalSets: allSets.length,
+    range: range.valid ? `${range.min}-${range.max}` : null
+  };
+  const base = (type, title, message, reason, confidence) => ({ type, title, message, reason, confidence, currentConfig, suggestedConfig, evidence });
+  if (sessions.length < 2 || !range.valid) {
+    return base('insufficient_data', 'Dados insuficientes', 'Registre mais sessoes deste exercicio para receber uma sugestao mais confiavel.', !range.valid ? 'A faixa de repeticoes atual nao pode ser interpretada com seguranca.' : 'Ainda ha menos de duas sessoes comparaveis.', 'low');
+  }
+  const confidence = getProgressionConfidence(sessions, range, allRpes.length >= allSets.length && allSets.length > 0);
+  if ((highEffort || belowMin >= Math.max(2, Math.ceil(allSets.length / 2)) || repDrop) && currentConfig.rest != null && currentConfig.rest < 90 && repDrop && averageRpe != null && averageRpe >= 8.5) {
+    return base('increase_rest', 'Considere aumentar ligeiramente o descanso', 'Considere aumentar ligeiramente o descanso entre as series.', 'Houve queda relevante de repeticoes com esforco elevado e o descanso configurado e curto.', confidence);
+  }
+  if (highEffort || belowMin >= Math.max(2, Math.ceil(allSets.length / 2)) || repDrop) {
+    return base('review_configuration', 'Revise a configuracao', 'O esforco ficou acima do planejado. Considere manter ou reduzir levemente a carga e revisar descanso e execucao.', highEffort ? 'O RPE medio ficou acima de 9.' : (repDrop ? 'Houve queda acentuada de repeticoes entre as series.' : 'Varias series ficaram abaixo do minimo da faixa planejada.'), confidence);
+  }
+  if (topLastTwo && averageRpe != null && averageRpe <= 8) {
+    return base('consider_increment', 'Considere o menor incremento disponivel', 'Voce completou o topo da faixa planejada nas ultimas sessoes com esforco controlado. Considere manter a carga ou usar o menor incremento disponivel.', 'Todas as series normais atingiram o topo da faixa e o RPE medio valido foi igual ou inferior a 8. Use o menor incremento disponivel, caso a execucao permaneça estavel.', confidence);
+  }
+  const withinRange = allSets.length > 0 && allSets.every(set => Number(set.reps) >= range.min && Number(set.reps) <= range.max);
+  if (withinRange && !targetRangeReached) {
+    return base('maintain_build_reps', 'Mantenha e construa repeticoes', 'Mantenha a carga e tente progredir gradualmente dentro da faixa planejada.', 'As series estao dentro da faixa, mas o topo ainda nao foi atingido de forma consistente.', confidence);
+  }
+  return base('maintain', 'Mantenha a configuracao', 'A configuracao atual permanece adequada. Priorize consistencia e execucao controlada.', averageRpe != null && averageRpe >= 8 ? 'A faixa foi atingida com esforco moderado a alto.' : 'Os dados recentes sao variaveis e pedem consistencia antes de qualquer mudanca.', confidence);
+}
+
+function buildNextWorkoutPlan(workoutKey) {
+  const key = String(workoutKey || getActiveWorkoutKey() || 'A').toUpperCase();
+  const workout = state.treinos?.[key] || { nome: `Treino ${key}`, exercicios: [] };
+  const exercises = (Array.isArray(workout.exercicios) ? workout.exercicios : []).map((item, index) => {
+    const exercise = normalizeWorkoutExercise(item, index);
+    const suggestion = buildExerciseProgressionSuggestion(exercise, state.execucoes);
+    return { exerciseId: exercise?.exerciseId || null, nome: exercise?.nome || `Exercicio ${index + 1}`, currentConfig: suggestion.currentConfig, suggestion };
+  });
+  const summary = { maintainCount: 0, considerIncrementCount: 0, reviewCount: 0, insufficientDataCount: 0 };
+  exercises.forEach(item => {
+    if (item.suggestion.type === 'consider_increment') summary.considerIncrementCount += 1;
+    else if (item.suggestion.type === 'review_configuration' || item.suggestion.type === 'increase_rest') summary.reviewCount += 1;
+    else if (item.suggestion.type === 'insufficient_data') summary.insufficientDataCount += 1;
+    else summary.maintainCount += 1;
+  });
+  return { workoutKey: key, workoutName: workout.nome || `Treino ${key}`, generatedAt: new Date().toISOString(), exercises, summary };
+}
+
+function renderNextWorkoutCard() {
+  const card = document.getElementById('next-workout-card');
+  const plan = buildNextWorkoutPlan(getActiveWorkoutKey());
+  if (!card) return plan;
+  card.classList.toggle('hidden', !plan.exercises.length);
+  if (!plan.exercises.length) return plan;
+  document.getElementById('next-workout-subtitle').textContent = `${plan.workoutName} - ${plan.exercises.length} exercicio${plan.exercises.length === 1 ? '' : 's'}`;
+  const summary = document.getElementById('next-workout-summary');
+  summary.replaceChildren();
+  const labels = [
+    [plan.summary.maintainCount, 'manter'], [plan.summary.considerIncrementCount, 'considerar progressao'],
+    [plan.summary.reviewCount, 'revisar configuracao'], [plan.summary.insufficientDataCount, 'aguardando mais dados']
+  ];
+  labels.filter(([count]) => count).forEach(([count, label]) => { const item = document.createElement('span'); item.textContent = `${count} ${label}`; summary.appendChild(item); });
+  return plan;
+}
+
+let nextWorkoutPlanReturnFocus = null;
+function renderNextWorkoutPlan(plan) {
+  const content = document.getElementById('next-workout-plan-content');
+  if (!content || !plan) return false;
+  document.getElementById('next-workout-plan-title').textContent = `Proximo treino - ${plan.workoutName}`;
+  document.getElementById('next-workout-plan-subtitle').textContent = `${plan.exercises.length} exercicio${plan.exercises.length === 1 ? '' : 's'} analisado${plan.exercises.length === 1 ? '' : 's'} sem alterar sua ficha.`;
+  content.replaceChildren();
+  plan.exercises.forEach(item => {
+    const article = document.createElement('article'); article.className = 'next-workout-plan-item';
+    const title = document.createElement('h3'); title.textContent = item.nome;
+    const config = document.createElement('p'); config.textContent = `Atual: ${item.currentConfig.sets ?? '-'} series - ${item.currentConfig.reps || '-'} reps - ${item.currentConfig.load == null ? 'carga nao definida' : `${item.currentConfig.load} kg`} - descanso ${item.currentConfig.rest == null ? '-' : `${item.currentConfig.rest}s`}`;
+    const suggestion = document.createElement('p');
+    const suggestionTitle = document.createElement('strong'); suggestionTitle.textContent = item.suggestion.title;
+    suggestion.append(suggestionTitle, document.createTextNode(` - ${item.suggestion.message}`));
+    const reason = document.createElement('p'); reason.textContent = `Motivo: ${item.suggestion.reason}`;
+    const evidence = document.createElement('div'); evidence.className = 'next-workout-evidence';
+    [`${item.suggestion.evidence.comparableSessions} sessoes comparaveis`, item.suggestion.evidence.averageRpe == null ? 'RPE sem dados' : `RPE medio ${item.suggestion.evidence.averageRpe}`, `confianca ${item.suggestion.confidence}`].forEach(text => { const badge = document.createElement('span'); badge.textContent = text; evidence.appendChild(badge); });
+    article.append(title, config, suggestion, reason, evidence); content.appendChild(article);
+  });
+  return true;
+}
+
+function openNextWorkoutPlan(workoutKey = getActiveWorkoutKey()) {
+  const dialog = document.getElementById('next-workout-plan-modal');
+  const plan = buildNextWorkoutPlan(workoutKey);
+  if (!dialog || !plan.exercises.length || !renderNextWorkoutPlan(plan)) return false;
+  nextWorkoutPlanReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); } else dialog.setAttribute('open', '');
+  document.body.classList.add('exercise-modal-open');
+  document.getElementById('next-workout-plan-close')?.focus({ preventScroll: true });
+  if (window.lucide) lucide.createIcons();
+  return true;
+}
+
+function closeNextWorkoutPlan() {
+  const dialog = document.getElementById('next-workout-plan-modal');
+  if (!dialog) return false;
+  if (typeof dialog.close === 'function' && dialog.open) dialog.close(); else dialog.removeAttribute('open');
+  document.body.classList.remove('exercise-modal-open');
+  if (nextWorkoutPlanReturnFocus?.isConnected) nextWorkoutPlanReturnFocus.focus({ preventScroll: true });
+  nextWorkoutPlanReturnFocus = null;
+  return true;
 }
 
 async function moveWorkoutExercise(index, direction, options = {}) {
@@ -10564,6 +10820,12 @@ document.getElementById('history-filter-search')?.addEventListener('input', even
 document.getElementById('workout-history-load-more')?.addEventListener('click', () => { workoutHistoryVisibleCount += 10; renderTreinoHistorico(); });
 document.getElementById('workout-history-details-close')?.addEventListener('click', closeWorkoutHistoryDetails);
 document.getElementById('workout-history-details-dialog')?.addEventListener('cancel', event => { event.preventDefault(); closeWorkoutHistoryDetails(); });
+document.getElementById('next-workout-open')?.addEventListener('click', () => openNextWorkoutPlan(getActiveWorkoutKey()));
+document.getElementById('next-workout-plan-close')?.addEventListener('click', closeNextWorkoutPlan);
+document.getElementById('next-workout-plan-modal')?.addEventListener('cancel', event => { event.preventDefault(); closeNextWorkoutPlan(); });
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.getElementById('next-workout-plan-modal')?.open) closeNextWorkoutPlan();
+});
 
 const CORES_MUSCULO = {
   'Peito':   'bg-ember',
@@ -11062,6 +11324,85 @@ window.testFoodSearchUI = async function() {
     renderDiarioHoje();
   }
 }
+
+window.testWorkoutProgressionV33 = async function() {
+  const result = {
+    repRangeParsingOk: false, comparableSessionsOk: false, warmupIgnoredForMainAnalysis: false, insufficientDataSuggestionOk: false,
+    incrementSuggestionRequiresTwoSessions: false, incrementSuggestionRequiresTopRange: false, incrementSuggestionRequiresControlledRpe: false,
+    maintainBuildRepsOk: false, maintainSuggestionOk: false, highRpeReviewSuggestionOk: false, lowPerformanceReviewSuggestionOk: false,
+    restSuggestionOk: false, deterministicRulesOk: false, noAutomaticPlanMutation: false, nextWorkoutPlanOk: false, summaryCountsOk: false,
+    confidenceLevelOk: false, planModalOpens: false, planModalCloses: false, legacyDataHandled: false, missingRpeHandled: false,
+    noNaNOrInfinity: false, safeLanguageOk: false, applyRequiresConfirmation: 'not_implemented', catalogUnaffected: false,
+    executionsUnaffected: false, historyV32StillWorks: false, syncV31StillWorks: false, liveWorkoutStillWorks: false, dietStillWorks: false,
+    foodSearchStillWorks: false, mobileNoOverflow: false, noBlockingErrors: false, completedPriorities: ['P0'], deferredPriorities: ['P1'], passed: false
+  };
+  const originalWorkouts = state.treinos;
+  const originalExecutions = state.execucoes;
+  const originalActive = treinoAtivo;
+  const catalogSnapshot = JSON.stringify(EXERCISE_LIBRARY);
+  const exercise = { exerciseId: 'progression-bench', nome: 'Supino de progressao', grupo: 'Peito', equipamento: 'Barra', series: 3, reps: '8-10', carga: 40, descanso: 60 };
+  const makeSession = (id, date, sets) => ({
+    id: `progression-${id}`, sessionId: `progression-${id}`, workoutKey: 'A', workout_date: date, completedAt: `${date}T11:00:00.000Z`, syncStatus: 'synced',
+    sessionPayload: { id: `progression-${id}`, sessionId: `progression-${id}`, workoutKey: 'A', workout_date: date, completedAt: `${date}T11:00:00.000Z`, exercises: [{ exerciseId: exercise.exerciseId, nome: exercise.nome, grupo: exercise.grupo, equipamento: exercise.equipamento, ordem: 0, sets: sets.map((set, index) => ({ setNumber: index + 1, completed: set.completed !== false, type: set.type || 'normal', reps: set.reps, load: set.load, rpe: set.rpe ?? null })) }] }
+  });
+  try {
+    const topSessions = [makeSession(1, '2026-06-01', [{ reps: 10, load: 40, rpe: 8 }, { reps: 10, load: 40, rpe: 8 }]), makeSession(2, '2026-06-08', [{ type: 'warmup', reps: 8, load: 20, rpe: 4 }, { reps: 10, load: 40, rpe: 8 }, { reps: 10, load: 40, rpe: 8 }])];
+    const oneSession = [topSessions[0]];
+    const build = sets => buildExerciseProgressionSuggestion(exercise, sets);
+    result.repRangeParsingOk = ['8-10', '8\u201310', '8 a 10', 10, '10'].every(value => parseRepRange(value).valid) && !parseRepRange('livre').valid;
+    const comparable = getComparableExerciseSessions(exercise, topSessions);
+    result.comparableSessionsOk = comparable.length === 2 && comparable[0].date === '2026-06-08';
+    result.warmupIgnoredForMainAnalysis = comparable[0]?.sets.length === 2 && comparable[0].sets.every(set => set.type === 'normal' && set.load === 40);
+    result.insufficientDataSuggestionOk = build(oneSession).type === 'insufficient_data';
+    const increment = build(topSessions);
+    result.incrementSuggestionRequiresTwoSessions = increment.type === 'consider_increment' && build(oneSession).type !== 'consider_increment';
+    result.incrementSuggestionRequiresTopRange = build([makeSession(3, '2026-06-01', [{ reps: 9, load: 40, rpe: 8 }]), makeSession(4, '2026-06-08', [{ reps: 9, load: 40, rpe: 8 }])]).type !== 'consider_increment';
+    result.incrementSuggestionRequiresControlledRpe = build([makeSession(5, '2026-06-01', [{ reps: 10, load: 40, rpe: 9 }]), makeSession(6, '2026-06-08', [{ reps: 10, load: 40, rpe: 9 }])]).type !== 'consider_increment';
+    result.maintainBuildRepsOk = build([makeSession(7, '2026-06-01', [{ reps: 9, load: 40, rpe: 7 }]), makeSession(8, '2026-06-08', [{ reps: 9, load: 40, rpe: 7 }])]).type === 'maintain_build_reps';
+    result.maintainSuggestionOk = build([makeSession(9, '2026-06-01', [{ reps: 10, load: 40, rpe: 8.5 }]), makeSession(10, '2026-06-08', [{ reps: 9, load: 40, rpe: 8.5 }])]).type === 'maintain';
+    result.highRpeReviewSuggestionOk = build([makeSession(11, '2026-06-01', [{ reps: 8, load: 40, rpe: 9.5 }]), makeSession(12, '2026-06-08', [{ reps: 8, load: 40, rpe: 9.5 }])]).type === 'review_configuration';
+    result.lowPerformanceReviewSuggestionOk = build([makeSession(13, '2026-06-01', [{ reps: 10, load: 40, rpe: 8 }, { reps: 6, load: 40, rpe: 8 }]), makeSession(14, '2026-06-08', [{ reps: 10, load: 40, rpe: 8 }, { reps: 6, load: 40, rpe: 8 }])]).type === 'review_configuration';
+    result.restSuggestionOk = build([makeSession(15, '2026-06-01', [{ reps: 10, load: 40, rpe: 9.5 }, { reps: 6, load: 40, rpe: 9.5 }]), makeSession(16, '2026-06-08', [{ reps: 10, load: 40, rpe: 9.5 }, { reps: 6, load: 40, rpe: 9.5 }])]).type === 'increase_rest';
+    result.deterministicRulesOk = JSON.stringify(build(topSessions)) === JSON.stringify(build(topSessions));
+    const legacyExercise = { nome: 'Remada legada', grupo: 'Costas', reps: '10', series: 3, carga: 45, descanso: 90 };
+    const legacy = [{ id: 'legacy-1', data: '2026-06-01', treino: 'B', exercicio: 'Remada legada', series: 3, reps: 10, carga: 45, rpe: 8 }, { id: 'legacy-2', data: '2026-06-08', treino: 'B', exercicio: 'Remada legada', series: 3, reps: 10, carga: 45, rpe: null }];
+    result.legacyDataHandled = getComparableExerciseSessions(legacyExercise, legacy).length === 2;
+    result.missingRpeHandled = buildExerciseProgressionSuggestion(legacyExercise, legacy).confidence !== 'high';
+    state.treinos = { A: { nome: 'Treino A', exercicios: [exercise] }, B: { nome: 'Treino B', exercicios: [] }, C: { nome: 'Treino C', exercicios: [] }, D: { nome: 'Treino D', exercicios: [] }, E: { nome: 'Treino E', exercicios: [] } };
+    state.execucoes = topSessions;
+    treinoAtivo = 'A';
+    const planStateBefore = JSON.stringify(state.treinos);
+    const plan = buildNextWorkoutPlan('A');
+    result.noAutomaticPlanMutation = planStateBefore === JSON.stringify(state.treinos);
+    result.nextWorkoutPlanOk = plan.exercises.length === 1 && plan.exercises[0].suggestion.type === 'consider_increment';
+    result.summaryCountsOk = plan.summary.considerIncrementCount === 1 && plan.summary.maintainCount === 0 && plan.summary.reviewCount === 0;
+    result.confidenceLevelOk = ['low', 'medium', 'high'].includes(plan.exercises[0].suggestion.confidence) && build(oneSession).confidence === 'low';
+    renderNextWorkoutCard();
+    result.planModalOpens = openNextWorkoutPlan('A') && Boolean(document.getElementById('next-workout-plan-modal')?.open || document.getElementById('next-workout-plan-modal')?.hasAttribute('open'));
+    result.planModalCloses = closeNextWorkoutPlan() && !document.getElementById('next-workout-plan-modal')?.open;
+    result.noNaNOrInfinity = !/NaN|Infinity/.test(JSON.stringify(plan)) && !/NaN|Infinity/.test(JSON.stringify(buildExerciseProgressionSuggestion(legacyExercise, legacy)));
+    result.safeLanguageOk = !/ate o limite|ate falhar|ignore a dor|aumente de qualquer jeito|carga maxima/i.test(JSON.stringify(plan)) && document.getElementById('next-workout-plan-modal')?.textContent.includes('Interrompa o exercicio se sentir dor.');
+    result.catalogUnaffected = catalogSnapshot === JSON.stringify(EXERCISE_LIBRARY);
+    result.executionsUnaffected = JSON.stringify(topSessions) === JSON.stringify(state.execucoes);
+    result.historyV32StillWorks = typeof renderTreinoHistoricoV32 === 'function' && typeof buildExerciseHistorySummary === 'function';
+    result.syncV31StillWorks = typeof StorageService !== 'undefined' && typeof SyncQueue !== 'undefined';
+    result.liveWorkoutStillWorks = typeof startLiveWorkout === 'function' && typeof buildCompletedWorkoutPayload === 'function';
+    result.dietStillWorks = Boolean(document.getElementById('f-busca') && document.getElementById('btn-add-food'));
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function' && filtrarAlimentosLocal('banana').length > 0;
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1;
+    result.noBlockingErrors = typeof parseRepRange === 'function' && typeof getComparableExerciseSessions === 'function' && typeof openNextWorkoutPlan === 'function' && Boolean(document.getElementById('next-workout-card'));
+  } catch (error) {
+    console.warn('testWorkoutProgressionV33 failed:', error);
+  } finally {
+    state.treinos = originalWorkouts;
+    state.execucoes = originalExecutions;
+    treinoAtivo = originalActive;
+    renderNextWorkoutCard();
+  }
+  const priorityZeroKeys = Object.keys(result).filter(key => !['applyRequiresConfirmation', 'completedPriorities', 'deferredPriorities', 'passed', 'mobileNoOverflow', 'dietStillWorks', 'foodSearchStillWorks', 'syncV31StillWorks', 'liveWorkoutStillWorks'].includes(key));
+  result.passed = priorityZeroKeys.every(key => result[key] === true) && result.mobileNoOverflow && result.dietStillWorks && result.foodSearchStillWorks && result.syncV31StillWorks && result.liveWorkoutStillWorks;
+  return result;
+};
 
 checkSession();
 </script>
