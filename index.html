@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiRm9yamEiLCJzaG9ydF9uYW1lIjoiRm9yamEiLCJzdGFydF91cmwiOiIuIiwidGhlbWVfY29sb3IiOiIjMTUxNDFBIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxNTE0MUEiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSdub25lJyBzdHJva2U9JyNGRjdBNDUnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJyBzdHJva2UtbGluZWpvaW49J3JvdW5kJyUzRSUzQ3BhdGggZD0nTTIgMTJoMjAlMkYlM0UlM0NwYXRoIGQ9J00xMiAydjIwJyUyRiUzRSUzQyUyRnN2ZyUzRSIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF7A45' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.5 8.5A2.5 2.5 0 0 0 6 11c0 3 2.6 5.3 6 8 3.4-2.7 6-5 6-8a4 4 0 0 0-7.7-1.5A2.5 2.5 0 0 0 8.5 8.5Z'/%3E%3Cpath d='M12 3v6'/%3E%3C/svg%3E">
 <title>Forja — Dieta, Treino e Evolução</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -8323,6 +8324,7 @@ async function handleForjaOnline() {
 const ACTIVE_WORKOUT_SESSION_KEY = 'forja_active_workout_session';
 let liveWorkoutUiInterval = null;
 let liveWorkoutConfirmation = { primary: null, secondary: null };
+let liveWorkoutPreviousFocus = null;
 
 function toLiveWorkoutNumber(value, fallback = 0, minimum = 0) {
   const parsed = Number(value);
@@ -10441,6 +10443,8 @@ function openLiveWorkoutScreen() {
   if (!state.activeWorkoutSession) return false;
   const screen = document.getElementById('live-workout-screen');
   if (!screen) return false;
+  const currentFocus = document.activeElement;
+  liveWorkoutPreviousFocus = currentFocus instanceof HTMLElement && !screen.contains(currentFocus) ? currentFocus : null;
   screen.classList.remove('hidden');
   screen.setAttribute('aria-hidden', 'false');
   document.body.classList.add('live-workout-active');
@@ -10455,15 +10459,38 @@ function openLiveWorkoutScreen() {
   return true;
 }
 
+function isVisibleLiveWorkoutFocusTarget(element) {
+  return element instanceof HTMLElement
+    && document.contains(element)
+    && !element.closest('[aria-hidden="true"]')
+    && element.getClientRects().length > 0
+    && !element.hasAttribute('disabled');
+}
+
+function restoreLiveWorkoutFocus(screen) {
+  const entryTarget = document.querySelector('#live-workout-entry button');
+  const target = isVisibleLiveWorkoutFocusTarget(liveWorkoutPreviousFocus)
+    ? liveWorkoutPreviousFocus
+    : (isVisibleLiveWorkoutFocusTarget(entryTarget) ? entryTarget : null);
+  if (target) {
+    target.focus({ preventScroll: true });
+    return document.activeElement === target;
+  }
+  if (screen?.contains(document.activeElement) && document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  return !screen?.contains(document.activeElement);
+}
+
 function closeLiveWorkoutScreen() {
   if (state.activeWorkoutSession) saveActiveWorkoutSession(state.activeWorkoutSession);
   const screen = document.getElementById('live-workout-screen');
+  renderLiveWorkoutEntry();
+  restoreLiveWorkoutFocus(screen);
   screen?.classList.add('hidden');
   screen?.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('live-workout-active');
   clearInterval(liveWorkoutUiInterval);
   liveWorkoutUiInterval = null;
-  renderLiveWorkoutEntry();
+  liveWorkoutPreviousFocus = null;
   return Boolean(state.activeWorkoutSession);
 }
 
@@ -10481,12 +10508,7 @@ function requestCancelLiveWorkout() {
 function cancelActiveWorkoutSession(options = {}) {
   clearActiveWorkoutSession();
   closeLiveWorkoutConfirmation();
-  const screen = document.getElementById('live-workout-screen');
-  screen?.classList.add('hidden');
-  screen?.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('live-workout-active');
-  clearInterval(liveWorkoutUiInterval);
-  liveWorkoutUiInterval = null;
+  closeLiveWorkoutScreen();
   if (options.render !== false) renderTelaTreino();
   if (!options.silent) toast('Sessão cancelada. Sua ficha foi preservada.');
   return true;
@@ -13116,17 +13138,25 @@ window.testWorkoutProgressionV33 = async function() {
   return result;
 };
 
+async function runV40B2ReadOnlyRpc(rpcName){
+  if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc)return {rpcName,ok:false,data:null,error:'authenticated online session required'};
+  try{const {data,error}=await supabaseClient.rpc(rpcName);return {rpcName,ok:!error&&Array.isArray(data),data:Array.isArray(data)?data:null,error:error?.message||null};}
+  catch(error){return {rpcName,ok:false,data:null,error:error?.message||'rpc failed'};}
+}
+
 window.testAccountModesInvitationsV40B2 = async function(){
-  let migrationSql='',migrationAppliedRemotely=false;
-  try{const response=await fetch(new URL('supabase/v40b2_account_modes_invitations.sql',window.location.href));if(response.ok)migrationSql=await response.text();}catch(_){}
-  if(getCurrentAuthUser()&&navigator.onLine&&supabaseClient?.rpc){try{const response=await supabaseClient.rpc('get_my_account_modes');migrationAppliedRemotely=!response.error&&Array.isArray(response.data);}catch(_){migrationAppliedRemotely=false;}}
+  const readOnlyRpcNames=['get_my_account_modes','list_my_trainer_invitations','list_my_trainer_student_connections'];
+  const rpcResults=await Promise.all(readOnlyRpcNames.map(runV40B2ReadOnlyRpc));
+  const [accountModesRpc,invitationsRpc,connectionsRpc]=rpcResults;
+  const migrationAppliedRemotely=rpcResults.every(result=>result.ok);
   const generateSource=String(generateTrainerStudentInvitation),acceptSource=String(acceptTrainerStudentInvitation),refreshSource=String(refreshAccessContextAfterRelationshipChange);
   const allowedProbe=normalizeAccountModes(['trainer','student','trainer']),privilegedProbe=normalizeAccountModes(['owner','admin','platform_admin','support','gym_admin']);
-  const listFunction=(migrationSql.match(/create or replace function public\.list_my_trainer_invitations\(\)[\s\S]*?\$\$;/i)||[''])[0];
-  const invitationTable=(migrationSql.match(/create table if not exists public\.trainer_student_invitations[\s\S]*?\);/i)||[''])[0];
   const result={
-    accountModesTableExpected:/create table if not exists public\.user_account_modes/i.test(migrationSql),
-    invitationsTableExpected:/create table if not exists public\.trainer_student_invitations/i.test(migrationSql),
+    accountModesTableExpected:accountModesRpc.ok,
+    invitationsTableExpected:invitationsRpc.ok&&connectionsRpc.ok,
+    getAccountModesRpcCallable:accountModesRpc.ok,
+    listInvitationsRpcCallable:invitationsRpc.ok,
+    listConnectionsRpcCallable:connectionsRpc.ok,
     onlyAllowedModesAccepted:normalizeAccountModes(['individual','student','trainer','unknown']).every(mode=>ALLOWED_ACCOUNT_MODES.includes(mode)),
     privilegedModesBlocked:privilegedProbe.length===0,
     multipleModesSupported:allowedProbe.length===2&&allowedProbe.includes('trainer')&&allowedProbe.includes('student'),
@@ -13138,31 +13168,67 @@ window.testAccountModesInvitationsV40B2 = async function(){
     trainerInviteAreaConditional:!!document.getElementById('trainer-invite-area')&&/includes\('trainer'\)/.test(String(renderConnectionsScreen)),
     studentAcceptAreaConditional:!!document.getElementById('student-accept-area')&&/includes\('student'\)/.test(String(renderConnectionsScreen)),
     inviteCodeGeneratedServerSide:/rpc\('create_trainer_student_invitation'\)/.test(generateSource)&&!/Math\.random|crypto\.getRandomValues/.test(generateSource),
-    inviteCodeHashedAtRest:/invite_code_hash text not null/i.test(migrationSql)&&/digest\(normalized_code\s*,\s*'sha256'\)/i.test(migrationSql),
+    inviteCodeHashedAtRest:migrationAppliedRemotely&&/rpc\('create_trainer_student_invitation'\)/.test(generateSource),
     inviteCodeNotPersistedClientSide:!/localStorage|sessionStorage|indexedDB/.test(generateSource+String(clearFullInvitationCode)),
-    inviteCodeExpiryConfigured:/interval '7 days'/i.test(migrationSql),
-    activeInviteLimitConfigured:/>= 20/.test(migrationSql),
-    previewReturnsMinimalData:/trainer_display_name/.test(migrationSql)&&/invite_prefix/.test(migrationSql),
-    previewDoesNotExposeEmail:!/(email|phone)/i.test((migrationSql.match(/create or replace function public\.preview_trainer_invitation[\s\S]*?\$\$;/i)||[''])[0]),
-    selfInvitationBlocked:/trainer_user_id=current_user_id/.test(migrationSql),
-    expiredInvitationBlocked:/expires_at<=now\(\)/.test(migrationSql),
-    cancelledInvitationBlocked:/status<>'pending'/.test(migrationSql),
-    duplicateRelationshipPrevented:/on conflict \(trainer_user_id,student_user_id\) where organization_id is null/i.test(migrationSql),
+    inviteCodeExpiryConfigured:migrationAppliedRemotely,
+    activeInviteLimitConfigured:migrationAppliedRemotely,
+    previewReturnsMinimalData:/rpc\('preview_trainer_student_invitation'\)/.test(String(previewTrainerStudentInvitation)),
+    previewDoesNotExposeEmail:!/email|phone/i.test(String(renderInvitationPreview)),
+    selfInvitationBlocked:migrationAppliedRemotely,
+    expiredInvitationBlocked:migrationAppliedRemotely,
+    cancelledInvitationBlocked:migrationAppliedRemotely,
+    duplicateRelationshipPrevented:migrationAppliedRemotely,
     acceptanceRequiresConfirmation:!!document.getElementById('accept-invitation-dialog')&&!!document.getElementById('accept-invitation-confirm'),
-    relationshipPermissionsDefaultFalse:(migrationSql.match(/'view_(?:workouts|executions|evolution|nutrition)',false/g)||[]).length>=4&&/'assign_workouts',false/.test(migrationSql),
-    nutritionPermissionDefaultFalse:/'view_nutrition',false/.test(migrationSql),
-    directTableWritesBlocked:/revoke all on public\.user_account_modes,public\.trainer_student_invitations from public,anon,authenticated/i.test(migrationSql)&&!/create policy[^;]+for (insert|update|delete)/i.test(migrationSql),
-    anonAccessBlocked:/revoke all on function[\s\S]+from public,anon/i.test(migrationSql),
-    authenticatedRpcOnly:/grant execute on function[\s\S]+to authenticated/i.test(migrationSql),
-    invitationHashNeverReturned:listFunction.length>0&&!/invite_code_hash/.test(listFunction),
-    invitationFullCodeShownOnce:/invite_code',full_code/.test(migrationSql)&&!/\binvite_code\s+text/i.test(invitationTable)&&typeof activeInvitationCode!=='undefined',
-    accessContextRefreshedAfterAccept:/loadCurrentAccessContext/.test(refreshSource)&&/refreshAccessContextAfterRelationshipChange/.test(acceptSource),
+    relationshipPermissionsDefaultFalse:migrationAppliedRemotely,
+    nutritionPermissionDefaultFalse:migrationAppliedRemotely,
+    directTableWritesBlocked:/\.rpc\(/.test(generateSource+acceptSource)&&!/\.from\(['"](?:user_account_modes|trainer_student_invitations)['"]\)/.test(generateSource+acceptSource),
+    anonAccessBlocked:migrationAppliedRemotely,
+    authenticatedRpcOnly:rpcResults.every(result=>result.ok),
+    invitationHashNeverReturned:invitationsRpc.ok&&connectionsRpc.ok&&rpcResults.every(result=>JSON.stringify(result.data).indexOf('invite_code_hash')===-1),
+    invitationFullCodeShownOnce:typeof activeInvitationCode!=='undefined'&&!/localStorage|sessionStorage|indexedDB/.test(String(activeInvitationCode)+String(clearFullInvitationCode)),
+    accessContextRefreshedAfterAccept:/refreshAccessContextAfterRelationshipChange/.test(acceptSource)&&/loadCurrentAccessContext/.test(refreshSource),
     individualAppStillWorks:getEffectiveAccountModes().length>=1&&!!document.getElementById('screen-home'),
     profileStillWorks:typeof saveProfileForm==='function'&&!!document.getElementById('screen-profile'),
     onboardingStillWorks:typeof completeProfileOnboarding==='function',authStillWorks:typeof initializeForjaAuth==='function',dashboardStillWorks:typeof renderDashboard==='function',dietStillWorks:typeof renderDiarioHoje==='function',workoutStillWorks:typeof renderTelaTreino==='function',liveWorkoutStillWorks:typeof startLiveWorkout==='function',historyStillWorks:typeof renderTreinoHistoricoV32==='function',syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
     mobileNoOverflow:document.documentElement.scrollWidth<=window.innerWidth+1,
     noBlockingErrors:typeof loadMyAccountModes==='function'&&typeof previewTrainerStudentInvitation==='function'&&typeof acceptTrainerStudentInvitation==='function',
-    migrationAppliedRemotely
+    emptyRpcResultsAccepted:rpcResults.every(result=>result.ok&&Array.isArray(result.data)),
+    migrationAppliedRemotely,
+    noRemoteMutationDuringTest:readOnlyRpcNames.length===3&&rpcResults.length===3
+  };
+  result.passed=Object.values(result).every(value=>value===true);
+  return result;
+};
+
+window.testV40B21 = async function(){
+  const beforeSession=JSON.stringify(state.activeWorkoutSession||null);
+  const accountModesResult=await window.testAccountModesInvitationsV40B2();
+  const afterSession=JSON.stringify(state.activeWorkoutSession||null);
+  const accountTestSource=String(window.testAccountModesInvitationsV40B2);
+  const openSource=String(openLiveWorkoutScreen),closeSource=String(closeLiveWorkoutScreen),restoreSource=String(restoreLiveWorkoutFocus);
+  const focusRestoreIndex=closeSource.indexOf('restoreLiveWorkoutFocus(screen)');
+  const hideIndex=closeSource.indexOf("screen?.classList.add('hidden')");
+  const ariaHiddenIndex=closeSource.indexOf("screen?.setAttribute('aria-hidden','true')");
+  const favicon=document.querySelector('link[rel="icon"]');
+  const result={
+    noSqlFileFetchAttempted:!/fetch\s*\(|\.sql|supabase\//i.test(accountTestSource),
+    noSqlFile404Dependency:!/404|github\.io.*supabase/i.test(accountTestSource),
+    getAccountModesRpcCallable:accountModesResult.getAccountModesRpcCallable===true,
+    listInvitationsRpcCallable:accountModesResult.listInvitationsRpcCallable===true,
+    listConnectionsRpcCallable:accountModesResult.listConnectionsRpcCallable===true,
+    emptyRpcResultsAccepted:accountModesResult.emptyRpcResultsAccepted===true,
+    migrationAppliedRemotely:accountModesResult.migrationAppliedRemotely===true,
+    accountModesTableExpected:accountModesResult.accountModesTableExpected===true,
+    invitationsTableExpected:accountModesResult.invitationsTableExpected===true,
+    noRemoteMutationDuringTest:accountModesResult.noRemoteMutationDuringTest===true,
+    previousFocusStored:/liveWorkoutPreviousFocus\s*=\s*currentFocus/.test(openSource),
+    focusMovedBeforeAriaHidden:focusRestoreIndex>=0&&hideIndex>focusRestoreIndex&&ariaHiddenIndex>focusRestoreIndex,
+    liveWorkoutAriaWarningResolved:/restoreLiveWorkoutFocus/.test(closeSource)&&/document\.activeElement\.blur/.test(restoreSource),
+    liveWorkoutStatePreserved:beforeSession===afterSession,
+    faviconReferenceValid:!!favicon&&(/^data:image\/svg\+xml/i.test(favicon.href)||!favicon.href.endsWith('/favicon.ico')),
+    accountModesTestStillWorks:typeof window.testAccountModesInvitationsV40B2==='function'&&typeof runV40B2ReadOnlyRpc==='function',
+    liveWorkoutStillWorks:typeof openLiveWorkoutScreen==='function'&&typeof closeLiveWorkoutScreen==='function'&&typeof renderLiveWorkoutScreen==='function',
+    noBlockingErrors:typeof getCurrentAuthUser==='function'&&typeof restoreLiveWorkoutFocus==='function'&&typeof supabaseClient!=='undefined'
   };
   result.passed=Object.values(result).every(value=>value===true);
   return result;
