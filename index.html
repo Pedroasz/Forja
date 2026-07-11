@@ -338,6 +338,13 @@
     border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
     background: color-mix(in srgb, var(--color-primary) 10%, rgba(26,29,38,.9));
   }
+  .exercise-advanced-filters { border: 1px solid rgba(77,82,97,.7); border-radius: 10px; background: rgba(255,255,255,.02); }
+  .exercise-advanced-filters summary { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; color: var(--forja-muted); cursor: pointer; font-size: 11px; font-weight: 650; list-style: none; }
+  .exercise-advanced-filters summary::-webkit-details-marker { display: none; }
+  .exercise-advanced-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 11px 11px; }
+  .exercise-advanced-filter-grid label { display: grid; gap: 5px; color: var(--forja-muted); font-size: 10px; }
+  .exercise-advanced-filter-grid select { min-width: 0; min-height: 38px; padding: 7px 9px; border: 1px solid rgba(77,82,97,.75); border-radius: 8px; background: var(--forja-card-2); color: var(--forja-text); font-size: 11px; }
+  .exercise-clear-filters { grid-column: 1 / -1; min-height: 38px; border: 1px solid rgba(77,82,97,.75); border-radius: 8px; color: var(--forja-muted); font-size: 11px; font-weight: 650; }
   #exercicio-lista-biblioteca > .exercise-library-item {
     position: relative;
     background: rgba(25,28,37,.86) !important;
@@ -498,6 +505,15 @@
   .exercise-detail-list { display: grid; gap: 7px; margin-top: 8px; }
   .exercise-detail-list li { position: relative; padding-left: 15px; }
   .exercise-detail-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; background: var(--forja-green); border-radius: 50%; }
+  ol.exercise-detail-list { counter-reset: exercise-step; }
+  ol.exercise-detail-list li { counter-increment: exercise-step; padding-left: 28px; }
+  ol.exercise-detail-list li::before { content: counter(exercise-step); top: 0; width: 20px; height: 20px; display: grid; place-items: center; color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent); border-radius: 6px; font-size: 10px; font-weight: 700; }
+  .exercise-detail-relations { display: grid; gap: 7px; margin-top: 8px; }
+  .exercise-relation-button { min-height: 38px; padding: 8px 10px; text-align: left; color: var(--forja-text); background: rgba(255,255,255,.025); border: 1px solid rgba(77,82,97,.7); border-radius: 8px; font-size: 11px; }
+  .exercise-relation-button:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 42%, transparent); }
+  .exercise-relation-button small { display: block; margin-top: 3px; color: var(--forja-muted); font-size: 9px; }
+  .exercise-detail-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 16px; }
+  .exercise-detail-actions .exercise-detail-add { margin-top: 0; }
   .exercise-detail-add {
     min-height: 44px;
     display: inline-flex;
@@ -1151,6 +1167,7 @@
     .exercise-library-count { margin-top: 7px; }
     .exercise-filter-chips { margin-inline: -1px; padding-bottom: 7px; }
     .exercise-filter-chip { min-height: 38px !important; padding: 0 13px; font-size: 11px; }
+    .exercise-advanced-filter-grid { grid-template-columns: 1fr 1fr; }
     #exercicio-lista-biblioteca { max-height: 440px !important; gap: 10px !important; }
     #exercicio-lista-biblioteca > .exercise-library-item { padding: 13px !important; }
     .exercise-muscle-mark { width: 42px; height: 42px; flex-basis: 42px; }
@@ -1200,6 +1217,7 @@
     .exercise-detail-grid { grid-template-columns: 1fr; }
     .exercise-detail-section-wide { grid-column: auto; }
     .exercise-detail-add { min-height: 50px; }
+    .exercise-detail-actions { grid-template-columns: 1fr; }
     .workout-plan-item { grid-template-columns: 32px 42px minmax(0, 1fr); padding: 11px !important; }
     .workout-plan-media { width: 42px; height: 42px; }
     .workout-plan-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -1812,6 +1830,16 @@
           <button type="button" class="exercise-filter-chip" data-exercise-group="Cardio">Cardio</button>
           <button type="button" class="exercise-filter-chip" data-exercise-group="Funcional">Funcional</button>
         </div>
+        <details id="exercise-advanced-filters" class="exercise-advanced-filters">
+          <summary><span>Mais filtros</span><i data-lucide="sliders-horizontal" class="w-4 h-4"></i></summary>
+          <div class="exercise-advanced-filter-grid">
+            <label>Equipamento<select id="exercicio-equipamento"><option value="">Todos</option></select></label>
+            <label>Dificuldade<select id="exercicio-dificuldade"><option value="">Todas</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></label>
+            <label>Movimento<select id="exercicio-movimento"><option value="">Todos</option></select></label>
+            <label>Lateralidade<select id="exercicio-lateralidade"><option value="">Todas</option><option value="bilateral">Bilateral</option><option value="unilateral">Unilateral</option></select></label>
+            <button type="button" id="exercise-clear-filters" class="exercise-clear-filters">Limpar filtros</button>
+          </div>
+        </details>
         <div id="exercicio-lista-biblioteca" class="grid grid-cols-1 gap-2 max-h-[34rem] overflow-y-auto pr-1"></div>
         <button id="btn-add-exercicio" type="button" class="w-full bg-card2 border border-ember/50 text-ember font-semibold text-sm rounded-lg py-2.5 hover:bg-ember hover:text-bg transition active:scale-[0.97] duration-200 flex items-center justify-center gap-1.5">
           <i data-lucide="plus" class="w-4 h-4"></i> Adicionar exercício
@@ -2000,6 +2028,7 @@
       <button type="button" id="exercise-detail-close" class="exercise-detail-close" title="Fechar" aria-label="Fechar detalhes do exercício"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
     <div class="exercise-detail-body">
+      <button type="button" id="exercise-detail-back" class="dashboard-action hidden mb-3" aria-label="Voltar ao exercício anterior"><i data-lucide="arrow-left" class="w-4 h-4"></i>Voltar</button>
       <p id="exercise-detail-eyebrow" class="text-[10px] uppercase font-semibold text-ember">Guia do exercício</p>
       <h2 id="exercise-detail-title" class="font-display font-semibold text-xl mt-1">Exercício</h2>
       <p id="exercise-detail-meta" class="text-xs text-mute mt-2"></p>
@@ -2016,22 +2045,24 @@
         </section>
         <section class="exercise-detail-section exercise-detail-section-wide">
           <h3>Como executar</h3>
-          <ul id="exercise-detail-instructions" class="exercise-detail-list"></ul>
+          <ol id="exercise-detail-instructions" class="exercise-detail-list"></ol>
         </section>
         <section class="exercise-detail-section">
           <h3>Dicas</h3>
           <ul id="exercise-detail-tips" class="exercise-detail-list"></ul>
         </section>
-        <section class="exercise-detail-section">
-          <h3>Observações</h3>
-          <p id="exercise-detail-observations" class="mt-2"></p>
-        </section>
+        <section class="exercise-detail-section"><h3>Erros comuns</h3><ul id="exercise-detail-errors" class="exercise-detail-list"></ul></section>
+        <section class="exercise-detail-section"><h3>Cuidados</h3><ul id="exercise-detail-safety" class="exercise-detail-list"></ul></section>
+        <section class="exercise-detail-section"><h3>Variações</h3><div id="exercise-detail-variations" class="exercise-detail-relations"></div></section>
+        <section class="exercise-detail-section"><h3>Alternativas</h3><div id="exercise-detail-alternatives" class="exercise-detail-relations"></div></section>
+        <section class="exercise-detail-section exercise-detail-section-wide"><h3>Observações</h3><p id="exercise-detail-observations" class="mt-2"></p></section>
       </div>
 
       <p id="exercise-detail-source" class="text-[10px] text-mute mt-3"></p>
-      <button type="button" id="exercise-detail-add" class="exercise-detail-add">
-        <i data-lucide="plus" class="w-4 h-4"></i><span>Adicionar ao treino</span>
-      </button>
+      <div class="exercise-detail-actions">
+        <button type="button" id="exercise-detail-configure" class="dashboard-action hidden"><i data-lucide="settings-2" class="w-4 h-4"></i><span>Configurar no treino</span></button>
+        <button type="button" id="exercise-detail-add" class="exercise-detail-add"><i data-lucide="plus" class="w-4 h-4"></i><span>Adicionar ao treino</span></button>
+      </div>
     </div>
   </div>
 </dialog>
@@ -7049,7 +7080,78 @@ function getExerciseRestSuggestion(grupo, categoria, nivel) {
   return 90;
 }
 
-function normalizeExercise(exercise) {
+const EXERCISE_ALLOWED_DIFFICULTIES = ['Iniciante', 'Intermediário', 'Avançado'];
+const EXERCISE_ALLOWED_MOVEMENTS = ['Empurrar', 'Puxar', 'Agachar', 'Dobradiça de quadril', 'Unilateral', 'Isolamento', 'Core', 'Carregar', 'Mobilidade'];
+const EXERCISE_ALLOWED_MEDIA_PROVIDERS = ['youtube', 'vimeo', 'local', 'custom'];
+const EXERCISE_DEFAULT_SAFETY = ['Use carga compatível com o controle do movimento.', 'Priorize controle e técnica. Interrompa o exercício se sentir dor.'];
+
+const EXERCISE_CONTENT_RULES = [
+  { terms: ['supino'], movement: ['Empurrar'], instructions: ['Ajuste o banco e firme os pés no chão.', 'Organize as escápulas antes de retirar a carga.', 'Desça a carga com trajetória controlada.', 'Empurre sem perder o apoio dos pés e do tronco.'], tips: ['Mantenha punhos alinhados aos antebraços.', 'Use amplitude confortável e repetível.'], errors: ['Perder a estabilidade dos ombros.', 'Retirar os pés do chão.', 'Acelerar a descida sem controle.'] },
+  { terms: ['crucifixo', 'crossover', 'peck deck'], movement: ['Isolamento'], instructions: ['Ajuste o equipamento e estabilize o tronco.', 'Mantenha leve flexão dos cotovelos.', 'Aproxime os braços com controle.', 'Retorne sem relaxar bruscamente os ombros.'], tips: ['Mantenha a trajetória consistente.', 'Evite transformar o movimento em supino.'], errors: ['Alterar demais o ângulo dos cotovelos.', 'Usar impulso para fechar os braços.'] },
+  { terms: ['flexao'], movement: ['Empurrar'], instructions: ['Apoie mãos e pés em posição estável.', 'Alinhe cabeça, tronco e quadril.', 'Desça o corpo com controle.', 'Empurre o chão mantendo o alinhamento.'], tips: ['Ajuste a inclinação para uma execução estável.'], errors: ['Deixar o quadril cair.', 'Projetar a cabeça à frente.'] },
+  { terms: ['puxada', 'pulldown', 'barra fixa'], movement: ['Puxar'], instructions: ['Ajuste a pegada e estabilize o tronco.', 'Inicie organizando as escápulas.', 'Conduza os cotovelos na direção do corpo.', 'Retorne devagar até a posição inicial.'], tips: ['Evite balançar o tronco.', 'Mantenha o pescoço neutro.'], errors: ['Puxar apenas com os braços.', 'Usar impulso excessivo.'] },
+  { terms: ['remada'], movement: ['Puxar'], instructions: ['Organize a postura e mantenha a coluna neutra.', 'Inicie o movimento pelas escápulas.', 'Puxe conduzindo os cotovelos para trás.', 'Retorne a carga de forma controlada.'], tips: ['Mantenha o tronco estável.', 'Evite elevar os ombros durante a puxada.'], errors: ['Arredondar a coluna.', 'Criar impulso com o quadril.'] },
+  { terms: ['agachamento', 'hack squat'], movement: ['Agachar'], instructions: ['Posicione os pés de forma estável.', 'Inicie flexionando joelhos e quadris com controle.', 'Desça até a amplitude confortável.', 'Retorne mantendo joelhos e pés alinhados.'], tips: ['Distribua o apoio por todo o pé.', 'Mantenha a carga próxima ao centro de equilíbrio.'], errors: ['Perder o apoio dos pés.', 'Acelerar a descida.', 'Permitir desalinhamento sem controle.'] },
+  { terms: ['leg press'], movement: ['Agachar'], instructions: ['Ajuste banco e plataforma antes de iniciar.', 'Mantenha quadril e costas apoiados.', 'Desça a plataforma com controle.', 'Estenda as pernas sem travar os joelhos bruscamente.'], tips: ['Use amplitude que preserve os apoios.'], errors: ['Retirar o quadril do banco.', 'Encerrar a descida sem controle.'] },
+  { terms: ['extensora'], movement: ['Isolamento'], instructions: ['Alinhe o eixo da máquina ao joelho.', 'Ajuste o apoio sobre a parte inferior da perna.', 'Estenda os joelhos com controle.', 'Retorne sem deixar a carga cair.'], tips: ['Mantenha o tronco apoiado.'], errors: ['Usar impulso do quadril.', 'Bater os pesos entre repetições.'] },
+  { terms: ['flexora'], movement: ['Isolamento'], instructions: ['Ajuste o equipamento ao comprimento das pernas.', 'Mantenha quadril e tronco estáveis.', 'Flexione os joelhos de forma controlada.', 'Retorne sem perder a tensão.'], tips: ['Evite elevar o quadril.'], errors: ['Reduzir a amplitude para mover mais carga.'] },
+  { terms: ['stiff', 'romeno'], movement: ['Dobradiça de quadril'], instructions: ['Posicione os pés e segure a carga com firmeza.', 'Mantenha leve flexão dos joelhos.', 'Leve o quadril para trás com a coluna neutra.', 'Retorne estendendo o quadril com controle.'], tips: ['Mantenha a carga próxima às pernas.'], errors: ['Arredondar a coluna.', 'Transformar o movimento em agachamento.'] },
+  { terms: ['avanco', 'afundo', 'passada'], movement: ['Unilateral', 'Agachar'], instructions: ['Defina uma base estável entre os pés.', 'Desça flexionando as duas pernas.', 'Mantenha o tronco controlado.', 'Retorne pressionando o chão com o pé da frente.'], tips: ['Comece sem carga se o equilíbrio estiver instável.'], errors: ['Usar uma base estreita demais.', 'Perder o alinhamento do joelho.'] },
+  { terms: ['elevacao pelvica', 'hip thrust'], movement: ['Dobradiça de quadril'], instructions: ['Ajuste o apoio das costas e posicione os pés.', 'Estabilize o tronco antes de elevar o quadril.', 'Estenda o quadril com controle.', 'Retorne sem perder a posição dos pés.'], tips: ['Evite hiperestender a região lombar.'], errors: ['Empurrar apenas com a lombar.', 'Alterar a posição dos pés durante a série.'] },
+  { terms: ['panturrilha'], movement: ['Isolamento'], instructions: ['Apoie os pés de forma estável.', 'Desça os calcanhares com controle.', 'Eleve os calcanhares sem perder o alinhamento.', 'Retorne de forma lenta.'], tips: ['Evite usar balanço.'], errors: ['Executar repetições curtas e aceleradas.'] },
+  { terms: ['desenvolvimento', 'shoulder press'], movement: ['Empurrar'], instructions: ['Ajuste o assento e estabilize o tronco.', 'Posicione a carga com punhos alinhados.', 'Empurre na amplitude confortável.', 'Retorne com controle.'], tips: ['Evite compensar com extensão excessiva da coluna.'], errors: ['Perder o apoio do tronco.', 'Descer a carga de forma brusca.'] },
+  { terms: ['elevacao lateral', 'elevacao frontal'], movement: ['Isolamento'], instructions: ['Estabilize tronco e ombros.', 'Eleve os braços com cotovelos levemente flexionados.', 'Pare antes de perder o controle.', 'Retorne lentamente.'], tips: ['Use carga que não exija balanço.'], errors: ['Impulsionar com o tronco.', 'Elevar os ombros em direção às orelhas.'] },
+  { terms: ['crucifixo inverso', 'face pull'], movement: ['Puxar', 'Isolamento'], instructions: ['Ajuste a altura do apoio ou da polia.', 'Estabilize o tronco.', 'Conduza os braços para trás com controle.', 'Retorne mantendo a posição dos ombros.'], tips: ['Mantenha o pescoço neutro.'], errors: ['Usar impulso lombar.', 'Encolher os ombros.'] },
+  { terms: ['rosca'], movement: ['Puxar', 'Isolamento'], instructions: ['Posicione cotovelos e tronco de forma estável.', 'Flexione os cotovelos sem deslocá-los para frente.', 'Aproxime a carga com controle.', 'Retorne até a amplitude confortável.'], tips: ['Evite balançar o corpo.'], errors: ['Usar impulso do quadril.', 'Perder o alinhamento dos punhos.'] },
+  { terms: ['triceps'], movement: ['Empurrar', 'Isolamento'], instructions: ['Estabilize ombros e cotovelos.', 'Estenda os cotovelos com controle.', 'Finalize sem travar a articulação bruscamente.', 'Retorne mantendo os cotovelos organizados.'], tips: ['Use amplitude confortável.'], errors: ['Abrir os cotovelos sem controle.', 'Movimentar o tronco para gerar impulso.'] },
+  { terms: ['prancha', 'dead bug', 'pallof'], movement: ['Core'], instructions: ['Organize a postura antes de iniciar.', 'Ative o abdômen sem prender a respiração.', 'Mantenha a posição durante o tempo planejado.', 'Encerre antes de perder o alinhamento.'], tips: ['Prefira séries curtas e consistentes.'], errors: ['Compensar com a região lombar.', 'Prender a respiração.'] },
+  { terms: ['abdominal', 'elevacao de pernas'], movement: ['Core'], instructions: ['Posicione a pelve e estabilize o tronco.', 'Inicie o movimento com controle abdominal.', 'Execute a amplitude confortável.', 'Retorne sem relaxar bruscamente.'], tips: ['Evite puxar o pescoço.'], errors: ['Usar balanço das pernas.', 'Perder o controle lombar.'] }
+];
+
+function getExerciseMovementTypes(nome, grupo, categoria) {
+  const key = normalizeExerciseKey(nome);
+  const rule = EXERCISE_CONTENT_RULES.find(item => item.terms.some(term => key.includes(normalizeExerciseKey(term))));
+  if (rule) return [...rule.movement];
+  if (key.includes('farmer') || key.includes('carreg')) return ['Carregar'];
+  if (key.includes('mobilidade') || key.includes('alongamento')) return ['Mobilidade'];
+  if (grupo === 'Core') return ['Core'];
+  if (categoria === 'Isolador') return ['Isolamento'];
+  if (['Costas', 'Bíceps'].includes(grupo)) return ['Puxar'];
+  if (['Peito', 'Ombros', 'Tríceps'].includes(grupo)) return ['Empurrar'];
+  if (grupo === 'Pernas' || grupo === 'Gluteos') return ['Agachar'];
+  return ['Isolamento'];
+}
+
+function getExerciseContentRule(nome) {
+  const key = normalizeExerciseKey(nome);
+  return EXERCISE_CONTENT_RULES.find(item => item.terms.some(term => key.includes(normalizeExerciseKey(term)))) || null;
+}
+
+function normalizeExerciseReference(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const exerciseId = String(source.exerciseId || source.id || '').trim();
+  const nome = String(source.nome || source.name || '').trim();
+  if (!exerciseId && !nome) return null;
+  return { ...source, exerciseId: exerciseId || null, nome: nome || null, reason: source.reason ? String(source.reason) : undefined };
+}
+
+function isValidExerciseMediaUrl(url) {
+  return isValidMediaUrl(url);
+}
+
+function normalizeExerciseMedia(media) {
+  const source = media && typeof media === 'object' ? { ...media } : {};
+  const provider = EXERCISE_ALLOWED_MEDIA_PROVIDERS.includes(String(source.videoProvider || source.provider || '').toLowerCase())
+    ? String(source.videoProvider || source.provider).toLowerCase()
+    : null;
+  const authorized = source.authorized === true;
+  const thumbnail = isValidExerciseMediaUrl(source.thumbnail || source.thumbnail_url) ? String(source.thumbnail || source.thumbnail_url) : null;
+  const requestedVideo = source.videoUrl || source.video_url;
+  const videoUrl = authorized && provider && isValidExerciseMediaUrl(requestedVideo) ? String(requestedVideo) : null;
+  return { ...source, thumbnail, videoUrl, videoProvider: provider, videoTitle: source.videoTitle ? String(source.videoTitle) : null, authorized };
+}
+
+function normalizeExerciseDefinition(exercise) {
   const raw = typeof exercise === 'string' ? { nome: exercise } : (exercise || {});
   const nome = String(raw.nome || raw.name || '').trim();
   if (!nome) return null;
@@ -7061,7 +7163,15 @@ function normalizeExercise(exercise) {
   const nivel = String(raw.nivel || raw.dificuldade || getExerciseDifficulty(nome, equipamento));
   const prescription = getExercisePrescription(grupo, categoria);
   const guide = getExerciseGuide(grupo);
-  const media = getExerciseMedia(nome);
+  const legacyMedia = getExerciseMedia(nome);
+  const media = normalizeExerciseMedia(raw.media || {
+    thumbnail: raw.thumbnail_url || legacyMedia.thumbnail_url,
+    videoUrl: raw.video_url || legacyMedia.video_url,
+    videoProvider: raw.video_provider || null,
+    videoTitle: raw.video_title || null,
+    authorized: raw.media_authorized === true
+  });
+  const contentRule = getExerciseContentRule(nome);
   const aliases = [...new Set([
     ...getExerciseAliases(nome),
     ...(Array.isArray(raw.aliases) ? raw.aliases : [])
@@ -7079,8 +7189,22 @@ function normalizeExercise(exercise) {
   const listOrFallback = (value, fallback) => Array.isArray(value) && value.length
     ? value.map(item => String(item || '').trim()).filter(Boolean)
     : [...fallback];
+  const primaryMuscles = listOrFallback(raw.musculosPrincipais || raw.musculos_primarios, guide.primarios);
+  const secondaryMuscles = listOrFallback(raw.musculosAuxiliares || raw.musculos_secundarios, guide.secundarios);
+  const instructions = listOrFallback(raw.instrucoes, contentRule?.instructions || guide.instrucoes);
+  const tips = listOrFallback(raw.dicas, contentRule?.tips || guide.dicas);
+  const commonErrors = listOrFallback(raw.errosComuns || raw.erros_comuns, contentRule?.errors || ['Usar impulso quando a proposta exige controle.', 'Perder o alinhamento durante a repeticao.']);
+  const safetyNotes = listOrFallback(raw.cuidados, EXERCISE_DEFAULT_SAFETY);
+  const rawMovements = raw.tipoMovimento || raw.tipos_movimento;
+  const normalizedMovements = (Array.isArray(rawMovements) ? rawMovements : (rawMovements ? [rawMovements] : getExerciseMovementTypes(nome, grupo, categoria)))
+    .map(item => String(item || '').trim()).filter(item => EXERCISE_ALLOWED_MOVEMENTS.includes(item));
+  const movementTypes = normalizedMovements.length ? normalizedMovements : getExerciseMovementTypes(nome, grupo, categoria);
+  const difficulty = EXERCISE_ALLOWED_DIFFICULTIES.includes(nivel) ? nivel : 'Intermediário';
+  const variations = (Array.isArray(raw.variacoes) ? raw.variacoes : []).map(normalizeExerciseReference).filter(Boolean);
+  const alternatives = (Array.isArray(raw.alternativas) ? raw.alternativas : []).map(normalizeExerciseReference).filter(Boolean);
 
   const normalized = {
+    ...raw,
     id: String(raw.id || getExerciseId(nome)),
     key,
     nome,
@@ -7089,18 +7213,29 @@ function normalizeExercise(exercise) {
     categoria,
     equipamento,
     kcal,
-    nivel,
+    nivel: difficulty,
     series_sugeridas: seriesSugeridas,
     reps_sugeridas: repsSugeridas,
     descanso_sugerido: descansoSugerido,
-    musculos_primarios: listOrFallback(raw.musculos_primarios, guide.primarios),
-    musculos_secundarios: listOrFallback(raw.musculos_secundarios, guide.secundarios),
-    instrucoes: listOrFallback(raw.instrucoes, guide.instrucoes),
-    dicas: listOrFallback(raw.dicas, guide.dicas),
+    musculos_primarios: primaryMuscles,
+    musculos_secundarios: secondaryMuscles,
+    instrucoes: instructions,
+    dicas: tips,
+    erros_comuns: commonErrors,
+    cuidados: safetyNotes,
+    variacoes: variations,
+    alternativas: alternatives,
+    grupoMuscular: grupo,
+    musculosPrincipais: primaryMuscles,
+    musculosAuxiliares: secondaryMuscles,
+    dificuldade: difficulty,
+    tipoMovimento: movementTypes,
+    unilateral: typeof raw.unilateral === 'boolean' ? raw.unilateral : movementTypes.includes('Unilateral'),
     observacoes: String(raw.observacoes ?? 'Ajuste carga e amplitude ao seu nível. Em caso de dor, interrompa e procure orientação profissional.'),
-    video_url: typeof raw.video_url === 'string' ? raw.video_url : media.video_url,
-    thumbnail_url: typeof raw.thumbnail_url === 'string' ? raw.thumbnail_url : media.thumbnail_url,
-    source_label: String(raw.source_label || media.source_label || 'Catálogo local FORJA'),
+    media,
+    video_url: media.videoUrl,
+    thumbnail_url: media.thumbnail,
+    source_label: String(raw.source_label || legacyMedia.source_label || 'Catálogo local FORJA'),
     guide
   };
 
@@ -7110,7 +7245,10 @@ function normalizeExercise(exercise) {
     normalized.grupo,
     normalized.categoria,
     normalized.equipamento,
-    normalized.nivel
+    normalized.nivel,
+    ...normalized.musculos_primarios,
+    ...normalized.musculos_secundarios,
+    ...normalized.tipoMovimento
   ].join(' '));
 
   // Campos legados continuam disponíveis para testes e renderizações anteriores.
@@ -7120,6 +7258,10 @@ function normalizeExercise(exercise) {
   normalized.repeticoesSugeridas = normalized.reps_sugeridas;
   normalized.videoUrl = normalized.video_url;
   return normalized;
+}
+
+function normalizeExercise(exercise) {
+  return normalizeExerciseDefinition(exercise);
 }
 
 const EXERCICIOS_BASE = EXERCICIO_NOMES_BASE
@@ -7133,6 +7275,112 @@ const EXERCICIOS_BASE = EXERCICIO_NOMES_BASE
   .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
 const EXERCISE_LIBRARY = EXERCICIOS_BASE;
+
+function buildExerciseSearchIndex(exercises = EXERCISE_LIBRARY) {
+  return (Array.isArray(exercises) ? exercises : []).map((exercise, index) => {
+    const definition = normalizeExerciseDefinition(exercise);
+    return {
+      id: definition.id,
+      index,
+      exercise: definition,
+      text: normalizeExerciseKey([
+        definition.nome,
+        ...definition.aliases,
+        definition.grupoMuscular,
+        ...definition.musculosPrincipais,
+        ...definition.musculosAuxiliares,
+        definition.equipamento,
+        definition.dificuldade,
+        ...definition.tipoMovimento
+      ].join(' '))
+    };
+  });
+}
+
+const EXERCISE_SEARCH_INDEX = buildExerciseSearchIndex(EXERCISE_LIBRARY);
+
+function searchExercises(query = '', filters = {}, exercises = EXERCISE_LIBRARY) {
+  const normalizedQuery = normalizeExerciseKey(query);
+  const sourceIndex = exercises === EXERCISE_LIBRARY ? EXERCISE_SEARCH_INDEX : buildExerciseSearchIndex(exercises);
+  const group = filters.grupo ? normalizeExerciseGroup(filters.grupo) : '';
+  const equipment = normalizeExerciseKey(filters.equipamento || '');
+  const difficulty = normalizeExerciseKey(filters.dificuldade || '');
+  const movement = normalizeExerciseKey(filters.tipoMovimento || '');
+  const laterality = String(filters.lateralidade || '');
+  return sourceIndex.filter(item => {
+    const exercise = item.exercise;
+    if (normalizedQuery && !item.text.includes(normalizedQuery)) return false;
+    if (group && group !== 'Outros' && normalizeExerciseGroup(exercise.grupo) !== group) return false;
+    if (equipment && normalizeExerciseKey(exercise.equipamento) !== equipment) return false;
+    if (difficulty && normalizeExerciseKey(exercise.dificuldade) !== difficulty) return false;
+    if (movement && !exercise.tipoMovimento.some(value => normalizeExerciseKey(value) === movement)) return false;
+    if (laterality === 'unilateral' && !exercise.unilateral) return false;
+    if (laterality === 'bilateral' && exercise.unilateral) return false;
+    return true;
+  }).map(item => item.exercise);
+}
+
+function getExerciseContent(exerciseId) {
+  const definition = getExerciseById(exerciseId);
+  return definition ? normalizeExerciseDefinition(definition) : null;
+}
+
+function getExerciseVariations(exercise) {
+  const definition = typeof exercise === 'string' ? getExerciseById(exercise) : normalizeExerciseDefinition(exercise);
+  if (!definition) return [];
+  const explicit = definition.variacoes.map(reference => getExerciseById(reference.exerciseId || reference.nome)).filter(Boolean);
+  if (explicit.length) return [...new Map(explicit.map(item => [item.id, item])).values()];
+  const movements = new Set(definition.tipoMovimento);
+  return EXERCISE_LIBRARY.filter(candidate => candidate.id !== definition.id
+    && candidate.grupo === definition.grupo
+    && candidate.tipoMovimento.some(value => movements.has(value)))
+    .slice(0, 3);
+}
+
+function getExerciseAlternatives(exercise) {
+  const definition = typeof exercise === 'string' ? getExerciseById(exercise) : normalizeExerciseDefinition(exercise);
+  if (!definition) return [];
+  const explicit = definition.alternativas.map(reference => {
+    const candidate = getExerciseById(reference.exerciseId || reference.nome);
+    return candidate ? { ...candidate, reason: reference.reason || 'Alternativa cadastrada' } : null;
+  }).filter(Boolean);
+  if (explicit.length) return [...new Map(explicit.map(item => [item.id, item])).values()];
+  return EXERCISE_LIBRARY.filter(candidate => candidate.id !== definition.id
+    && candidate.grupo === definition.grupo
+    && candidate.equipamento !== definition.equipamento)
+    .slice(0, 3)
+    .map(candidate => ({ ...candidate, reason: `Alternativa com ${candidate.equipamento}` }));
+}
+
+function mergeExerciseDefinitionWithWorkoutInstance(definition, workoutInstance) {
+  const content = normalizeExerciseDefinition(definition || workoutInstance);
+  const instance = workoutInstance && typeof workoutInstance === 'object' ? { ...workoutInstance } : {};
+  if (!content) return instance;
+  return {
+    ...content,
+    ...instance,
+    exerciseId: instance.exerciseId || content.id,
+    nome: instance.nome || content.nome,
+    grupo: content.grupo,
+    equipamento: content.equipamento,
+    aliases: content.aliases,
+    musculosPrincipais: content.musculosPrincipais,
+    musculosAuxiliares: content.musculosAuxiliares,
+    instrucoes: content.instrucoes,
+    dicas: content.dicas,
+    erros_comuns: content.erros_comuns,
+    cuidados: content.cuidados,
+    tipoMovimento: content.tipoMovimento,
+    media: content.media,
+    series: instance.series ?? content.series_sugeridas,
+    reps: instance.reps ?? content.reps_sugeridas,
+    carga: instance.carga ?? null,
+    descanso: instance.descanso ?? content.descanso_sugerido,
+    rpeAlvo: instance.rpeAlvo ?? null,
+    observacoes: instance.observacoes ?? content.observacoes,
+    ordem: instance.ordem ?? 0
+  };
+}
 
 function getWorkoutExerciseName(item) {
   return String(item && typeof item === 'object' ? (item.nome || item.name || '') : (item || '')).trim();
@@ -8626,17 +8874,31 @@ async function saveWorkoutState() {
   });
 }
 
+let exerciseAdvancedFiltersInitialized = false;
+function initializeExerciseAdvancedFilters() {
+  if (exerciseAdvancedFiltersInitialized) return;
+  const equipment = document.getElementById('exercicio-equipamento');
+  const movement = document.getElementById('exercicio-movimento');
+  if (!equipment || !movement) return;
+  [...new Set(EXERCISE_LIBRARY.map(item => item.equipamento).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')).forEach(value => equipment.appendChild(new Option(value, value)));
+  EXERCISE_ALLOWED_MOVEMENTS.forEach(value => movement.appendChild(new Option(value, value)));
+  exerciseAdvancedFiltersInitialized = true;
+}
+
+function getExerciseLibraryFilters() {
+  return {
+    grupo: document.getElementById('exercicio-grupo')?.value || '',
+    equipamento: document.getElementById('exercicio-equipamento')?.value || '',
+    dificuldade: document.getElementById('exercicio-dificuldade')?.value || '',
+    tipoMovimento: document.getElementById('exercicio-movimento')?.value || '',
+    lateralidade: document.getElementById('exercicio-lateralidade')?.value || ''
+  };
+}
+
 function filtrarExerciciosBiblioteca() {
-  const busca = normalizeExerciseKey(document.getElementById('exercicio-busca')?.value || '');
-  const grupoFiltro = normalizeExerciseGroup(document.getElementById('exercicio-grupo')?.value || '');
-  return EXERCISE_LIBRARY
-    .filter(item => {
-      const matchesSearch = !busca
-        || item.search_text.includes(busca);
-      const matchesGroup = grupoFiltro === 'Outros' || normalizeExerciseGroup(item.grupo) === grupoFiltro;
-      return matchesSearch && matchesGroup;
-    })
-    .slice(0, 60);
+  initializeExerciseAdvancedFilters();
+  const busca = document.getElementById('exercicio-busca')?.value || '';
+  return searchExercises(busca, getExerciseLibraryFilters()).slice(0, 60);
 }
 
 function getFilteredExerciseLibrary() {
@@ -8675,6 +8937,12 @@ function isSafeExerciseMediaUrl(value) {
   return isValidMediaUrl(value);
 }
 
+function getExerciseThumbnail(exercise) {
+  const definition = typeof exercise === 'string' ? getExerciseById(exercise) : exercise;
+  const url = definition?.media?.thumbnail || definition?.thumbnail_url;
+  return isValidExerciseMediaUrl(url) ? url : null;
+}
+
 function renderThumbnailFallback(container, exercise, className = '') {
   if (!container) return;
   container.replaceChildren();
@@ -8685,7 +8953,7 @@ function renderThumbnailFallback(container, exercise, className = '') {
   wrapper.appendChild(icon);
   if (className.includes('exercise-library-media')) {
     const label = document.createElement('span');
-    label.textContent = exercise?.grupo || 'Exercício';
+    label.textContent = String(exercise?.nome || exercise?.grupo || 'Exercício').split(/\s+/).slice(0, 2).join(' ');
     wrapper.appendChild(label);
   }
   container.appendChild(wrapper);
@@ -8715,11 +8983,11 @@ function appendExerciseMediaFallback(media, exercise) {
 
   const title = document.createElement('p');
   title.className = 'text-sm font-semibold text-ink';
-  title.textContent = 'Demonstração em vídeo ainda não disponível.';
+  title.textContent = 'Vídeo demonstrativo ainda não disponível.';
 
   const description = document.createElement('p');
   description.className = 'text-xs text-mute mt-2';
-  description.textContent = 'Consulte as instruções abaixo para executar o movimento.';
+  description.textContent = 'Demonstração em vídeo ainda não disponível. Consulte as instruções abaixo para executar o movimento.';
 
   content.appendChild(icon);
   content.appendChild(group);
@@ -8767,34 +9035,58 @@ function renderExerciseMediaState(exercise) {
   appendExerciseMediaFallback(media, exercise);
 }
 
-function renderExerciseDetailList(elementId, items) {
+function renderExerciseMedia(exercise) {
+  renderExerciseMediaState(exercise);
+  return Boolean(document.getElementById('exercise-detail-media')?.children.length);
+}
+
+function renderExerciseDetailList(elementId, items, fallback = 'Informação ainda não cadastrada.') {
   const list = document.getElementById(elementId);
   if (!list) return;
   list.replaceChildren();
-  (Array.isArray(items) && items.length ? items : ['Informação ainda não cadastrada.']).forEach(item => {
+  (Array.isArray(items) && items.length ? items : [fallback]).forEach(item => {
     const li = document.createElement('li');
     li.textContent = item;
     list.appendChild(li);
   });
 }
 
+function renderExerciseRelations(elementId, items, showReason = false) {
+  const container = document.getElementById(elementId);
+  if (!container) return;
+  container.replaceChildren();
+  if (!items.length) {
+    const empty = document.createElement('p'); empty.textContent = 'Nenhuma opção relacionada cadastrada.'; container.appendChild(empty); return;
+  }
+  items.forEach(item => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'exercise-relation-button'; button.dataset.exerciseRelationId = item.id;
+    button.textContent = item.nome;
+    if (showReason && item.reason) { const reason = document.createElement('small'); reason.textContent = item.reason; button.appendChild(reason); }
+    button.addEventListener('click', () => navigateExerciseDetail(item.id));
+    container.appendChild(button);
+  });
+}
+
 function renderExerciseDetails(exercise) {
-  if (!exercise) return false;
-  document.getElementById('exercise-detail-eyebrow').textContent = `${exercise.grupo} · Guia do exercício`;
-  document.getElementById('exercise-detail-title').textContent = exercise.nome;
-  document.getElementById('exercise-detail-meta').textContent = `${exercise.equipamento} · ${exercise.categoria} · ~${exercise.kcal} kcal estimadas`;
-  document.getElementById('exercise-detail-primary').textContent = exercise.musculos_primarios.join(', ');
-  document.getElementById('exercise-detail-secondary').textContent = exercise.musculos_secundarios.join(', ');
-  document.getElementById('exercise-detail-observations').textContent = exercise.observacoes;
-  document.getElementById('exercise-detail-source').textContent = `Fonte: ${exercise.source_label}`;
+  const definition = normalizeExerciseDefinition(exercise);
+  if (!definition) return false;
+  currentExerciseDetailId = definition.id;
+  document.getElementById('exercise-detail-eyebrow').textContent = `${definition.grupo} · Guia do exercício`;
+  document.getElementById('exercise-detail-title').textContent = definition.nome;
+  document.getElementById('exercise-detail-meta').textContent = `${definition.equipamento} · ${definition.tipoMovimento.join(' / ')} · ~${definition.kcal} kcal estimadas`;
+  document.getElementById('exercise-detail-primary').textContent = definition.musculosPrincipais.join(', ') || 'Não informado';
+  document.getElementById('exercise-detail-secondary').textContent = definition.musculosAuxiliares.join(', ') || 'Não informado';
+  document.getElementById('exercise-detail-observations').textContent = definition.observacoes;
+  document.getElementById('exercise-detail-source').textContent = `Fonte: ${definition.source_label}`;
 
   const badges = document.getElementById('exercise-detail-badges');
   badges.replaceChildren();
   [
-    exercise.nivel,
-    `${exercise.series_sugeridas} séries`,
-    formatSuggestedReps(exercise.reps_sugeridas),
-    `${exercise.descanso_sugerido}s descanso`
+    definition.dificuldade,
+    ...definition.tipoMovimento,
+    `${definition.series_sugeridas} séries`,
+    formatSuggestedReps(definition.reps_sugeridas),
+    `${definition.descanso_sugerido}s descanso`
   ].forEach(label => {
     const badge = document.createElement('span');
     badge.className = 'exercise-badge';
@@ -8802,21 +9094,51 @@ function renderExerciseDetails(exercise) {
     badges.appendChild(badge);
   });
 
-  renderExerciseDetailList('exercise-detail-instructions', exercise.instrucoes);
-  renderExerciseDetailList('exercise-detail-tips', exercise.dicas);
-  renderExerciseMediaState(exercise);
+  renderExerciseDetailList('exercise-detail-instructions', definition.instrucoes, 'Detalhes de execução ainda não disponíveis.');
+  renderExerciseDetailList('exercise-detail-tips', definition.dicas);
+  renderExerciseDetailList('exercise-detail-errors', definition.erros_comuns);
+  renderExerciseDetailList('exercise-detail-safety', definition.cuidados, 'Priorize controle e técnica. Interrompa o exercício se sentir dor.');
+  renderExerciseRelations('exercise-detail-variations', getExerciseVariations(definition));
+  renderExerciseRelations('exercise-detail-alternatives', getExerciseAlternatives(definition), true);
+  renderExerciseMedia(definition);
 
   const addButton = document.getElementById('exercise-detail-add');
-  addButton.dataset.exerciseId = exercise.id;
+  addButton.dataset.exerciseId = definition.id;
   addButton.querySelector('span').textContent = `Adicionar ao ${getWorkoutLabel(getActiveWorkoutKey())}`;
+  const workout = state.treinos?.[getActiveWorkoutKey()];
+  const configuredIndex = (workout?.exercicios || []).findIndex(item => getWorkoutExerciseId(item) === definition.id || normalizeExerciseKey(getWorkoutExerciseName(item)) === definition.key);
+  const configureButton = document.getElementById('exercise-detail-configure');
+  configureButton.classList.toggle('hidden', configuredIndex < 0);
+  configureButton.dataset.exerciseIndex = configuredIndex >= 0 ? String(configuredIndex) : '';
+  document.getElementById('exercise-detail-back').classList.toggle('hidden', exerciseDetailHistory.length === 0);
   return true;
 }
 
 let exerciseModalReturnFocus = null;
+let exerciseDetailHistory = [];
+let currentExerciseDetailId = null;
+
+function navigateExerciseDetail(exerciseId) {
+  const next = getExerciseById(exerciseId);
+  if (!next) return false;
+  if (currentExerciseDetailId && currentExerciseDetailId !== next.id) exerciseDetailHistory.push(currentExerciseDetailId);
+  const rendered = renderExerciseDetails(next);
+  if (rendered && window.lucide) lucide.createIcons();
+  return rendered;
+}
+
+function goBackExerciseDetail() {
+  const previous = getExerciseById(exerciseDetailHistory.pop());
+  if (!previous) return false;
+  const rendered = renderExerciseDetails(previous);
+  if (rendered && window.lucide) lucide.createIcons();
+  return rendered;
+}
 
 function openExerciseModal(exerciseId) {
   const exercise = typeof exerciseId === 'object' ? exerciseId : getExerciseById(exerciseId);
   const modal = document.getElementById('exercise-detail-modal');
+  if (!modal?.open && !modal?.hasAttribute('open')) exerciseDetailHistory = [];
   if (!exercise || !modal || !renderExerciseDetails(exercise)) return false;
   exerciseModalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
@@ -8837,6 +9159,8 @@ function closeExerciseModal() {
   if (typeof modal.close === 'function' && modal.open) modal.close();
   else modal.removeAttribute('open');
   document.body.classList.remove('exercise-modal-open');
+  exerciseDetailHistory = [];
+  currentExerciseDetailId = null;
   if (exerciseModalReturnFocus?.isConnected) exerciseModalReturnFocus.focus({ preventScroll: true });
   exerciseModalReturnFocus = null;
 }
@@ -8926,7 +9250,7 @@ function renderExerciseResults() {
 
       const badges = document.createElement('div');
       badges.className = 'exercise-badges';
-      [item.nivel, `${item.series_sugeridas} séries`, formatSuggestedReps(item.reps_sugeridas), `${item.descanso_sugerido}s`].forEach(labelText => {
+      [item.nivel, item.tipoMovimento[0], `${item.series_sugeridas} séries`, formatSuggestedReps(item.reps_sugeridas)].filter(Boolean).forEach(labelText => {
         const badge = document.createElement('span');
         badge.className = 'exercise-badge';
         badge.textContent = labelText;
@@ -10442,6 +10766,16 @@ function popularSelectExercicios(divisao = null) {
 document.getElementById('btn-add-exercicio')?.addEventListener('click', adicionarExercicioDaBiblioteca);
 document.getElementById('exercicio-busca')?.addEventListener('input', renderExerciseResults);
 document.getElementById('exercicio-grupo')?.addEventListener('change', renderExerciseResults);
+['exercicio-equipamento', 'exercicio-dificuldade', 'exercicio-movimento', 'exercicio-lateralidade'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', renderExerciseResults);
+});
+document.getElementById('exercise-clear-filters')?.addEventListener('click', () => {
+  ['exercicio-busca', 'exercicio-grupo', 'exercicio-equipamento', 'exercicio-dificuldade', 'exercicio-movimento', 'exercicio-lateralidade'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.value = '';
+  });
+  renderExerciseResults();
+});
 document.getElementById('exercise-filter-chips')?.addEventListener('click', (event) => {
   const button = event.target.closest('.exercise-filter-chip');
   const select = document.getElementById('exercicio-grupo');
@@ -10456,6 +10790,13 @@ document.getElementById('exercicio-busca')?.addEventListener('keydown', (e) => {
 });
 document.getElementById('exercicio-resultados')?.addEventListener('dblclick', adicionarExercicioDaBiblioteca);
 document.getElementById('exercise-detail-close')?.addEventListener('click', closeExerciseModal);
+document.getElementById('exercise-detail-back')?.addEventListener('click', goBackExerciseDetail);
+document.getElementById('exercise-detail-configure')?.addEventListener('click', event => {
+  const index = Number(event.currentTarget.dataset.exerciseIndex);
+  if (!Number.isInteger(index) || index < 0) return;
+  closeExerciseModal();
+  openWorkoutExerciseConfig(index);
+});
 document.getElementById('exercise-detail-add')?.addEventListener('click', async (event) => {
   const exercise = getExerciseById(event.currentTarget.dataset.exerciseId);
   const result = await adicionarExercicioAoTreinoAtivo(exercise);
@@ -11753,6 +12094,94 @@ window.testFoodSearchUI = async function() {
     renderDiarioHoje();
   }
 }
+
+window.testExerciseContentV37 = async function() {
+  const result = {
+    normalizationOk: false, legacyExerciseHandled: false, existingIdsPreserved: false, unknownPropertiesPreserved: false,
+    instructionsRendered: false, musclesRendered: false, tipsRendered: false, commonErrorsRendered: false, safetyNotesRendered: false,
+    variationsOnlyExistingExercises: false, alternativesOnlyExistingExercises: false, invalidMediaHandled: false,
+    missingThumbnailFallbackOk: false, noBrokenImages: false, noUnauthorizedVideoAdded: false, searchByNameOk: false,
+    searchByAliasOk: false, searchByMuscleOk: false, searchByEquipmentOk: false, accentInsensitiveSearchOk: false,
+    filtersOk: false, detailsModalOpens: false, detailsModalCloses: false, variationNavigationOk: false,
+    workoutConfigurationPreserved: false, plansABCDEPreserved: false, catalogUnaffectedByWorkoutChanges: false,
+    favoritesOk: 'not_implemented', dashboardStillWorks: false, foodSearchStillWorks: false, liveWorkoutStillWorks: false,
+    historyStillWorks: false, syncStillWorks: false, mobileNoOverflow: false, noBlockingErrors: false,
+    completedPriorities: ['content', 'search', 'details', 'media-fallback'], deferredPriorities: ['favorites'], passed: false
+  };
+  const plansBefore = JSON.stringify(state.treinos);
+  const catalogBefore = JSON.stringify(EXERCISE_LIBRARY);
+  const storageBefore = Object.fromEntries(Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(Boolean).map(key => [key, localStorage.getItem(key)]));
+  const filterState = Object.fromEntries(['exercicio-busca', 'exercicio-grupo', 'exercicio-equipamento', 'exercicio-dificuldade', 'exercicio-movimento', 'exercicio-lateralidade'].map(id => [id, document.getElementById(id)?.value || '']));
+  try {
+    const legacy = normalizeExerciseDefinition({ nome: 'Exercício legado', grupo: 'Costas', campoAntigo: 'preservado' });
+    const identified = normalizeExerciseDefinition({ id: 'id-existente-v37', nome: 'Exercício identificado', grupo: 'Peito' });
+    result.normalizationOk = Boolean(legacy?.id && legacy.nome && legacy.grupoMuscular && Array.isArray(legacy.instrucoes) && Array.isArray(legacy.erros_comuns) && Array.isArray(legacy.cuidados) && Array.isArray(legacy.tipoMovimento) && legacy.media);
+    result.legacyExerciseHandled = Boolean(legacy?.id && legacy.nome === 'Exercício legado');
+    result.existingIdsPreserved = identified?.id === 'id-existente-v37';
+    result.unknownPropertiesPreserved = legacy?.campoAntigo === 'preservado';
+
+    const invalidMedia = normalizeExerciseMedia({ thumbnail: 'javascript:alert(1)', videoUrl: 'javascript:alert(2)', videoProvider: 'custom', authorized: false });
+    result.invalidMediaHandled = invalidMedia.thumbnail === null && invalidMedia.videoUrl === null;
+    result.noUnauthorizedVideoAdded = EXERCISE_LIBRARY.every(item => !item.media.videoUrl || item.media.authorized === true);
+
+    const byName = searchExercises('supino');
+    const byAlias = searchExercises('bench press');
+    const byMuscle = searchExercises('peitoral maior');
+    const byEquipment = searchExercises('halter');
+    const accentSearch = searchExercises('triceps');
+    result.searchByNameOk = byName.some(item => normalizeExerciseKey(item.nome).includes('supino'));
+    result.searchByAliasOk = byAlias.some(item => item.aliases.some(alias => normalizeExerciseKey(alias).includes('bench press')));
+    result.searchByMuscleOk = byMuscle.some(item => item.musculosPrincipais.some(muscle => normalizeExerciseKey(muscle).includes('peitoral')));
+    result.searchByEquipmentOk = byEquipment.some(item => normalizeExerciseKey(item.equipamento).includes('halter'));
+    result.accentInsensitiveSearchOk = accentSearch.some(item => normalizeExerciseKey([item.nome, item.grupo].join(' ')).includes('triceps'));
+    const filtered = searchExercises('', { dificuldade: 'Intermediário', tipoMovimento: 'Empurrar' });
+    result.filtersOk = filtered.length > 0 && filtered.every(item => item.dificuldade === 'Intermediário' && item.tipoMovimento.includes('Empurrar'));
+
+    const detailExercise = EXERCISE_LIBRARY.find(item => normalizeExerciseKey(item.nome).includes('supino')) || EXERCISE_LIBRARY[0];
+    const variations = getExerciseVariations(detailExercise);
+    const alternatives = getExerciseAlternatives(detailExercise);
+    result.variationsOnlyExistingExercises = variations.length > 0 && variations.every(item => getExerciseById(item.id));
+    result.alternativesOnlyExistingExercises = alternatives.length > 0 && alternatives.every(item => getExerciseById(item.id));
+    result.detailsModalOpens = openExerciseModal(detailExercise.id) && Boolean(document.getElementById('exercise-detail-modal')?.open || document.getElementById('exercise-detail-modal')?.hasAttribute('open'));
+    result.instructionsRendered = document.querySelectorAll('#exercise-detail-instructions li').length > 0;
+    result.musclesRendered = Boolean(document.getElementById('exercise-detail-primary')?.textContent.trim() && document.getElementById('exercise-detail-secondary')?.textContent.trim());
+    result.tipsRendered = document.querySelectorAll('#exercise-detail-tips li').length > 0;
+    result.commonErrorsRendered = document.querySelectorAll('#exercise-detail-errors li').length > 0;
+    result.safetyNotesRendered = (document.getElementById('exercise-detail-safety')?.textContent || '').includes('Interrompa o exercício se sentir dor');
+    result.missingThumbnailFallbackOk = Boolean(document.querySelector('#exercise-detail-media .exercise-media-fallback'));
+    result.noBrokenImages = !document.querySelector('#exercise-detail-media img');
+    const originalTitle = document.getElementById('exercise-detail-title')?.textContent;
+    result.variationNavigationOk = Boolean(variations[0] && navigateExerciseDetail(variations[0].id)
+      && document.getElementById('exercise-detail-title')?.textContent !== originalTitle
+      && goBackExerciseDetail()
+      && document.getElementById('exercise-detail-title')?.textContent === originalTitle);
+    closeExerciseModal();
+    result.detailsModalCloses = !document.getElementById('exercise-detail-modal')?.open;
+
+    const instance = { exerciseId: detailExercise.id, nome: detailExercise.nome, series: 5, reps: '8-10', carga: 42.5, descanso: 120, rpeAlvo: 8, observacoes: 'Configuração preservada', ordem: 2 };
+    const merged = mergeExerciseDefinitionWithWorkoutInstance(detailExercise, instance);
+    result.workoutConfigurationPreserved = merged.series === 5 && merged.reps === '8-10' && merged.carga === 42.5 && merged.descanso === 120 && merged.rpeAlvo === 8 && merged.observacoes === 'Configuração preservada' && merged.ordem === 2;
+    result.plansABCDEPreserved = plansBefore === JSON.stringify(state.treinos) && ['A', 'B', 'C', 'D', 'E'].every(key => Object.hasOwn(state.treinos, key));
+    result.catalogUnaffectedByWorkoutChanges = catalogBefore === JSON.stringify(EXERCISE_LIBRARY);
+    result.dashboardStillWorks = typeof renderDashboard === 'function' && Boolean(document.getElementById('screen-home'));
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function' && filtrarAlimentosLocal('banana').length > 0;
+    result.liveWorkoutStillWorks = typeof createActiveWorkoutSession === 'function' && typeof finalizeActiveWorkoutSession === 'function';
+    result.historyStillWorks = typeof renderTreinoHistoricoV32 === 'function' && typeof openWorkoutHistoryDetails === 'function';
+    result.syncStillWorks = typeof StorageService?.saveWorkouts === 'function' && typeof SyncQueue !== 'undefined';
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1;
+    const storageAfter = Object.fromEntries(Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter(Boolean).map(key => [key, localStorage.getItem(key)]));
+    result.noBlockingErrors = typeof normalizeExerciseDefinition === 'function' && typeof searchExercises === 'function' && JSON.stringify(storageBefore) === JSON.stringify(storageAfter);
+  } catch (error) {
+    console.warn('testExerciseContentV37 failed:', error);
+  } finally {
+    closeExerciseModal();
+    Object.entries(filterState).forEach(([id, value]) => { const field = document.getElementById(id); if (field) field.value = value; });
+    renderExerciseResults();
+  }
+  const essentialKeys = Object.keys(result).filter(key => !['favoritesOk', 'completedPriorities', 'deferredPriorities', 'passed'].includes(key));
+  result.passed = essentialKeys.every(key => result[key] === true);
+  return result;
+};
 
 window.testDashboardV36 = async function() {
   const result = {
