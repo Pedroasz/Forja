@@ -1446,7 +1446,7 @@
     <article class="premium-card bg-card border border-line rounded-2xl p-6">
       <section id="onboarding-welcome-view" data-onboarding-step="1"><h1 id="onboarding-title" class="font-display text-2xl font-semibold">Bem-vindo ao Forja</h1><p class="text-sm text-mute mt-2">Vamos configurar as informações básicas da sua conta.</p><div class="profile-review mt-5"><div><span>E-mail</span><strong id="onboarding-email"></strong></div><div><span>Nome inicial</span><strong id="onboarding-initial-name">Não informado</strong></div></div><div class="profile-actions"><button type="button" class="profile-primary" data-onboarding-next>Continuar</button></div></section>
       <section id="onboarding-personal-view" class="hidden" data-onboarding-step="2"><h1 class="font-display text-2xl font-semibold">Informações pessoais</h1><p class="text-sm text-mute mt-2">Somente os dados essenciais da sua conta.</p><div class="profile-form-grid mt-5"><label for="onboarding-full-name">Nome completo<input id="onboarding-full-name" autocomplete="name" maxlength="80" aria-describedby="onboarding-message"></label><label for="onboarding-display-name">Nome de exibição (opcional)<input id="onboarding-display-name" autocomplete="nickname" maxlength="40" aria-describedby="onboarding-message"></label><label for="onboarding-phone">Telefone (opcional)<input id="onboarding-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="onboarding-message"></label></div><div class="profile-actions"><button type="button" class="profile-secondary" data-onboarding-back>Voltar</button><button type="button" class="profile-primary" data-onboarding-next>Continuar</button></div></section>
-      <section id="onboarding-preferences-view" class="hidden" data-onboarding-step="3"><h1 class="font-display text-2xl font-semibold">Preferências</h1><p class="text-sm text-mute mt-2">Estas escolhas ficam prontas para uso futuro.</p><div class="profile-form-grid mt-5"><label for="onboarding-locale">Idioma<select id="onboarding-locale"><option value="pt-BR">Português (Brasil)</option></select></label><label for="onboarding-timezone">Fuso horário<input id="onboarding-timezone" autocomplete="off" maxlength="80" aria-describedby="onboarding-message"></label></div><div class="profile-actions"><button type="button" class="profile-secondary" data-onboarding-back>Voltar</button><button type="button" class="profile-primary" data-onboarding-next>Revisar</button></div></section>
+      <section id="onboarding-preferences-view" class="hidden" data-onboarding-step="3"><h1 class="font-display text-2xl font-semibold">Preferências</h1><p class="text-sm text-mute mt-2">Estas escolhas ficam prontas para uso futuro.</p><div class="profile-form-grid mt-5"><label for="onboarding-locale">Idioma<select id="onboarding-locale"><option value="pt-BR">Português (Brasil)</option></select></label></div><div class="profile-actions"><button type="button" class="profile-secondary" data-onboarding-back>Voltar</button><button type="button" class="profile-primary" data-onboarding-next>Revisar</button></div></section>
       <section id="onboarding-review-view" class="hidden" data-onboarding-step="4"><h1 class="font-display text-2xl font-semibold">Revise sua conta</h1><div id="onboarding-review" class="profile-review mt-5"></div><div class="profile-actions"><button type="button" class="profile-secondary" data-onboarding-back>Voltar</button><button type="button" id="onboarding-complete" class="profile-primary">Concluir configuração</button></div></section>
       <p id="onboarding-message" class="profile-status" role="status" aria-live="polite"></p>
     </article>
@@ -2096,7 +2096,7 @@
     <div class="screen-intro"><h2>Meu perfil</h2><p>Identificação e preferências da sua conta.</p></div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 profile-account-grid">
       <article class="premium-card bg-card border border-line rounded-2xl p-5"><div class="flex items-center gap-4"><div id="profile-avatar" class="profile-avatar">--</div><div><h3 id="profile-display-heading" class="font-display font-semibold text-lg">Sua conta</h3><p id="profile-full-heading" class="text-sm text-mute"></p><p id="profile-email-heading" class="text-xs text-mute mt-1"></p></div></div><p class="text-xs text-mint mt-4">Conta autenticada</p></article>
-      <form id="profile-form" class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-2" novalidate><h3 class="font-display font-semibold text-lg">Informações pessoais</h3><div class="profile-form-grid mt-4"><label for="profile-full-name">Nome completo<input id="profile-full-name" autocomplete="name" maxlength="80" aria-describedby="profile-message"></label><label for="profile-display-name">Nome de exibição (opcional)<input id="profile-display-name" autocomplete="nickname" maxlength="40" aria-describedby="profile-message"></label><label for="profile-phone">Telefone (opcional)<input id="profile-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="profile-message"></label></div><h3 class="font-display font-semibold text-lg mt-6">Preferências</h3><div class="profile-form-grid mt-4"><label for="profile-locale">Idioma<select id="profile-locale"><option value="pt-BR">Português (Brasil)</option></select></label><label for="profile-timezone">Fuso horário<input id="profile-timezone" maxlength="80"></label></div><div class="profile-actions"><button type="button" id="profile-cancel" class="profile-secondary">Cancelar alterações</button><button type="submit" id="profile-save" class="profile-primary">Salvar alterações</button></div><p id="profile-message" class="profile-status" role="status" aria-live="polite"></p></form>
+      <form id="profile-form" class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-2" novalidate><h3 class="font-display font-semibold text-lg">Informações pessoais</h3><div class="profile-form-grid mt-4"><label for="profile-full-name">Nome completo<input id="profile-full-name" autocomplete="name" maxlength="80" aria-describedby="profile-message"></label><label for="profile-display-name">Nome de exibição (opcional)<input id="profile-display-name" autocomplete="nickname" maxlength="40" aria-describedby="profile-message"></label><label for="profile-phone">Telefone (opcional)<input id="profile-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="profile-message"></label></div><h3 class="font-display font-semibold text-lg mt-6">Preferências</h3><div class="profile-form-grid mt-4"><label for="profile-locale">Idioma<select id="profile-locale"><option value="pt-BR">Português (Brasil)</option></select></label></div><div class="profile-actions"><button type="button" id="profile-cancel" class="profile-secondary">Cancelar alterações</button><button type="submit" id="profile-save" class="profile-primary">Salvar alterações</button></div><p id="profile-message" class="profile-status" role="status" aria-live="polite"></p></form>
       <article class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-3"><h3 class="font-display font-semibold text-lg">Conta e segurança</h3><p class="text-sm text-mute mt-2">E-mail: <strong id="profile-security-email"></strong></p><div class="profile-actions justify-start"><button type="button" id="profile-change-password" class="profile-secondary">Alterar senha</button><button type="button" id="profile-logout" class="profile-secondary">Sair da conta</button></div><p class="text-xs text-mute mt-4">Alteração de e-mail e exclusão da conta serão disponibilizadas em uma etapa futura.</p></article>
     </div>
   </section>
@@ -2801,7 +2801,7 @@ function normalizeCurrentUserProfile(profile = {}, options = {}) {
 function getProfileDisplayName(profile) { return String(profile?.display_name || profile?.full_name || '').trim(); }
 function getProfileInitials(profile) { const name=getProfileDisplayName(profile)||String(getCurrentAuthUser()?.email||'U'); return name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()).join('')||'U'; }
 function calculateProfileCompletion(profile) { const fields=['full_name','timezone','locale']; return Math.round(fields.filter(key=>String(profile?.[key]||'').trim()).length/fields.length*100); }
-function validateAccountProfile(input={}) { const full=String(input.full_name||'').trim(), display=String(input.display_name||'').trim(); if(full.length<2||full.length>80||!/[\p{L}\p{N}]/u.test(full)) return {valid:false,field:'full_name',message:'Informe um nome completo válido entre 2 e 80 caracteres.'}; if(display&&(display.length<2||display.length>40)) return {valid:false,field:'display_name',message:'O nome de exibição deve ter entre 2 e 40 caracteres.'}; if(!isValidProfileTimezone(input.timezone)) return {valid:false,field:'timezone',message:'Informe um fuso horário válido.'}; return {valid:true}; }
+function validateAccountProfile(input={}) { const full=String(input.full_name||'').trim(), display=String(input.display_name||'').trim(); if(full.length<2||full.length>80||!/[\p{L}\p{N}]/u.test(full)) return {valid:false,field:'full_name',message:'Informe um nome completo válido entre 2 e 80 caracteres.'}; if(display&&(display.length<2||display.length>40)) return {valid:false,field:'display_name',message:'O nome de exibição deve ter entre 2 e 40 caracteres.'}; return {valid:true}; }
 function buildSafeProfileUpdate(input={}) { const result={}; PROFILE_ACCOUNT_FIELDS.forEach(key=>{ if(Object.prototype.hasOwnProperty.call(input,key)){ if(key==='phone') result[key]=normalizePhone(input[key])||null; else if(key==='onboarding_step') result[key]=Math.max(0,Math.min(4,Number(input[key])||0)); else if(key==='onboarding_completed') result[key]=input[key]===true; else result[key]=String(input[key]??'').trim()||null; }}); result.updated_at=new Date().toISOString(); return result; }
 function mapProfileError(error) { if(!getCurrentAuthUser()) return 'Sua sessão não está disponível. Entre novamente.'; const m=String(error?.message||'').toLowerCase(); if(!navigator.onLine||/fetch|network|connection/.test(m)) return 'Não foi possível salvar seu perfil. Verifique sua conexão.'; return 'Não foi possível concluir a operação. Tente novamente.'; }
 function readAccountProfileCache(userId){ try{return JSON.parse(localStorage.getItem(getProfileCacheKey(userId))||'null');}catch(_){return null;} }
@@ -2810,12 +2810,32 @@ async function loadCurrentUserProfile(){ const user=getCurrentAuthUser(); if(!us
 async function saveCurrentUserProfile(profileData){ const user=getCurrentAuthUser(); if(!user) throw new Error('session_missing'); if(!navigator.onLine) throw new Error('network'); const update=buildSafeProfileUpdate(profileData); const {data,error}=await supabaseClient.from('profiles').update(update).eq('user_id',user.id).select('*').maybeSingle(); if(error||!data) throw error||new Error('profile_not_found'); const normalized=normalizeCurrentUserProfile(data); state.profile={loaded:true,loading:false,data:normalized,error:null,dirty:false}; writeAccountProfileCache(user.id,normalized); renderProfileIdentity(); if(typeof renderDashboard==='function') renderDashboard(); return normalized; }
 async function ensureCurrentUserProfile(){ const user=getCurrentAuthUser(); if(!user) throw new Error('session_missing'); if(profileInitializationPromise&&profileInitializationUserId===user.id) return profileInitializationPromise; profileInitializationUserId=user.id; profileInitializationPromise=(async()=>{ state.profile.loading=true; try{ let profile=await loadCurrentUserProfile(); if(!profile){ if(!navigator.onLine) throw new Error('network'); const seed=normalizeCurrentUserProfile({user_id:user.id,full_name:user.user_metadata?.full_name||user.user_metadata?.name||'',display_name:'',phone:'',timezone:detectProfileTimezone(),locale:'pt-BR',onboarding_completed:false,onboarding_step:0},{newProfile:true}); const {data,error}=await supabaseClient.from('profiles').upsert({user_id:user.id,...buildSafeProfileUpdate(seed)},{onConflict:'user_id'}).select('*').maybeSingle(); if(error||!data) throw error||new Error('profile_create_failed'); profile=normalizeCurrentUserProfile(data,{newProfile:true}); writeAccountProfileCache(user.id,profile); } state.profile={loaded:true,loading:false,data:profile,error:null,dirty:false}; return profile; }catch(error){ state.profile={loaded:false,loading:false,data:null,error:mapProfileError(error),dirty:false}; throw error; } })(); try{return await profileInitializationPromise;}finally{profileInitializationPromise=null;} }
 
+function createEmptyAccessContext(){ return { platformRoles:[], memberships:[], trainerRelationships:[], studentRelationships:[] }; }
+function normalizeAccessContext(data={}){ return { platformRoles:Array.isArray(data.platform_roles)?data.platform_roles:[], memberships:Array.isArray(data.memberships)?data.memberships:[], trainerRelationships:Array.isArray(data.trainer_relationships)?data.trainer_relationships:[], studentRelationships:Array.isArray(data.student_relationships)?data.student_relationships:[] }; }
+async function loadCurrentAccessContext(){
+  const user=getCurrentAuthUser();
+  if(!state.accessContext) state.accessContext={loaded:false,loading:false,data:createEmptyAccessContext(),error:null};
+  if(!user||!supabaseClient?.rpc||!navigator.onLine){ state.accessContext={loaded:true,loading:false,data:createEmptyAccessContext(),error:null}; return state.accessContext.data; }
+  state.accessContext.loading=true;
+  try{
+    const {data,error}=await supabaseClient.rpc('get_current_access_context');
+    if(error) throw error;
+    const normalized=normalizeAccessContext(data||{});
+    state.accessContext={loaded:true,loading:false,data:normalized,error:null};
+    return normalized;
+  }catch(error){
+    state.accessContext={loaded:true,loading:false,data:createEmptyAccessContext(),error:'access_context_unavailable'};
+    console.warn('Access context unavailable; continuing as individual user.');
+    return state.accessContext.data;
+  }
+}
+
 function getOnboardingDraft(userId){ try{return JSON.parse(localStorage.getItem(getOnboardingDraftKey(userId))||'null');}catch(_){return null;} }
 function saveOnboardingDraft(step){ const user=getCurrentAuthUser(); if(!user)return; const data=readOnboardingForm(); localStorage.setItem(getOnboardingDraftKey(user.id),JSON.stringify({...data,onboarding_step:step})); }
-function readOnboardingForm(){ return {full_name:authEl('onboarding-full-name')?.value||'',display_name:authEl('onboarding-display-name')?.value||'',phone:authEl('onboarding-phone')?.value||'',locale:authEl('onboarding-locale')?.value||'pt-BR',timezone:authEl('onboarding-timezone')?.value||detectProfileTimezone()}; }
-function renderOnboardingReview(){ const d=readOnboardingForm(),u=getCurrentAuthUser(); const rows=[['Nome',d.full_name],['Nome de exibição',d.display_name||'Não informado'],['E-mail',u?.email||''],['Telefone',d.phone||'Não informado'],['Idioma',d.locale],['Fuso horário',d.timezone]]; const box=authEl('onboarding-review'); box.replaceChildren(...rows.map(([a,b])=>{const x=document.createElement('div');const s=document.createElement('span');s.textContent=a;const strong=document.createElement('strong');strong.textContent=b;x.append(s,strong);return x;})); }
+function readOnboardingForm(){ return {full_name:authEl('onboarding-full-name')?.value||'',display_name:authEl('onboarding-display-name')?.value||'',phone:authEl('onboarding-phone')?.value||'',locale:authEl('onboarding-locale')?.value||'pt-BR'}; }
+function renderOnboardingReview(){ const d=readOnboardingForm(),u=getCurrentAuthUser(); const rows=[['Nome',d.full_name],['Nome de exibição',d.display_name||'Não informado'],['E-mail',u?.email||''],['Telefone',d.phone||'Não informado'],['Idioma',d.locale]]; const box=authEl('onboarding-review'); box.replaceChildren(...rows.map(([a,b])=>{const x=document.createElement('div');const s=document.createElement('span');s.textContent=a;const strong=document.createElement('strong');strong.textContent=b;x.append(s,strong);return x;})); }
 function showOnboardingStep(step){ const n=Math.max(1,Math.min(4,Number(step)||1)); document.querySelectorAll('[data-onboarding-step]').forEach(v=>v.classList.toggle('hidden',Number(v.dataset.onboardingStep)!==n)); document.querySelectorAll('[data-onboarding-progress]').forEach(v=>v.classList.toggle('active',Number(v.dataset.onboardingProgress)<=n)); if(n===4)renderOnboardingReview(); saveOnboardingDraft(n); }
-function showProfileOnboarding(profile){ authEl('tela-auth').style.display='none'; authEl('app-principal').classList.add('hidden'); authEl('onboarding-shell').classList.remove('hidden'); const u=getCurrentAuthUser(),d=getOnboardingDraft(u.id)||profile; authEl('onboarding-email').textContent=u.email||''; authEl('onboarding-initial-name').textContent=profile.full_name||'Não informado'; ['full-name','display-name','phone','locale','timezone'].forEach(key=>{const el=authEl(`onboarding-${key}`),prop=key.replaceAll('-','_');if(el)el.value=d?.[prop]||profile?.[prop]||(key==='locale'?'pt-BR':key==='timezone'?detectProfileTimezone():'');}); showOnboardingStep(d?.onboarding_step||1); if(window.lucide)lucide.createIcons(); }
+function showProfileOnboarding(profile){ authEl('tela-auth').style.display='none'; authEl('app-principal').classList.add('hidden'); authEl('onboarding-shell').classList.remove('hidden'); const u=getCurrentAuthUser(),d=getOnboardingDraft(u.id)||profile; authEl('onboarding-email').textContent=u.email||''; authEl('onboarding-initial-name').textContent=profile.full_name||'Não informado'; ['full-name','display-name','phone','locale'].forEach(key=>{const el=authEl(`onboarding-${key}`),prop=key.replaceAll('-','_');if(el)el.value=d?.[prop]||profile?.[prop]||(key==='locale'?'pt-BR':'');}); showOnboardingStep(d?.onboarding_step||1); if(window.lucide)lucide.createIcons(); }
 async function completeProfileOnboarding(){ const data=readOnboardingForm(),validation=validateAccountProfile(data),message=authEl('onboarding-message'); if(!validation.valid){message.textContent=validation.message;authEl(`onboarding-${validation.field.replaceAll('_','-')}`)?.focus();return false;} if(!navigator.onLine){message.textContent='Conecte-se à internet para concluir a configuração da conta.';saveOnboardingDraft(4);return false;} try{message.textContent='Salvando...';await saveCurrentUserProfile({...data,onboarding_completed:true,onboarding_step:4});localStorage.removeItem(getOnboardingDraftKey(getCurrentAuthUser().id));authEl('onboarding-shell').classList.add('hidden');await showApp();navigateToForjaScreen('home');return true;}catch(error){message.textContent=mapProfileError(error);saveOnboardingDraft(4);return false;} }
 
 function showAuthView(viewName) {
@@ -2854,6 +2874,7 @@ async function showAuthenticatedApp(session = currentSession) {
   authState.user = session.user; authState.session = session; authState.initialized = true; authState.loading = false; authState.error = null;
   try {
     const accountProfile = await ensureCurrentUserProfile();
+    void loadCurrentAccessContext();
     if (!accountProfile.onboarding_completed) { showProfileOnboarding(accountProfile); return true; }
     authEl('onboarding-shell')?.classList.add('hidden');
     await showApp();
@@ -3053,7 +3074,7 @@ function resetAuthenticatedUserState() {
   if (typeof liveWorkoutUiInterval !== 'undefined' && liveWorkoutUiInterval != null) { clearInterval(liveWorkoutUiInterval); liveWorkoutUiInterval = null; }
   if (typeof dashboardActiveTimer !== 'undefined' && dashboardActiveTimer != null) { clearInterval(dashboardActiveTimer); dashboardActiveTimer = null; }
   if (recoveryCooldownTimer != null) { clearInterval(recoveryCooldownTimer); recoveryCooldownTimer = null; recoveryCooldownUntil = 0; }
-  state.perfil = { ...DEFAULT_PROFILE }; state.profile = { loaded:false, loading:false, data:null, error:null, dirty:false }; state.diario = []; state.agua = []; state.evolucao = []; state.execucoes = [];
+  state.perfil = { ...DEFAULT_PROFILE }; state.profile = { loaded:false, loading:false, data:null, error:null, dirty:false }; state.accessContext = { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }; state.diario = []; state.agua = []; state.evolucao = []; state.execucoes = [];
   state.treinos = createEmptyWorkoutPlan(state.configTreino?.divisao || 'ABCDE'); state.activeWorkoutSession = null;
   profileInitializationPromise = null; profileInitializationUserId = null; pendingProfileNavigation = null;
   authEl('onboarding-shell')?.classList.add('hidden'); authEl('account-menu')?.classList.add('hidden');
@@ -8788,6 +8809,7 @@ const initialWorkoutConfig = loadWorkoutConfig();
 let state = {
   auth:      { ...INITIAL_FORJA_AUTH_STATE },
   profile:   { loaded: false, loading: false, data: null, error: null, dirty: false },
+  accessContext: { loaded: false, loading: false, data: { platformRoles: [], memberships: [], trainerRelationships: [], studentRelationships: [] }, error: null },
   perfil:    { ...DEFAULT_PROFILE },
   diario:    [],
   treinos:   ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO), initialWorkoutConfig.divisao),
@@ -8873,12 +8895,12 @@ function toast(msg) {
 }
 
 function renderProfileIdentity(){ const p=state.profile?.data,u=getCurrentAuthUser(),name=getProfileDisplayName(p)||'Sua conta',initials=getProfileInitials(p); const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value||'';}; set('header-account-initials',initials);set('profile-avatar',initials);set('profile-display-heading',name);set('profile-full-heading',p?.full_name||'');set('profile-email-heading',u?.email||'');set('profile-security-email',u?.email||''); }
-function fillProfileForm(){ const p=state.profile?.data||{}; [['profile-full-name','full_name'],['profile-display-name','display_name'],['profile-phone','phone'],['profile-locale','locale'],['profile-timezone','timezone']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=p[key]||(key==='locale'?'pt-BR':key==='timezone'?detectProfileTimezone():'');});state.profile.dirty=false;renderProfileIdentity(); }
+function fillProfileForm(){ const p=state.profile?.data||{}; [['profile-full-name','full_name'],['profile-display-name','display_name'],['profile-phone','phone'],['profile-locale','locale']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=p[key]||(key==='locale'?'pt-BR':'');});state.profile.dirty=false;renderProfileIdentity(); }
 function renderProfileScreen(){ fillProfileForm(); const m=document.getElementById('profile-message');if(m)m.textContent='';if(window.lucide)lucide.createIcons(); }
-async function saveProfileForm(){ const data={full_name:document.getElementById('profile-full-name')?.value,display_name:document.getElementById('profile-display-name')?.value,phone:document.getElementById('profile-phone')?.value,locale:document.getElementById('profile-locale')?.value,timezone:document.getElementById('profile-timezone')?.value},validation=validateAccountProfile(data),message=document.getElementById('profile-message'); if(!validation.valid){message.textContent=validation.message;document.getElementById(`profile-${validation.field.replaceAll('_','-')}`)?.focus();return false;} try{message.textContent='Salvando...';await saveCurrentUserProfile(data);message.textContent='Perfil salvo com sucesso.';fillProfileForm();return true;}catch(error){message.textContent=mapProfileError(error);return false;} }
+async function saveProfileForm(){ const data={full_name:document.getElementById('profile-full-name')?.value,display_name:document.getElementById('profile-display-name')?.value,phone:document.getElementById('profile-phone')?.value,locale:document.getElementById('profile-locale')?.value},validation=validateAccountProfile(data),message=document.getElementById('profile-message'); if(!validation.valid){message.textContent=validation.message;document.getElementById(`profile-${validation.field.replaceAll('_','-')}`)?.focus();return false;} try{message.textContent='Salvando...';await saveCurrentUserProfile(data);message.textContent='Perfil salvo com sucesso.';fillProfileForm();return true;}catch(error){message.textContent=mapProfileError(error);return false;} }
 function openAccountMenu(force){ const menu=document.getElementById('account-menu'),button=document.getElementById('btn-account-menu');const open=force??menu.classList.contains('hidden');menu.classList.toggle('hidden',!open);button?.setAttribute('aria-expanded',String(open)); }
 function closeUnsavedDialog(){ const d=document.getElementById('profile-unsaved-dialog');if(d?.close)d.close();else d?.removeAttribute('open'); }
-document.querySelectorAll('[data-onboarding-next]').forEach(button=>button.addEventListener('click',()=>{const current=Number(document.querySelector('[data-onboarding-step]:not(.hidden)')?.dataset.onboardingStep||1);if(current===2){const v=validateAccountProfile({...readOnboardingForm(),timezone:detectProfileTimezone()});if(!v.valid){document.getElementById('onboarding-message').textContent=v.message;document.getElementById(`onboarding-${v.field.replaceAll('_','-')}`)?.focus();return;}}showOnboardingStep(current+1);}));
+document.querySelectorAll('[data-onboarding-next]').forEach(button=>button.addEventListener('click',()=>{const current=Number(document.querySelector('[data-onboarding-step]:not(.hidden)')?.dataset.onboardingStep||1);if(current===2){const v=validateAccountProfile(readOnboardingForm());if(!v.valid){document.getElementById('onboarding-message').textContent=v.message;document.getElementById(`onboarding-${v.field.replaceAll('_','-')}`)?.focus();return;}}showOnboardingStep(current+1);}));
 document.querySelectorAll('[data-onboarding-back]').forEach(button=>button.addEventListener('click',()=>showOnboardingStep(Number(document.querySelector('[data-onboarding-step]:not(.hidden)')?.dataset.onboardingStep||2)-1)));
 document.getElementById('onboarding-shell')?.addEventListener('input',()=>saveOnboardingDraft(Number(document.querySelector('[data-onboarding-step]:not(.hidden)')?.dataset.onboardingStep||1)));
 document.getElementById('onboarding-complete')?.addEventListener('click',completeProfileOnboarding);
@@ -12212,6 +12234,7 @@ document.getElementById('input-backup-restaurar').addEventListener('change', (e)
       state = {
         auth:      state.auth || { ...INITIAL_FORJA_AUTH_STATE },
         profile:   state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false },
+        accessContext: state.accessContext || { loaded:false, loading:false, data:createEmptyAccessContext(), error:null },
         perfil:    dados.perfil    ?? null,
         diario:    dados.diario    ?? [],
         treinos:   dados.treinos   ?? TREINOS_PADRAO,
@@ -12235,7 +12258,7 @@ document.getElementById('input-backup-restaurar').addEventListener('change', (e)
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (!confirm('Deseja apagar TODOS os dados salvos localmente?')) return;
   Object.values(LS).forEach(k => localStorage.removeItem(k));
-  state = { auth: state.auth || { ...INITIAL_FORJA_AUTH_STATE }, profile: state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false }, perfil: null, diario: [], treinos: TREINOS_PADRAO, execucoes: [], evolucao: [], agua: [] };
+  state = { auth: state.auth || { ...INITIAL_FORJA_AUTH_STATE }, profile: state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false }, accessContext: state.accessContext || { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }, perfil: null, diario: [], treinos: TREINOS_PADRAO, execucoes: [], evolucao: [], agua: [] };
   dataDietaAtiva = todayISO();
   document.getElementById('perfil-resultado').classList.add('hidden');
   resetBuscaAlimento();
@@ -12981,6 +13004,44 @@ window.testWorkoutProgressionV33 = async function() {
   }
   const priorityZeroKeys = Object.keys(result).filter(key => !['applyRequiresConfirmation', 'completedPriorities', 'deferredPriorities', 'passed', 'mobileNoOverflow', 'dietStillWorks', 'foodSearchStillWorks', 'syncV31StillWorks', 'liveWorkoutStillWorks'].includes(key));
   result.passed = priorityZeroKeys.every(key => result[key] === true) && result.mobileNoOverflow && result.dietStillWorks && result.foodSearchStillWorks && result.syncV31StillWorks && result.liveWorkoutStillWorks;
+  return result;
+};
+
+window.testRolesFoundationV40B1 = async function(){
+  const loadSource=String(loadCurrentAccessContext), profileSaveSource=String(saveProfileForm), onboardingSource=String(readOnboardingForm);
+  const empty=normalizeAccessContext({}), roleProbe=buildSafeProfileUpdate({role:'platform_admin',admin:true,full_name:'Teste'});
+  let migrationAppliedRemotely=false;
+  if(getCurrentAuthUser()&&navigator.onLine&&supabaseClient?.rpc){
+    try{ const response=await supabaseClient.rpc('get_current_access_context'); migrationAppliedRemotely=!response.error&&Boolean(response.data); }catch(_){ migrationAppliedRemotely=false; }
+  }
+  const privilegedSelectors=Array.from(document.querySelectorAll('select option,input[type="radio"],input[type="checkbox"]')).some(element=>/platform_admin|gym_admin|trainer|owner|admin/i.test(`${element.value||''} ${element.textContent||''}`));
+  const result={
+    timezoneRemovedFromProfileUi:!document.getElementById('profile-timezone')&&!document.getElementById('onboarding-timezone'),
+    timezoneColumnNotRequiredByFrontend:!/timezone/.test(profileSaveSource)&&!/timezone/.test(onboardingSource),
+    accessContextStateExists:Boolean(state.accessContext&&state.accessContext.data),
+    accessContextRpcCallable:/\.rpc\('get_current_access_context'\)/.test(loadSource),
+    accessContextShapeOk:['platformRoles','memberships','trainerRelationships','studentRelationships'].every(key=>Array.isArray(empty[key])),
+    noRoleStoredInProfile:!('role'in roleProbe)&&!('admin'in roleProbe),
+    noRoleTrustedFromUserMetadata:!/user_metadata|localStorage/.test(loadSource),
+    noPrivilegedRoleSelector:!privilegedSelectors,
+    noOrganizationCreationUiYet:!document.querySelector('[id*="create-organization"],[data-action="create-organization"]'),
+    noTrainerDashboardYet:!document.getElementById('screen-trainer')&&!document.getElementById('trainer-dashboard'),
+    migrationAppliedRemotely,
+    currentUserIsolationOk:/getCurrentAuthUser\(\)/.test(loadSource)&&/rpc\('get_current_access_context'\)/.test(loadSource)&&!/user_id\s*:/.test(loadSource),
+    emptyContextHandled:Object.values(empty).every(Array.isArray)&&Object.values(empty).every(value=>value.length===0),
+    migrationMissingDoesNotBlockApp:/catch\(error\)/.test(loadSource)&&/continuing as individual user/.test(loadSource)&&/return state\.accessContext\.data/.test(loadSource),
+    authStillWorks:typeof initializeForjaAuth==='function'&&typeof logoutForjaUser==='function',
+    onboardingStillWorks:typeof completeProfileOnboarding==='function'&&document.querySelectorAll('[data-onboarding-step]').length===4,
+    profileStillWorks:typeof saveProfileForm==='function'&&!!document.getElementById('screen-profile'),
+    dashboardStillWorks:typeof renderDashboard==='function'&&!!document.getElementById('screen-home'),
+    dietStillWorks:!!document.getElementById('screen-dieta')&&typeof renderDiarioHoje==='function',
+    workoutStillWorks:!!document.getElementById('screen-treino')&&typeof renderTelaTreino==='function',
+    liveWorkoutStillWorks:typeof startLiveWorkout==='function',
+    historyStillWorks:typeof renderTreinoHistoricoV32==='function',
+    syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
+    noBlockingErrors:typeof loadCurrentAccessContext==='function'&&typeof normalizeAccessContext==='function'
+  };
+  result.passed=Object.values(result).every(value=>value===true);
   return result;
 };
 
