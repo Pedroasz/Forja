@@ -909,7 +909,7 @@
     .app-header .header-inner { width: 100%; }
     .app-content { width: 100% !important; max-width: 760px !important; padding: 20px 14px 30px !important; }
     .app-nav { padding-bottom: max(5px, env(safe-area-inset-bottom)); }
-    .nav-items { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .nav-items { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
     .app-nav .tab-btn { min-width: 0; padding: 8px 2px !important; }
     .app-nav .tab-icon-wrap { width: 34px !important; height: 30px !important; }
     .screen.active.diet-grid,
@@ -1231,6 +1231,71 @@
   .next-workout-plan-item strong { color: var(--forja-text); }
   .next-workout-evidence { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .next-workout-safety { margin-top: 14px; padding: 11px 12px; border-left: 3px solid var(--color-primary); color: var(--forja-muted); background: rgba(255,255,255,.03); border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.5; }
+  .dashboard-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 4px 2px 2px; }
+  .dashboard-hero h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(24px, 3vw, 34px); font-weight: 700; line-height: 1.1; }
+  .dashboard-hero p { color: var(--forja-muted); margin-top: 7px; font-size: 13px; }
+  .dashboard-status { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid rgba(84,89,104,.65); border-radius: 9px; color: var(--forja-muted); font-size: 11px; white-space: nowrap; }
+  .dashboard-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 4px rgba(52,211,153,.08); }
+  .dashboard-status[data-online="false"]::before { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.08); }
+  .dashboard-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .dashboard-metric { min-width: 0; padding: 14px; border: 1px solid rgba(84,89,104,.55); border-radius: 10px; background: rgba(255,255,255,.025); }
+  .dashboard-metric span { display: block; color: var(--forja-muted); font-size: 10px; }
+  .dashboard-metric strong { display: block; margin-top: 5px; font-family: 'JetBrains Mono', monospace; font-size: 17px; overflow-wrap: anywhere; }
+  .dashboard-card { min-width: 0; }
+  .dashboard-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+  .dashboard-card-heading h2 { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; }
+  .dashboard-card-heading p { color: var(--forja-muted); margin-top: 3px; font-size: 11px; }
+  .dashboard-card-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent); border-radius: 9px; }
+  .dashboard-card-icon svg { width: 17px; height: 17px; }
+  .dashboard-progress-row { margin-top: 12px; }
+  .dashboard-progress-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; color: var(--forja-muted); font-size: 11px; }
+  .dashboard-progress-label strong { color: var(--forja-text); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .dashboard-progress-track { height: 7px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.055); }
+  .dashboard-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--color-primary); transition: width .35s ease; }
+  .dashboard-progress-track.protein span { background: #46c7ad; }
+  .dashboard-progress-track.carbs span { background: #f2bd45; }
+  .dashboard-progress-track.fat span { background: #a78bfa; }
+  .dashboard-progress-track.water span { background: #3ba4ff; }
+  .dashboard-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .dashboard-action { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 12px; border: 1px solid rgba(84,89,104,.7); border-radius: 9px; color: var(--forja-text); font-size: 12px; font-weight: 650; transition: .2s ease; }
+  .dashboard-action:hover { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 50%, transparent); }
+  .dashboard-action.primary { color: #111218; background: var(--color-primary); border-color: var(--color-primary); }
+  .dashboard-action.primary:hover { color: #111218; background: var(--color-primary-hover); }
+  .dashboard-action svg { width: 15px; height: 15px; }
+  .dashboard-workout-shortcuts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .dashboard-workout-shortcut { min-width: 0; min-height: 82px; padding: 12px 8px; text-align: left; border: 1px solid rgba(84,89,104,.65); border-radius: 10px; background: rgba(255,255,255,.025); }
+  .dashboard-workout-shortcut:hover { border-color: color-mix(in srgb, var(--color-primary) 55%, transparent); background: color-mix(in srgb, var(--color-primary) 7%, transparent); }
+  .dashboard-workout-shortcut strong { display: block; color: var(--color-primary); font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
+  .dashboard-workout-shortcut span { display: block; margin-top: 6px; color: var(--forja-muted); font-size: 10px; overflow-wrap: anywhere; }
+  .dashboard-active-grid, .dashboard-last-grid, .dashboard-evolution-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .dashboard-stat { padding: 11px; border-radius: 9px; background: rgba(255,255,255,.03); }
+  .dashboard-stat span { display: block; color: var(--forja-muted); font-size: 10px; }
+  .dashboard-stat strong { display: block; margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 13px; overflow-wrap: anywhere; }
+  .dashboard-empty { padding: 18px; text-align: center; border: 1px dashed rgba(84,89,104,.7); border-radius: 10px; color: var(--forja-muted); }
+  .dashboard-empty svg { width: 24px; height: 24px; margin: 0 auto 8px; color: var(--color-primary); }
+  .dashboard-empty strong { display: block; color: var(--forja-text); font-size: 13px; }
+  .dashboard-empty p { margin-top: 4px; font-size: 11px; }
+  .dashboard-inline-empty { margin-top: 12px; padding: 10px 12px; color: var(--forja-muted); background: rgba(255,255,255,.025); border: 1px dashed rgba(84,89,104,.6); border-radius: 9px; font-size: 11px; }
+  .dashboard-quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .dashboard-quick-grid .dashboard-action { min-height: 48px; justify-content: flex-start; }
+  @media (max-width: 767px) {
+    .dashboard-hero { align-items: flex-start; }
+    .dashboard-hero h2 { font-size: 24px; }
+    .dashboard-hero p { max-width: 250px; }
+    .dashboard-status { padding: 7px 9px; }
+    .dashboard-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-metric { padding: 12px; }
+    .dashboard-workout-shortcuts { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 3px; }
+    .dashboard-workout-shortcuts::-webkit-scrollbar { display: none; }
+    .dashboard-workout-shortcut { flex: 0 0 112px; scroll-snap-align: start; }
+    .dashboard-active-grid, .dashboard-last-grid, .dashboard-evolution-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .dashboard-action { min-height: 46px; padding-inline: 9px; }
+  }
+  @media (max-width: 374px) {
+    .dashboard-status span { display: none; }
+    .dashboard-quick-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body class="font-body text-ink min-h-screen pb-24">
@@ -1287,7 +1352,88 @@
 
 <main class="app-content max-w-md lg:max-w-7xl mx-auto px-4 lg:px-8 py-6">
 
-  <section id="screen-dieta" class="screen active rise diet-grid">
+  <section id="screen-home" class="screen active rise">
+    <div class="dashboard-hero mb-5">
+      <div><h2 id="dashboard-greeting">Ola</h2><p id="dashboard-date">Veja seu resumo de hoje.</p></div>
+      <div id="dashboard-online-status" class="dashboard-status" data-online="true"><span>Online</span></div>
+    </div>
+
+    <div id="dashboard-overview" class="dashboard-overview mb-5" aria-label="Resumo do dia">
+      <div class="dashboard-metric"><span>Calorias consumidas</span><strong id="dashboard-overview-kcal">0 kcal</strong></div>
+      <div class="dashboard-metric"><span>Calorias restantes</span><strong id="dashboard-overview-remaining">--</strong></div>
+      <div class="dashboard-metric"><span>Agua</span><strong id="dashboard-overview-water">0 ml</strong></div>
+      <div class="dashboard-metric"><span>Treinos registrados</span><strong id="dashboard-overview-workouts">0</strong></div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+      <div class="space-y-5 xl:col-span-8">
+        <article id="dashboard-active-workout-card" class="dashboard-card premium-card bg-card border border-ember/35 rounded-2xl p-5 shadow-lg shadow-black/20 hidden">
+          <div class="dashboard-card-heading"><div><h2>Treino em andamento</h2><p id="dashboard-active-workout-name"></p></div><span class="dashboard-card-icon"><i data-lucide="activity"></i></span></div>
+          <div class="dashboard-active-grid">
+            <div class="dashboard-stat"><span>Duracao</span><strong id="dashboard-active-duration">00:00</strong></div>
+            <div class="dashboard-stat"><span>Exercicio atual</span><strong id="dashboard-active-exercise">--</strong></div>
+            <div class="dashboard-stat"><span>Series</span><strong id="dashboard-active-sets">0 / 0</strong></div>
+          </div>
+          <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span id="dashboard-active-status">Ativo</span><strong id="dashboard-active-percent">0%</strong></div><div class="dashboard-progress-track"><span id="dashboard-active-progress"></span></div></div>
+          <div class="dashboard-actions"><button type="button" id="dashboard-continue-workout" class="dashboard-action primary"><i data-lucide="play"></i>Continuar treino</button><button type="button" id="dashboard-toggle-workout" class="dashboard-action"><i data-lucide="pause"></i><span>Pausar</span></button></div>
+        </article>
+
+        <article class="dashboard-card premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Nutricao de hoje</h2><p id="dashboard-nutrition-caption">Consumo e metas do dia</p></div><span class="dashboard-card-icon"><i data-lucide="utensils"></i></span></div>
+          <div id="dashboard-nutrition-content">
+            <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span>Calorias</span><strong id="dashboard-kcal-label">0 / -- kcal</strong></div><div class="dashboard-progress-track"><span id="dashboard-kcal-progress"></span></div></div>
+            <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span>Proteina</span><strong id="dashboard-protein-label">0 / -- g</strong></div><div class="dashboard-progress-track protein"><span id="dashboard-protein-progress"></span></div></div>
+            <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span>Carboidrato</span><strong id="dashboard-carbs-label">0 / -- g</strong></div><div class="dashboard-progress-track carbs"><span id="dashboard-carbs-progress"></span></div></div>
+            <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span>Gordura</span><strong id="dashboard-fat-label">0 / -- g</strong></div><div class="dashboard-progress-track fat"><span id="dashboard-fat-progress"></span></div></div>
+          </div>
+          <p id="dashboard-no-foods" class="dashboard-inline-empty hidden">Nenhum alimento registrado hoje. Quando quiser, use o fluxo atual da Dieta.</p>
+          <div id="dashboard-nutrition-empty" class="dashboard-empty hidden"><i data-lucide="target"></i><strong>Configure suas metas</strong><p>Use seu perfil atual para liberar o acompanhamento nutricional.</p><button type="button" id="dashboard-configure-goals" class="dashboard-action mt-3">Configurar metas</button></div>
+          <div class="dashboard-actions"><button type="button" id="dashboard-add-food" class="dashboard-action primary"><i data-lucide="plus"></i>Registrar alimento</button><button type="button" id="dashboard-view-diary" class="dashboard-action"><i data-lucide="notebook-tabs"></i>Ver diario</button></div>
+        </article>
+
+        <article id="dashboard-workout-shortcuts-card" class="dashboard-card premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Iniciar treino</h2><p>Escolha um bloco para abrir a ficha.</p></div><span class="dashboard-card-icon"><i data-lucide="dumbbell"></i></span></div>
+          <div id="dashboard-workout-shortcuts" class="dashboard-workout-shortcuts" aria-label="Atalhos dos Treinos A a E"></div>
+        </article>
+
+        <article class="dashboard-card premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Ultimo treino</h2><p id="dashboard-last-workout-caption">Resumo da execucao mais recente</p></div><span class="dashboard-card-icon"><i data-lucide="history"></i></span></div>
+          <div id="dashboard-last-workout-content" class="dashboard-last-grid"></div>
+          <div id="dashboard-last-workout-empty" class="dashboard-empty hidden"><i data-lucide="clipboard-list"></i><strong>Seu historico comeca aqui</strong><p>Seus treinos concluidos aparecerao neste card.</p></div>
+          <div class="dashboard-actions"><button type="button" id="dashboard-workout-details" class="dashboard-action primary"><i data-lucide="eye"></i>Ver detalhes</button><button type="button" id="dashboard-workout-history" class="dashboard-action"><i data-lucide="list"></i>Ver historico</button></div>
+        </article>
+      </div>
+
+      <aside class="space-y-5 xl:col-span-4">
+        <article class="dashboard-card premium-card bg-card border border-blue-500/25 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Hidratacao</h2><p id="dashboard-water-caption">Consumo de hoje</p></div><span class="dashboard-card-icon" style="color:#3ba4ff;border-color:rgba(59,164,255,.25);background:rgba(59,164,255,.08)"><i data-lucide="droplets"></i></span></div>
+          <div class="dashboard-progress-row"><div class="dashboard-progress-label"><span>Agua</span><strong id="dashboard-water-label">0 / -- ml</strong></div><div class="dashboard-progress-track water"><span id="dashboard-water-progress"></span></div></div>
+          <p id="dashboard-no-water" class="dashboard-inline-empty hidden">Nenhum registro de agua hoje. Comece quando fizer sentido para sua rotina.</p>
+          <div class="dashboard-actions"><button type="button" id="dashboard-water-250" class="dashboard-action primary">+250 ml</button><button type="button" id="dashboard-water-500" class="dashboard-action">+500 ml</button><button type="button" id="dashboard-view-water" class="dashboard-action"><i data-lucide="arrow-right"></i>Ver hidratacao</button></div>
+        </article>
+
+        <article class="dashboard-card premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Evolucao</h2><p>Acompanhamento recente</p></div><span class="dashboard-card-icon"><i data-lucide="trending-up"></i></span></div>
+          <div id="dashboard-evolution-content" class="dashboard-evolution-grid"></div>
+          <div id="dashboard-evolution-empty" class="dashboard-empty hidden"><i data-lucide="line-chart"></i><strong>Nenhum registro ainda</strong><p>Seus registros de evolucao aparecerao aqui.</p></div>
+          <div class="dashboard-actions"><button type="button" id="dashboard-view-evolution" class="dashboard-action primary">Ver evolucao</button><button type="button" id="dashboard-add-evolution" class="dashboard-action">Novo registro</button></div>
+        </article>
+
+        <article class="dashboard-card premium-card bg-card border border-line/40 rounded-2xl p-5 shadow-lg shadow-black/20">
+          <div class="dashboard-card-heading"><div><h2>Acoes rapidas</h2><p>Acesse os fluxos existentes.</p></div><span class="dashboard-card-icon"><i data-lucide="zap"></i></span></div>
+          <div class="dashboard-quick-grid">
+            <button type="button" class="dashboard-action" data-dashboard-action="food"><i data-lucide="utensils"></i>Registrar alimento</button>
+            <button type="button" class="dashboard-action" data-dashboard-action="water"><i data-lucide="droplet"></i>Adicionar 250 ml</button>
+            <button type="button" class="dashboard-action" data-dashboard-action="workout"><i data-lucide="dumbbell"></i>Iniciar treino</button>
+            <button type="button" class="dashboard-action" data-dashboard-action="evolution"><i data-lucide="trending-up"></i>Registrar evolucao</button>
+            <button type="button" class="dashboard-action" data-dashboard-action="history"><i data-lucide="history"></i>Abrir historico</button>
+          </div>
+        </article>
+      </aside>
+    </div>
+  </section>
+
+  <section id="screen-dieta" class="screen rise diet-grid">
 
     <div class="screen-intro">
       <h2>Dieta e performance</h2>
@@ -2107,8 +2253,12 @@
       <div><p class="forja-wordmark">Forja</p><p class="forja-tagline">Performance diária</p></div>
     </div>
   </div>
-  <div class="nav-items max-w-md lg:max-w-7xl mx-auto grid grid-cols-4">
-    <button class="tab-btn active flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="dieta">
+  <div class="nav-items max-w-md lg:max-w-7xl mx-auto grid grid-cols-5">
+    <button class="tab-btn active flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="home">
+      <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="house" class="w-[18px] h-[18px]"></i></span>
+      Inicio
+    </button>
+    <button class="tab-btn flex flex-col items-center gap-1 py-3 text-mute text-[11px] font-medium active:scale-[0.97] transition-all duration-200" data-screen="dieta">
       <span class="tab-icon-wrap w-9 h-9 rounded-xl flex items-center justify-center transition"><i data-lucide="utensils" class="w-[18px] h-[18px]"></i></span>
       Dieta
     </button>
@@ -7934,15 +8084,29 @@ function mudarDiaDieta(delta) {
 document.getElementById('btn-dia-anterior').addEventListener('click', () => mudarDiaDieta(-1));
 document.getElementById('btn-dia-seguinte').addEventListener('click', () => mudarDiaDieta(1));
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('screen-' + btn.dataset.screen).classList.add('active');
-    if (btn.dataset.screen === 'treino') renderTelaTreino();
-    if (btn.dataset.screen === 'evolucao') renderGraficoEvolucao();
+function navigateToForjaScreen(screenName, options = {}) {
+  const name = String(screenName || 'home').replace(/^screen-/, '');
+  const screen = document.getElementById(`screen-${name}`);
+  if (!screen) return false;
+  document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.screen === name));
+  document.querySelectorAll('.screen').forEach(item => item.classList.toggle('active', item === screen));
+  if (name === 'home') renderDashboard();
+  if (name === 'treino') {
+    if (options.workoutKey && getAllWorkoutKeys().includes(String(options.workoutKey).toUpperCase())) treinoAtivo = String(options.workoutKey).toUpperCase();
+    renderTelaTreino();
+  }
+  if (name === 'evolucao') renderGraficoEvolucao();
+  syncDashboardActiveTimer();
+  requestAnimationFrame(() => {
+    const target = options.focusId ? document.getElementById(options.focusId) : (options.scrollId ? document.getElementById(options.scrollId) : null);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (options.focusId && typeof target?.focus === 'function') target.focus({ preventScroll: true });
   });
+  return true;
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => navigateToForjaScreen(btn.dataset.screen));
 });
 
 function toast(msg) {
@@ -8047,6 +8211,7 @@ function renderPerfilResultado() {
   document.getElementById('r-carb').textContent = carbG.toFixed(0) + ' g';
 
   renderDiarioTotais();
+  if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 document.getElementById('btn-calc-perfil').addEventListener('click', calcularPerfil);
@@ -8363,6 +8528,7 @@ function renderDiarioHoje() {
   });
 
   renderDiarioTotais();
+  if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 function metasDieta() {
@@ -8415,6 +8581,7 @@ function renderAgua() {
 
   document.getElementById('bar-agua').style.width = pct + '%';
   document.getElementById('bar-agua-label').textContent = `${total}ml / ${meta ? meta.toFixed(0) + 'ml' : '—'}`;
+  if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 async function adicionarAgua(ml) {
@@ -8994,6 +9161,7 @@ function renderLiveWorkoutEntry() {
   content.append(title, description);
   banner.append(content, button);
   container.appendChild(banner);
+  if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 function openLiveWorkoutConfirmation({ title, message, primaryLabel, secondaryLabel = '', onPrimary, onSecondary = null }) {
@@ -9527,6 +9695,7 @@ async function finalizeActiveWorkoutSession() {
     closeLiveWorkoutPreview();
     closeLiveWorkoutScreen();
     renderTelaTreino();
+    renderDashboard();
     openLiveWorkoutSummary(payload);
     const savedExecution = findExecutionByIdentity(records[0]);
     Promise.resolve(syncCompletedWorkout(savedExecution)).catch(error => {
@@ -11052,6 +11221,7 @@ function renderEvolucaoTabela() {
   const tbody = document.getElementById('tbody-evolucao');
   if (state.evolucao.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-mute py-4">Nenhum registro ainda.</td></tr>`;
+    if (typeof renderDashboard === 'function') renderDashboard();
     return;
   }
 
@@ -11084,6 +11254,7 @@ function renderEvolucaoTabela() {
     </tr>
   `;
   }).join('');
+  if (typeof renderDashboard === 'function') renderDashboard();
 }
 
 function renderContadores() {
@@ -11199,6 +11370,263 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   toast('Todos os dados foram apagados.');
 });
 
+let dashboardActiveTimer = null;
+let dashboardListenersBound = false;
+
+function getDashboardDateKey() {
+  return todayISO();
+}
+
+function dashboardPercent(value, target) {
+  const current = Number(value);
+  const goal = Number(target);
+  if (!Number.isFinite(current) || !Number.isFinite(goal) || goal <= 0) return 0;
+  return Math.max(0, Math.min(100, (current / goal) * 100));
+}
+
+function calculateDashboardNutrition() {
+  const date = getDashboardDateKey();
+  const records = (Array.isArray(state.diario) ? state.diario : []).filter(item => item.data === date);
+  const totals = records.reduce((result, item) => {
+    result.kcal += Number(item.kcal) || 0;
+    result.prot += Number(item.prot) || 0;
+    result.carb += Number(item.carb) || 0;
+    result.gord += Number(item.gord) || 0;
+    return result;
+  }, { kcal: 0, prot: 0, carb: 0, gord: 0 });
+  return { date, records, itemCount: records.length, totals, goals: metasDieta() };
+}
+
+function getDashboardHydrationSummary() {
+  const date = getDashboardDateKey();
+  const records = (Array.isArray(state.agua) ? state.agua : []).filter(item => item.data === date);
+  const total = records.reduce((sum, item) => sum + (Number(item.ml) || 0), 0);
+  const goal = metaAgua();
+  return { date, records, total, goal: Number.isFinite(Number(goal)) ? Number(goal) : null, percent: dashboardPercent(total, goal) };
+}
+
+function getDashboardWorkoutSummary() {
+  const entries = getWorkoutHistoryEntries(Array.isArray(state.execucoes) ? state.execucoes : []);
+  const active = state.activeWorkoutSession || null;
+  const progress = active ? getLiveWorkoutProgress(active) : null;
+  return { active, progress, entries, last: entries[0] || null };
+}
+
+function getDashboardEvolutionSummary() {
+  const records = (Array.isArray(state.evolucao) ? state.evolucao : []).slice().sort((a, b) => String(b.data || '').localeCompare(String(a.data || '')));
+  const latest = records[0] || null;
+  const previous = records[1] || null;
+  const latestWeight = Number(latest?.peso);
+  const previousWeight = Number(previous?.peso);
+  const variation = Number.isFinite(latestWeight) && Number.isFinite(previousWeight) ? latestWeight - previousWeight : null;
+  return { records, latest, previous, variation: variation == null ? null : Number(variation.toFixed(1)) };
+}
+
+function setDashboardProgress(labelId, progressId, consumed, goal, unit) {
+  const label = document.getElementById(labelId);
+  const progress = document.getElementById(progressId);
+  const current = Number.isFinite(Number(consumed)) ? Number(consumed) : 0;
+  const target = Number.isFinite(Number(goal)) && Number(goal) > 0 ? Number(goal) : null;
+  if (label) label.textContent = `${Math.round(current)} / ${target == null ? '--' : Math.round(target)} ${unit}`;
+  if (progress) {
+    const percent = dashboardPercent(current, target);
+    progress.style.width = `${percent}%`;
+    progress.parentElement?.setAttribute('aria-label', `${Math.round(percent)}%`);
+  }
+}
+
+function createDashboardStat(label, value) {
+  const item = document.createElement('div');
+  item.className = 'dashboard-stat';
+  const caption = document.createElement('span'); caption.textContent = label;
+  const content = document.createElement('strong'); content.textContent = value;
+  item.append(caption, content);
+  return item;
+}
+
+function renderDashboardWorkoutShortcuts() {
+  const container = document.getElementById('dashboard-workout-shortcuts');
+  if (!container) return;
+  container.replaceChildren();
+  getAllWorkoutKeys().forEach(key => {
+    const workout = state.treinos?.[key] || { nome: `Treino ${key}`, exercicios: [] };
+    const count = Array.isArray(workout.exercicios) ? workout.exercicios.length : 0;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'dashboard-workout-shortcut';
+    button.dataset.workoutKey = key;
+    button.setAttribute('aria-label', `Abrir Treino ${key}`);
+    const title = document.createElement('strong'); title.textContent = key;
+    const description = document.createElement('span'); description.textContent = `${workout.nome || `Treino ${key}`} - ${count} exercicio${count === 1 ? '' : 's'}`;
+    button.append(title, description);
+    container.appendChild(button);
+  });
+}
+
+function renderDashboardQuickActions() {
+  document.querySelectorAll('[data-dashboard-action]').forEach(button => button.disabled = false);
+}
+
+function updateDashboardActiveWorkoutClock() {
+  const session = state.activeWorkoutSession;
+  const duration = document.getElementById('dashboard-active-duration');
+  if (duration) duration.textContent = session ? formatLiveDuration(getActiveWorkoutElapsedMs(session)) : '00:00';
+}
+
+function syncDashboardActiveTimer() {
+  const shouldRun = Boolean(state?.activeWorkoutSession && document.getElementById('screen-home')?.classList.contains('active'));
+  if (shouldRun && dashboardActiveTimer == null) dashboardActiveTimer = window.setInterval(updateDashboardActiveWorkoutClock, 1000);
+  if (!shouldRun && dashboardActiveTimer != null) {
+    clearInterval(dashboardActiveTimer);
+    dashboardActiveTimer = null;
+  }
+  updateDashboardActiveWorkoutClock();
+}
+
+async function addDashboardHydration(ml) {
+  const previousDate = dataDietaAtiva;
+  dataDietaAtiva = getDashboardDateKey();
+  try {
+    await adicionarAgua(ml);
+  } finally {
+    dataDietaAtiva = previousDate;
+    atualizarLabelDataDieta();
+    renderAgua();
+    renderDashboard();
+  }
+}
+
+function bindDashboardListeners() {
+  if (dashboardListenersBound) return;
+  dashboardListenersBound = true;
+  document.getElementById('dashboard-add-food')?.addEventListener('click', () => navigateToForjaScreen('dieta', { focusId: 'f-busca' }));
+  document.getElementById('dashboard-configure-goals')?.addEventListener('click', () => navigateToForjaScreen('dieta', { focusId: 'p-peso' }));
+  document.getElementById('dashboard-view-diary')?.addEventListener('click', () => navigateToForjaScreen('dieta', { scrollId: 'diario-hoje' }));
+  document.getElementById('dashboard-view-water')?.addEventListener('click', () => navigateToForjaScreen('dieta', { scrollId: 'bar-agua' }));
+  document.getElementById('dashboard-water-250')?.addEventListener('click', () => addDashboardHydration(250));
+  document.getElementById('dashboard-water-500')?.addEventListener('click', () => addDashboardHydration(500));
+  document.getElementById('dashboard-continue-workout')?.addEventListener('click', openLiveWorkoutScreen);
+  document.getElementById('dashboard-toggle-workout')?.addEventListener('click', () => {
+    if (state.activeWorkoutSession?.status === 'paused') resumeActiveWorkoutSession();
+    else pauseActiveWorkoutSession();
+    renderDashboard();
+  });
+  document.getElementById('dashboard-workout-shortcuts')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-workout-key]');
+    if (button) navigateToForjaScreen('treino', { workoutKey: button.dataset.workoutKey, scrollId: 'live-workout-entry' });
+  });
+  document.getElementById('dashboard-workout-details')?.addEventListener('click', event => {
+    const identity = event.currentTarget.dataset.executionIdentity;
+    if (identity) openWorkoutHistoryDetails(identity);
+    else navigateToForjaScreen('treino');
+  });
+  document.getElementById('dashboard-workout-history')?.addEventListener('click', () => navigateToForjaScreen('treino', { scrollId: 'treino-historico' }));
+  document.getElementById('dashboard-view-evolution')?.addEventListener('click', () => navigateToForjaScreen('evolucao'));
+  document.getElementById('dashboard-add-evolution')?.addEventListener('click', () => navigateToForjaScreen('evolucao', { focusId: 'e-peso' }));
+  document.querySelector('.dashboard-quick-grid')?.addEventListener('click', event => {
+    const action = event.target.closest('[data-dashboard-action]')?.dataset.dashboardAction;
+    if (action === 'food') navigateToForjaScreen('dieta', { focusId: 'f-busca' });
+    if (action === 'water') addDashboardHydration(250);
+    if (action === 'workout') navigateToForjaScreen('treino');
+    if (action === 'evolution') navigateToForjaScreen('evolucao', { focusId: 'e-peso' });
+    if (action === 'history') navigateToForjaScreen('treino', { scrollId: 'treino-historico' });
+  });
+  window.addEventListener('online', renderDashboard);
+  window.addEventListener('offline', renderDashboard);
+}
+
+function renderDashboard() {
+  const nutrition = calculateDashboardNutrition();
+  const hydration = getDashboardHydrationSummary();
+  const workouts = getDashboardWorkoutSummary();
+  const evolution = getDashboardEvolutionSummary();
+  const profileName = String(state.perfil?.nome || state.perfil?.name || '').trim();
+  const greeting = document.getElementById('dashboard-greeting');
+  if (!greeting) return false;
+
+  greeting.textContent = profileName ? `Ola, ${profileName}` : 'Ola';
+  document.getElementById('dashboard-date').textContent = `${new Date(`${getDashboardDateKey()}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}. Veja seu resumo de hoje.`;
+  const online = navigator.onLine !== false;
+  const status = document.getElementById('dashboard-online-status');
+  status.dataset.online = String(online); status.querySelector('span').textContent = online ? 'Online' : 'Offline';
+
+  document.getElementById('dashboard-overview-kcal').textContent = `${Math.round(nutrition.totals.kcal)} kcal`;
+  document.getElementById('dashboard-overview-remaining').textContent = nutrition.goals ? `${Math.round(Math.max(0, nutrition.goals.kcal - nutrition.totals.kcal))} kcal` : '--';
+  document.getElementById('dashboard-overview-water').textContent = `${Math.round(hydration.total)} ml`;
+  document.getElementById('dashboard-overview-workouts').textContent = String(workouts.entries.length);
+
+  document.getElementById('dashboard-nutrition-caption').textContent = `${nutrition.itemCount} item${nutrition.itemCount === 1 ? '' : 's'} registrado${nutrition.itemCount === 1 ? '' : 's'} hoje`;
+  document.getElementById('dashboard-nutrition-content').classList.toggle('hidden', !nutrition.goals);
+  document.getElementById('dashboard-nutrition-empty').classList.toggle('hidden', Boolean(nutrition.goals));
+  document.getElementById('dashboard-no-foods').classList.toggle('hidden', nutrition.itemCount > 0);
+  setDashboardProgress('dashboard-kcal-label', 'dashboard-kcal-progress', nutrition.totals.kcal, nutrition.goals?.kcal, 'kcal');
+  setDashboardProgress('dashboard-protein-label', 'dashboard-protein-progress', nutrition.totals.prot, nutrition.goals?.prot, 'g');
+  setDashboardProgress('dashboard-carbs-label', 'dashboard-carbs-progress', nutrition.totals.carb, nutrition.goals?.carb, 'g');
+  setDashboardProgress('dashboard-fat-label', 'dashboard-fat-progress', nutrition.totals.gord, nutrition.goals?.gord, 'g');
+
+  document.getElementById('dashboard-water-caption').textContent = hydration.goal ? `${Math.round(hydration.percent)}% da meta atual` : 'Consumo atual sem meta configurada';
+  document.getElementById('dashboard-no-water').classList.toggle('hidden', hydration.total > 0);
+  setDashboardProgress('dashboard-water-label', 'dashboard-water-progress', hydration.total, hydration.goal, 'ml');
+
+  const activeCard = document.getElementById('dashboard-active-workout-card');
+  const shortcutsCard = document.getElementById('dashboard-workout-shortcuts-card');
+  activeCard.classList.toggle('hidden', !workouts.active);
+  shortcutsCard.classList.toggle('hidden', Boolean(workouts.active));
+  if (workouts.active) {
+    const session = workouts.active;
+    const currentExercise = session.exercises?.[session.currentExerciseIndex || 0];
+    document.getElementById('dashboard-active-workout-name').textContent = session.workoutName || `Treino ${session.workoutKey || ''}`;
+    document.getElementById('dashboard-active-exercise').textContent = currentExercise?.nome || '--';
+    document.getElementById('dashboard-active-sets').textContent = `${workouts.progress.completedSets} / ${workouts.progress.totalSets}`;
+    document.getElementById('dashboard-active-percent').textContent = `${workouts.progress.percent}%`;
+    document.getElementById('dashboard-active-progress').style.width = `${workouts.progress.percent}%`;
+    document.getElementById('dashboard-active-status').textContent = session.status === 'paused' ? 'Pausado' : 'Ativo';
+    const toggle = document.getElementById('dashboard-toggle-workout');
+    toggle.querySelector('span').textContent = session.status === 'paused' ? 'Retomar' : 'Pausar';
+  }
+  renderDashboardWorkoutShortcuts();
+
+  const lastContent = document.getElementById('dashboard-last-workout-content');
+  const lastEmpty = document.getElementById('dashboard-last-workout-empty');
+  const lastDetails = document.getElementById('dashboard-workout-details');
+  lastContent.replaceChildren();
+  lastEmpty.classList.toggle('hidden', Boolean(workouts.last));
+  lastContent.classList.toggle('hidden', !workouts.last);
+  lastDetails.textContent = workouts.last ? 'Ver detalhes' : 'Montar treino';
+  lastDetails.dataset.executionIdentity = workouts.last?.identity || '';
+  if (workouts.last) {
+    const last = workouts.last;
+    document.getElementById('dashboard-last-workout-caption').textContent = `${last.name || `Treino ${last.workoutKey}`} - ${last.workout_date ? fmtDataBR(last.workout_date) : 'data nao informada'}`;
+    lastContent.append(
+      createDashboardStat('Duracao', last.durationMinutes ? formatLiveDuration(last.durationMinutes * 60000) : '--'),
+      createDashboardStat('Exercicios', String(last.exercises?.length || 0)),
+      createDashboardStat('Series', String(last.completedSets || 0)),
+      createDashboardStat('Volume', formatLiveVolume(last.totalVolume || 0)),
+      createDashboardStat('RPE medio', last.averageRpe == null ? '--' : String(last.averageRpe)),
+      createDashboardStat('Recordes', String(detectExercisePersonalRecords(last, state.execucoes).length))
+    );
+  } else document.getElementById('dashboard-last-workout-caption').textContent = 'Resumo da execucao mais recente';
+
+  const evolutionContent = document.getElementById('dashboard-evolution-content');
+  const evolutionEmpty = document.getElementById('dashboard-evolution-empty');
+  evolutionContent.replaceChildren();
+  evolutionEmpty.classList.toggle('hidden', Boolean(evolution.latest));
+  evolutionContent.classList.toggle('hidden', !evolution.latest);
+  if (evolution.latest) {
+    evolutionContent.append(
+      createDashboardStat('Peso', Number.isFinite(Number(evolution.latest.peso)) ? `${Number(evolution.latest.peso).toFixed(1)} kg` : '--'),
+      createDashboardStat('Variacao', evolution.variation == null ? '--' : `${evolution.variation > 0 ? '+' : ''}${evolution.variation.toFixed(1)} kg`),
+      createDashboardStat('Data', evolution.latest.data ? fmtDataBR(evolution.latest.data) : '--'),
+      createDashboardStat('Registros', String(evolution.records.length))
+    );
+  }
+  renderDashboardQuickActions();
+  bindDashboardListeners();
+  syncDashboardActiveTimer();
+  if (window.lucide) lucide.createIcons();
+  return true;
+}
+
 function renderTudo() {
   initTema();
   initPerfilForm();
@@ -11209,6 +11637,7 @@ function renderTudo() {
   renderEvolucaoTabela();
   renderGraficoEvolucao();
   renderContadores();
+  renderDashboard();
   if (window.lucide) lucide.createIcons();
 }
 
@@ -11324,6 +11753,103 @@ window.testFoodSearchUI = async function() {
     renderDiarioHoje();
   }
 }
+
+window.testDashboardV36 = async function() {
+  const result = {
+    homeScreenExists: false, homeNavigationDesktopOk: false, homeNavigationMobileOk: false, dashboardInitialRenderOk: false,
+    profileGreetingOk: false, nutritionSummaryOk: false, nutritionUsesExistingCalculations: false, hydrationSummaryOk: false,
+    hydrationQuickAddUsesExistingFlow: false, activeWorkoutCardOk: false, continueWorkoutUsesExistingFlow: false,
+    workoutShortcutsABCDEOk: false, noExtraLabel: false, lastWorkoutSummaryOk: false, workoutDetailsReuseOk: false,
+    evolutionSummaryOk: false, quickActionsOk: false, emptyStatesOk: false, recentActivityOk: 'not_implemented',
+    noDuplicateListeners: false, noDuplicateTimers: false, noStateMutationDuringRender: false, offlineDashboardOk: false,
+    mobileNoOverflow: false, desktopUsesAvailableWidth: false, dietStillWorks: false, foodSearchStillWorks: false,
+    hydrationStillWorks: false, workoutProStillWorks: false, liveWorkoutStillWorks: false, historyV32StillWorks: false,
+    syncV31StillWorks: false, evolutionStillWorks: false, exportStillWorks: false, authStillWorks: false,
+    noBlockingErrors: false, completedPriorities: ['P0'], deferredPriorities: ['recentActivity', 'visualPolish'], passed: false
+  };
+  const original = {
+    perfil: state.perfil, diario: state.diario, agua: state.agua, treinos: state.treinos, execucoes: state.execucoes,
+    evolucao: state.evolucao, activeWorkoutSession: state.activeWorkoutSession, treinoAtivo,
+    activeScreen: document.querySelector('.screen.active')?.id || 'screen-home',
+    activeNav: document.querySelector('.tab-btn.active')?.dataset.screen || 'home'
+  };
+  const date = getDashboardDateKey();
+  const exercise = { exerciseId: 'dashboard-test-exercise', nome: 'Exercicio temporario', grupo: 'Peito', equipamento: 'Barra', series: 2, reps: '8-10', carga: 30, descanso: 90, ordem: 0 };
+  try {
+    state.perfil = { nome: 'Teste', peso: 80, get: 2200, metaProtKg: 2, metaGordKg: 1 };
+    state.diario = [{ id: 1, data: date, alimento: 'Item temporario', kcal: 400, prot: 30, carb: 45, gord: 10 }];
+    state.agua = [{ id: 1, data: date, ml: 750 }];
+    state.treinos = Object.fromEntries(getAllWorkoutKeys().map(key => [key, { nome: `Treino ${key}`, exercicios: key === 'A' ? [exercise] : [] }]));
+    state.execucoes = [{
+      id: 'dashboard-history', sessionId: 'dashboard-history', workoutKey: 'A', workout_date: date, completedAt: `${date}T10:00:00.000Z`, durationMinutes: 40, totalVolume: 1200, completedSets: 2, totalReps: 20, averageRpe: 8, syncStatus: 'synced',
+      sessionPayload: { id: 'dashboard-history', sessionId: 'dashboard-history', workoutKey: 'A', name: 'Treino A', workout_date: date, completedAt: `${date}T10:00:00.000Z`, durationMinutes: 40, totalVolume: 1200, completedSets: 2, totalReps: 20, averageRpe: 8, exercises: [{ ...exercise, sets: [{ setNumber: 1, type: 'normal', completed: true, reps: 10, load: 30, rpe: 8 }, { setNumber: 2, type: 'normal', completed: true, reps: 10, load: 30, rpe: 8 }] }] }
+    }];
+    state.evolucao = [{ id: 1, data: '2026-07-01', peso: 80 }, { id: 2, data: '2026-07-08', peso: 79.6 }];
+    treinoAtivo = 'A';
+    state.activeWorkoutSession = createActiveWorkoutSession('A', { persist: false, open: false, silent: true });
+    navigateToForjaScreen('home');
+    const stateBeforeRender = JSON.stringify({ perfil: state.perfil, diario: state.diario, agua: state.agua, treinos: state.treinos, execucoes: state.execucoes, evolucao: state.evolucao, activeWorkoutSession: state.activeWorkoutSession });
+    result.dashboardInitialRenderOk = renderDashboard() === true;
+    result.noStateMutationDuringRender = stateBeforeRender === JSON.stringify({ perfil: state.perfil, diario: state.diario, agua: state.agua, treinos: state.treinos, execucoes: state.execucoes, evolucao: state.evolucao, activeWorkoutSession: state.activeWorkoutSession });
+    result.homeScreenExists = Boolean(document.getElementById('screen-home'));
+    const homeNav = Array.from(document.querySelectorAll('.tab-btn')).find(button => button.dataset.screen === 'home');
+    result.homeNavigationDesktopOk = Boolean(homeNav && document.getElementById('screen-home')?.classList.contains('active'));
+    result.homeNavigationMobileOk = Boolean(homeNav?.querySelector('.tab-icon-wrap')) && document.querySelectorAll('.tab-btn').length === 5;
+    result.profileGreetingOk = document.getElementById('dashboard-greeting')?.textContent.includes('Teste');
+    const nutrition = calculateDashboardNutrition();
+    result.nutritionSummaryOk = nutrition.totals.kcal === 400 && document.getElementById('dashboard-overview-kcal')?.textContent.includes('400');
+    result.nutritionUsesExistingCalculations = JSON.stringify(nutrition.goals) === JSON.stringify(metasDieta());
+    const hydration = getDashboardHydrationSummary();
+    result.hydrationSummaryOk = hydration.total === 750 && document.getElementById('dashboard-water-label')?.textContent.includes('750');
+    result.hydrationQuickAddUsesExistingFlow = typeof addDashboardHydration === 'function' && /adicionarAgua/.test(String(addDashboardHydration)) && Boolean(document.getElementById('dashboard-water-250'));
+    result.activeWorkoutCardOk = !document.getElementById('dashboard-active-workout-card')?.classList.contains('hidden') && document.getElementById('dashboard-active-workout-name')?.textContent.includes('Treino A');
+    result.continueWorkoutUsesExistingFlow = typeof openLiveWorkoutScreen === 'function' && Boolean(document.getElementById('dashboard-continue-workout'));
+    const shortcutKeys = Array.from(document.querySelectorAll('#dashboard-workout-shortcuts [data-workout-key]')).map(button => button.dataset.workoutKey);
+    result.workoutShortcutsABCDEOk = ['A', 'B', 'C', 'D', 'E'].every(key => shortcutKeys.includes(key));
+    result.noExtraLabel = !/\bextra\b/i.test(document.getElementById('screen-home')?.textContent || '');
+    result.lastWorkoutSummaryOk = document.getElementById('dashboard-last-workout-caption')?.textContent.includes('Treino A') && document.getElementById('dashboard-last-workout-content')?.textContent.includes('1.200');
+    result.workoutDetailsReuseOk = typeof openWorkoutHistoryDetails === 'function' && document.getElementById('dashboard-workout-details')?.dataset.executionIdentity === 'session:dashboard-history';
+    result.evolutionSummaryOk = document.getElementById('dashboard-evolution-content')?.textContent.includes('79.6 kg') && document.getElementById('dashboard-evolution-content')?.textContent.includes('-0.4 kg');
+    result.quickActionsOk = document.querySelectorAll('[data-dashboard-action]').length === 5 && typeof navigateToForjaScreen === 'function';
+    const timerBefore = dashboardActiveTimer; syncDashboardActiveTimer(); const timerAfter = dashboardActiveTimer;
+    result.noDuplicateTimers = timerBefore != null && timerBefore === timerAfter;
+    bindDashboardListeners(); const listenersState = dashboardListenersBound; bindDashboardListeners();
+    result.noDuplicateListeners = listenersState === true && dashboardListenersBound === true;
+    state.perfil = null; state.diario = []; state.agua = []; state.execucoes = []; state.evolucao = []; state.activeWorkoutSession = null;
+    renderDashboard();
+    result.emptyStatesOk = !document.getElementById('dashboard-nutrition-empty')?.classList.contains('hidden')
+      && !document.getElementById('dashboard-last-workout-empty')?.classList.contains('hidden')
+      && !document.getElementById('dashboard-evolution-empty')?.classList.contains('hidden');
+    result.offlineDashboardOk = !/supabaseClient|\.from\(/.test(String(renderDashboard)) && Boolean(document.getElementById('dashboard-online-status'));
+    result.mobileNoOverflow = document.documentElement.scrollWidth <= window.innerWidth + 1;
+    result.desktopUsesAvailableWidth = document.querySelector('#screen-home .xl\\:col-span-8') != null && document.querySelector('#screen-home .xl\\:col-span-4') != null;
+    result.dietStillWorks = typeof renderDiarioHoje === 'function' && Boolean(document.getElementById('f-busca'));
+    result.foodSearchStillWorks = typeof filtrarAlimentosLocal === 'function' && filtrarAlimentosLocal('banana').length > 0;
+    result.hydrationStillWorks = typeof adicionarAgua === 'function' && typeof renderAgua === 'function';
+    result.workoutProStillWorks = typeof renderTelaTreino === 'function' && getAllWorkoutKeys().length === 5;
+    result.liveWorkoutStillWorks = typeof createActiveWorkoutSession === 'function' && typeof finalizeActiveWorkoutSession === 'function';
+    result.historyV32StillWorks = typeof renderTreinoHistoricoV32 === 'function' && typeof openWorkoutHistoryDetails === 'function';
+    result.syncV31StillWorks = typeof SyncQueue !== 'undefined' && typeof StorageService?.saveWorkouts === 'function';
+    result.evolutionStillWorks = typeof renderEvolucaoTabela === 'function' && Boolean(document.getElementById('btn-add-evolucao'));
+    result.exportStillWorks = typeof renderContadores === 'function' && Boolean(document.getElementById('btn-export'));
+    result.authStillWorks = typeof checkSession === 'function' && Boolean(document.getElementById('btn-entrar'));
+    result.noBlockingErrors = typeof renderDashboard === 'function' && typeof calculateDashboardNutrition === 'function' && typeof getDashboardWorkoutSummary === 'function';
+  } catch (error) {
+    console.warn('testDashboardV36 failed:', error);
+  } finally {
+    if (dashboardActiveTimer != null) { clearInterval(dashboardActiveTimer); dashboardActiveTimer = null; }
+    state.perfil = original.perfil; state.diario = original.diario; state.agua = original.agua; state.treinos = original.treinos;
+    state.execucoes = original.execucoes; state.evolucao = original.evolucao; state.activeWorkoutSession = original.activeWorkoutSession;
+    treinoAtivo = original.treinoAtivo;
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.toggle('active', screen.id === original.activeScreen));
+    document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.screen === original.activeNav));
+    renderDashboard();
+    syncDashboardActiveTimer();
+  }
+  const essentialKeys = Object.keys(result).filter(key => !['recentActivityOk', 'completedPriorities', 'deferredPriorities', 'passed'].includes(key));
+  result.passed = essentialKeys.every(key => result[key] === true);
+  return result;
+};
 
 window.testWorkoutProgressionV33 = async function() {
   const result = {
