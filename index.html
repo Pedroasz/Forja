@@ -1364,15 +1364,27 @@
   .profile-review { display:grid; gap:9px; padding:14px; background:var(--forja-panel-2); border:1px solid var(--forja-line); border-radius:10px; }
   .profile-review div { display:flex; justify-content:space-between; gap:16px; }
   .profile-review span { color:var(--forja-muted); }
+  .account-mode-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  .account-mode-option { min-height:62px; display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--forja-line); border-radius:10px; background:var(--forja-panel-2); cursor:pointer; }
+  .account-mode-option:has(input:checked) { border-color:var(--forja-orange); background:rgba(255,107,33,.08); }
+  .account-mode-option input { width:18px; height:18px; accent-color:var(--forja-orange); }
+  #screen-connections { width:100%; max-width:1180px; margin-inline:auto; }
+  .connections-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+  .connection-list { display:grid; gap:10px; margin-top:14px; }
+  .connection-item { padding:13px; border:1px solid var(--forja-line); border-radius:9px; background:var(--forja-panel-2); }
+  .invite-code-box { overflow-wrap:anywhere; letter-spacing:.04em; font-family:'JetBrains Mono',monospace; font-size:clamp(13px,2vw,18px); }
+  .connections-actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+  .connections-actions button { min-height:44px; }
   #screen-profile { width:100%; max-width:1180px; margin-inline:auto; }
   #screen-profile .profile-form-grid { max-width:720px; }
   @media(min-width:1024px){
     #screen-profile .profile-account-grid { grid-template-columns:minmax(280px,320px) minmax(0,1fr); }
     #screen-profile .profile-account-grid > :first-child { grid-column:1; }
     #screen-profile .profile-account-grid > #profile-form { grid-column:2; }
+    #screen-profile .profile-account-grid > .profile-modes-card { grid-column:1 / -1; }
     #screen-profile .profile-account-grid > :last-child { grid-column:1 / -1; }
   }
-  @media(max-width:639px){ .profile-shell{padding:18px 14px 34px}.profile-actions>*{flex:1}.profile-review div{display:grid;gap:3px}.profile-account-grid{grid-template-columns:1fr!important} }
+  @media(max-width:639px){ .profile-shell{padding:18px 14px 34px}.profile-actions>*{flex:1}.profile-review div{display:grid;gap:3px}.profile-account-grid{grid-template-columns:1fr!important}.account-mode-options,.connections-grid{grid-template-columns:1fr}.connections-actions>*{flex:1}.invite-code-box{font-size:13px} }
 </style>
 </head>
 <body class="font-body text-ink min-h-screen pb-24">
@@ -1477,7 +1489,7 @@
     </div>
   </div>
 </header>
-<div id="account-menu" class="account-menu hidden"><button type="button" id="account-open-profile"><i data-lucide="user-round"></i>Meu perfil</button><button type="button" id="account-open-export"><i data-lucide="download"></i>Exportar</button><button type="button" id="account-logout"><i data-lucide="log-out"></i>Sair da conta</button></div>
+<div id="account-menu" class="account-menu hidden"><button type="button" id="account-open-profile"><i data-lucide="user-round"></i>Meu perfil</button><button type="button" id="account-open-connections"><i data-lucide="users-round"></i>Conexões</button><button type="button" id="account-open-export"><i data-lucide="download"></i>Exportar</button><button type="button" id="account-logout"><i data-lucide="log-out"></i>Sair da conta</button></div>
 
 <main class="app-content max-w-md lg:max-w-7xl mx-auto px-4 lg:px-8 py-6">
 
@@ -2097,8 +2109,19 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 profile-account-grid">
       <article class="premium-card bg-card border border-line rounded-2xl p-5"><div class="flex items-center gap-4"><div id="profile-avatar" class="profile-avatar">--</div><div><h3 id="profile-display-heading" class="font-display font-semibold text-lg">Sua conta</h3><p id="profile-full-heading" class="text-sm text-mute"></p><p id="profile-email-heading" class="text-xs text-mute mt-1"></p></div></div><p class="text-xs text-mint mt-4">Conta autenticada</p></article>
       <form id="profile-form" class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-2" novalidate><h3 class="font-display font-semibold text-lg">Informações pessoais</h3><div class="profile-form-grid mt-4"><label for="profile-full-name">Nome completo<input id="profile-full-name" autocomplete="name" maxlength="80" aria-describedby="profile-message"></label><label for="profile-display-name">Nome de exibição (opcional)<input id="profile-display-name" autocomplete="nickname" maxlength="40" aria-describedby="profile-message"></label><label for="profile-phone">Telefone (opcional)<input id="profile-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="profile-message"></label></div><h3 class="font-display font-semibold text-lg mt-6">Preferências</h3><div class="profile-form-grid mt-4"><label for="profile-locale">Idioma<select id="profile-locale"><option value="pt-BR">Português (Brasil)</option></select></label></div><div class="profile-actions"><button type="button" id="profile-cancel" class="profile-secondary">Cancelar alterações</button><button type="submit" id="profile-save" class="profile-primary">Salvar alterações</button></div><p id="profile-message" class="profile-status" role="status" aria-live="polite"></p></form>
+      <article class="premium-card bg-card border border-line rounded-2xl p-5 profile-modes-card"><h3 class="font-display font-semibold text-lg">Como você usa o Forja</h3><p class="text-sm text-mute mt-2">Essas opções personalizam sua experiência. Elas não concedem acesso aos dados de outras pessoas.</p><div id="account-mode-options" class="account-mode-options mt-4"><label class="account-mode-option"><input type="checkbox" value="individual" data-account-mode><span>Uso individual</span></label><label class="account-mode-option"><input type="checkbox" value="student" data-account-mode><span>Sou aluno</span></label><label class="account-mode-option"><input type="checkbox" value="trainer" data-account-mode><span>Sou treinador</span></label></div><div class="profile-actions"><button type="button" id="profile-open-connections" class="profile-secondary">Abrir Conexões</button><button type="button" id="account-modes-save" class="profile-primary">Salvar modos de uso</button></div><p id="account-modes-message" class="profile-status" role="status" aria-live="polite"></p></article>
       <article class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-3"><h3 class="font-display font-semibold text-lg">Conta e segurança</h3><p class="text-sm text-mute mt-2">E-mail: <strong id="profile-security-email"></strong></p><div class="profile-actions justify-start"><button type="button" id="profile-change-password" class="profile-secondary">Alterar senha</button><button type="button" id="profile-logout" class="profile-secondary">Sair da conta</button></div><p class="text-xs text-mute mt-4">Alteração de e-mail e exclusão da conta serão disponibilizadas em uma etapa futura.</p></article>
     </div>
+  </section>
+
+  <section id="screen-connections" class="screen rise">
+    <div class="screen-intro"><h2>Conexões</h2><p>Gerencie vínculos seguros entre treinador e aluno.</p></div>
+    <div id="connections-individual-empty" class="premium-card bg-card border border-line rounded-2xl p-5 mt-5 hidden"><h3 class="font-display font-semibold text-lg">Conexões ainda não ativadas</h3><p class="text-sm text-mute mt-2">Ative o modo Aluno ou Treinador no seu perfil para criar conexões.</p><button type="button" id="connections-open-profile" class="profile-secondary mt-4">Abrir Meu perfil</button></div>
+    <div class="connections-grid mt-5">
+      <article id="trainer-invite-area" class="premium-card bg-card border border-line rounded-2xl p-5 hidden"><h3 class="font-display font-semibold text-lg">Convidar aluno</h3><p class="text-sm text-mute mt-2">Gere um código seguro com validade de sete dias.</p><button type="button" id="generate-trainer-invite" class="profile-primary mt-4">Gerar código de convite</button><div id="generated-invite-result" class="profile-review mt-4 hidden"><span class="text-mute">Código</span><strong id="generated-invite-code" class="invite-code-box"></strong><span class="text-mute">Expira em</span><strong id="generated-invite-expires"></strong><p class="text-xs text-mute">Este código será mostrado integralmente apenas agora.</p><div class="connections-actions"><button type="button" id="copy-generated-invite" class="profile-secondary">Copiar código</button><button type="button" id="dismiss-generated-invite" class="profile-secondary">Ocultar código</button></div></div><h4 class="font-semibold mt-6">Convites recentes</h4><div id="trainer-invitations-list" class="connection-list"></div></article>
+      <article id="student-accept-area" class="premium-card bg-card border border-line rounded-2xl p-5 hidden"><h3 class="font-display font-semibold text-lg">Conectar com treinador</h3><label for="student-invite-code" class="block text-sm text-mute mt-4">Código do convite</label><input id="student-invite-code" class="w-full mt-2 bg-card2 border border-line rounded-lg px-3 py-3 text-sm font-mono" autocomplete="off" autocapitalize="characters" maxlength="40" placeholder="FORJA-XXXX-XXXX-XXXX-XXXX-XXXX"><div class="connections-actions"><button type="button" id="preview-student-invite" class="profile-primary">Verificar código</button><button type="button" id="clear-student-invite" class="profile-secondary">Cancelar</button></div><p id="student-invite-message" class="profile-status" role="status" aria-live="polite"></p></article>
+    </div>
+    <article class="premium-card bg-card border border-line rounded-2xl p-5 mt-5"><h3 class="font-display font-semibold text-lg">Minhas conexões</h3><div id="connections-list" class="connection-list"></div></article>
   </section>
 
   <section id="screen-exportar" class="screen rise export-grid">
@@ -2141,6 +2164,8 @@
     </div>
   </section>
 </main>
+
+<dialog id="accept-invitation-dialog" class="exercise-detail-dialog" aria-modal="true" aria-labelledby="accept-invitation-title"><div class="exercise-detail-panel p-6"><div class="flex items-center justify-between gap-3"><h2 id="accept-invitation-title" class="font-display font-semibold text-xl">Confirmar conexão</h2><button type="button" id="accept-invitation-close" class="live-icon-button" aria-label="Fechar confirmação"><i data-lucide="x"></i></button></div><p id="accept-invitation-trainer" class="text-lg font-semibold mt-4"></p><p class="text-sm text-mute mt-3">Criar esta conexão não concede automaticamente acesso à sua alimentação, evolução, execuções ou outros dados. As permissões serão configuradas separadamente.</p><div class="profile-actions"><button type="button" id="accept-invitation-back" class="profile-secondary">Voltar</button><button type="button" id="accept-invitation-confirm" class="profile-primary">Aceitar convite</button></div><p id="accept-invitation-message" class="profile-status" role="status" aria-live="polite"></p></div></dialog>
 
 <dialog id="exercise-detail-modal" class="exercise-detail-dialog" aria-labelledby="exercise-detail-title">
   <div class="exercise-detail-panel">
@@ -2830,6 +2855,53 @@ async function loadCurrentAccessContext(){
   }
 }
 
+const ALLOWED_ACCOUNT_MODES=Object.freeze(['individual','student','trainer']);
+let activeInvitationCode=null;
+let activeInvitationMeta=null;
+let pendingInvitationPreview=null;
+let accountModesOperationPending=false;
+let invitationOperationPending=false;
+function normalizeAccountModes(values){ return [...new Set((Array.isArray(values)?values:[]).map(value=>String(value).trim().toLowerCase()))].filter(value=>ALLOWED_ACCOUNT_MODES.includes(value)); }
+function accountModesWithFallback(values){const normalized=normalizeAccountModes(values);return normalized.length?normalized:['individual'];}
+function getEffectiveAccountModes(){ return accountModesWithFallback(state.accountModes?.values); }
+function mapInvitationError(error){ const message=String(error?.message||'').toLowerCase(); if(message.includes('limite de convites'))return 'Você atingiu o limite de convites ativos.'; if(message.includes('modo treinador'))return 'Ative o modo Treinador no seu perfil para gerar convites.'; if(!navigator.onLine||/fetch|network|connection/.test(message))return 'Não foi possível concluir a operação. Verifique sua conexão.'; return 'Não foi possível concluir a operação. Tente novamente.'; }
+async function loadMyAccountModes(){
+  if(!state.accountModes)state.accountModes={loaded:false,loading:false,values:[],error:null};
+  if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc){state.accountModes={loaded:true,loading:false,values:['individual'],error:null};return state.accountModes.values;}
+  state.accountModes.loading=true;
+  try{const {data,error}=await supabaseClient.rpc('get_my_account_modes');if(error)throw error;const modes=normalizeAccountModes(data);state.accountModes={loaded:true,loading:false,values:modes.length?modes:['individual'],error:null};return state.accountModes.values;}
+  catch(error){state.accountModes={loaded:true,loading:false,values:['individual'],error:'account_modes_unavailable'};console.warn('Account modes unavailable; using individual fallback.');return state.accountModes.values;}
+}
+async function saveMyAccountModes(modes){
+  const normalized=normalizeAccountModes(modes);if(!normalized.length)throw new Error('at_least_one_mode');if(normalized.length!==new Set(modes).size||modes.some(mode=>!ALLOWED_ACCOUNT_MODES.includes(mode)))throw new Error('invalid_mode');
+  if(!getCurrentAuthUser()||!navigator.onLine)throw new Error('connection');
+  const {data,error}=await supabaseClient.rpc('set_my_account_modes',{requested_modes:normalized});if(error)throw error;
+  state.accountModes={loaded:true,loading:false,values:normalizeAccountModes(data),error:null};return state.accountModes.values;
+}
+async function loadMyTrainerInvitations(){
+  if(!state.trainerInvitations)state.trainerInvitations={loaded:false,loading:false,items:[],error:null};
+  if(!getEffectiveAccountModes().includes('trainer')||!navigator.onLine){state.trainerInvitations={loaded:true,loading:false,items:[],error:null};return [];}
+  state.trainerInvitations.loading=true;
+  try{const {data,error}=await supabaseClient.rpc('list_my_trainer_invitations');if(error)throw error;state.trainerInvitations={loaded:true,loading:false,items:Array.isArray(data)?data:[],error:null};return state.trainerInvitations.items;}
+  catch(error){state.trainerInvitations={loaded:true,loading:false,items:[],error:'invitations_unavailable'};console.warn('Trainer invitations unavailable.');return [];}
+}
+async function loadMyConnections(){
+  if(!state.connections)state.connections={loaded:false,loading:false,items:[],error:null};
+  if(!getCurrentAuthUser()||!navigator.onLine){state.connections={loaded:true,loading:false,items:[],error:null};return [];}
+  try{const {data,error}=await supabaseClient.rpc('list_my_trainer_student_connections');if(error)throw error;state.connections={loaded:true,loading:false,items:Array.isArray(data)?data:[],error:null};return state.connections.items;}
+  catch(error){state.connections={loaded:true,loading:false,items:[],error:'connections_unavailable'};console.warn('Connections unavailable.');return [];}
+}
+async function generateTrainerStudentInvitation(){
+  if(invitationOperationPending)return null;invitationOperationPending=true;
+  try{if(!getEffectiveAccountModes().includes('trainer'))throw new Error('modo treinador');const {data,error}=await supabaseClient.rpc('create_trainer_student_invitation');if(error)throw error;activeInvitationCode=String(data?.invite_code||'');activeInvitationMeta={expires_at:data?.expires_at||null,invite_code_prefix:data?.invite_code_prefix||''};await loadMyTrainerInvitations();renderConnectionsScreen();return data;}
+  finally{invitationOperationPending=false;}
+}
+async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value)return {valid:false,message:'Informe o código do convite.'};const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;pendingInvitationPreview=data?.valid?{...data,code:value}:null;return data||{valid:false};}
+async function acceptTrainerStudentInvitation(code){if(invitationOperationPending)return null;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('accept_trainer_student_invitation',{invite_code:String(code||'')});if(error)throw error;if(data?.accepted){await loadMyAccountModes();await refreshAccessContextAfterRelationshipChange();}return data;}finally{invitationOperationPending=false;}}
+async function cancelTrainerStudentInvitation(invitationId){if(invitationOperationPending)return false;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('cancel_trainer_invitation',{invitation_id:invitationId});if(error)throw error;await loadMyTrainerInvitations();renderConnectionsScreen();return data===true;}finally{invitationOperationPending=false;}}
+async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections()]);renderConnectionsScreen();return state.accessContext.data;}
+function clearFullInvitationCode(){activeInvitationCode=null;activeInvitationMeta=null;const code=document.getElementById('generated-invite-code');if(code)code.textContent='';document.getElementById('generated-invite-result')?.classList.add('hidden');}
+
 function getOnboardingDraft(userId){ try{return JSON.parse(localStorage.getItem(getOnboardingDraftKey(userId))||'null');}catch(_){return null;} }
 function saveOnboardingDraft(step){ const user=getCurrentAuthUser(); if(!user)return; const data=readOnboardingForm(); localStorage.setItem(getOnboardingDraftKey(user.id),JSON.stringify({...data,onboarding_step:step})); }
 function readOnboardingForm(){ return {full_name:authEl('onboarding-full-name')?.value||'',display_name:authEl('onboarding-display-name')?.value||'',phone:authEl('onboarding-phone')?.value||'',locale:authEl('onboarding-locale')?.value||'pt-BR'}; }
@@ -2874,7 +2946,7 @@ async function showAuthenticatedApp(session = currentSession) {
   authState.user = session.user; authState.session = session; authState.initialized = true; authState.loading = false; authState.error = null;
   try {
     const accountProfile = await ensureCurrentUserProfile();
-    void loadCurrentAccessContext();
+    void (async()=>{await loadMyAccountModes();await Promise.all([loadCurrentAccessContext(),loadMyTrainerInvitations(),loadMyConnections()]);})();
     if (!accountProfile.onboarding_completed) { showProfileOnboarding(accountProfile); return true; }
     authEl('onboarding-shell')?.classList.add('hidden');
     await showApp();
@@ -3074,7 +3146,7 @@ function resetAuthenticatedUserState() {
   if (typeof liveWorkoutUiInterval !== 'undefined' && liveWorkoutUiInterval != null) { clearInterval(liveWorkoutUiInterval); liveWorkoutUiInterval = null; }
   if (typeof dashboardActiveTimer !== 'undefined' && dashboardActiveTimer != null) { clearInterval(dashboardActiveTimer); dashboardActiveTimer = null; }
   if (recoveryCooldownTimer != null) { clearInterval(recoveryCooldownTimer); recoveryCooldownTimer = null; recoveryCooldownUntil = 0; }
-  state.perfil = { ...DEFAULT_PROFILE }; state.profile = { loaded:false, loading:false, data:null, error:null, dirty:false }; state.accessContext = { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }; state.diario = []; state.agua = []; state.evolucao = []; state.execucoes = [];
+  state.perfil = { ...DEFAULT_PROFILE }; state.profile = { loaded:false, loading:false, data:null, error:null, dirty:false }; state.accessContext = { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }; state.accountModes={loaded:false,loading:false,values:[],error:null};state.trainerInvitations={loaded:false,loading:false,items:[],error:null};state.connections={loaded:false,loading:false,items:[],error:null};clearFullInvitationCode();pendingInvitationPreview=null;state.diario = []; state.agua = []; state.evolucao = []; state.execucoes = [];
   state.treinos = createEmptyWorkoutPlan(state.configTreino?.divisao || 'ABCDE'); state.activeWorkoutSession = null;
   profileInitializationPromise = null; profileInitializationUserId = null; pendingProfileNavigation = null;
   authEl('onboarding-shell')?.classList.add('hidden'); authEl('account-menu')?.classList.add('hidden');
@@ -8810,6 +8882,9 @@ let state = {
   auth:      { ...INITIAL_FORJA_AUTH_STATE },
   profile:   { loaded: false, loading: false, data: null, error: null, dirty: false },
   accessContext: { loaded: false, loading: false, data: { platformRoles: [], memberships: [], trainerRelationships: [], studentRelationships: [] }, error: null },
+  accountModes: { loaded: false, loading: false, values: [], error: null },
+  trainerInvitations: { loaded: false, loading: false, items: [], error: null },
+  connections: { loaded: false, loading: false, items: [], error: null },
   perfil:    { ...DEFAULT_PROFILE },
   diario:    [],
   treinos:   ensureValidWorkoutPlan(load(LS.treinos, TREINOS_PADRAO), initialWorkoutConfig.divisao),
@@ -8859,6 +8934,7 @@ document.getElementById('btn-dia-seguinte').addEventListener('click', () => muda
 
 function navigateToForjaScreen(screenName, options = {}) {
   const name = String(screenName || 'home').replace(/^screen-/, '');
+  if (document.getElementById('screen-connections')?.classList.contains('active') && name !== 'connections') clearFullInvitationCode();
   if (document.getElementById('screen-profile')?.classList.contains('active') && state.profile?.dirty && name !== 'profile' && !options.ignoreDirty) {
     pendingProfileNavigation = { name, options }; const dialog = document.getElementById('profile-unsaved-dialog'); if (dialog?.showModal) dialog.showModal(); else dialog?.setAttribute('open',''); return false;
   }
@@ -8872,7 +8948,8 @@ function navigateToForjaScreen(screenName, options = {}) {
     renderTelaTreino();
   }
   if (name === 'evolucao') renderGraficoEvolucao();
-  if (name === 'profile') renderProfileScreen();
+  if (name === 'profile') { renderProfileScreen(); if(!state.accountModes?.loaded)void loadMyAccountModes().then(renderAccountModesProfile); }
+  if (name === 'connections') { renderConnectionsScreen(); void (async()=>{await loadMyAccountModes();await Promise.all([loadMyTrainerInvitations(),loadMyConnections()]);renderConnectionsScreen();})(); }
   syncDashboardActiveTimer();
   requestAnimationFrame(() => {
     const target = options.focusId ? document.getElementById(options.focusId) : (options.scrollId ? document.getElementById(options.scrollId) : null);
@@ -8896,7 +8973,21 @@ function toast(msg) {
 
 function renderProfileIdentity(){ const p=state.profile?.data,u=getCurrentAuthUser(),name=getProfileDisplayName(p)||'Sua conta',initials=getProfileInitials(p); const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value||'';}; set('header-account-initials',initials);set('profile-avatar',initials);set('profile-display-heading',name);set('profile-full-heading',p?.full_name||'');set('profile-email-heading',u?.email||'');set('profile-security-email',u?.email||''); }
 function fillProfileForm(){ const p=state.profile?.data||{}; [['profile-full-name','full_name'],['profile-display-name','display_name'],['profile-phone','phone'],['profile-locale','locale']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=p[key]||(key==='locale'?'pt-BR':'');});state.profile.dirty=false;renderProfileIdentity(); }
-function renderProfileScreen(){ fillProfileForm(); const m=document.getElementById('profile-message');if(m)m.textContent='';if(window.lucide)lucide.createIcons(); }
+function renderAccountModesProfile(){const modes=getEffectiveAccountModes();document.querySelectorAll('[data-account-mode]').forEach(input=>{input.checked=modes.includes(input.value);});}
+function renderProfileScreen(){ fillProfileForm();renderAccountModesProfile();const m=document.getElementById('profile-message');if(m)m.textContent='';if(window.lucide)lucide.createIcons(); }
+function formatConnectionDate(value){if(!value)return 'Não informado';const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString('pt-BR'):'Não informado';}
+function createConnectionItem(title,lines=[],action=null){const item=document.createElement('div');item.className='connection-item';const heading=document.createElement('strong');heading.textContent=title;item.appendChild(heading);lines.forEach(line=>{const p=document.createElement('p');p.className='text-xs text-mute mt-1';p.textContent=line;item.appendChild(p);});if(action)item.appendChild(action);return item;}
+function renderConnectionsScreen(){
+  const modes=getEffectiveAccountModes(),trainer=modes.includes('trainer'),student=modes.includes('student');
+  document.getElementById('connections-individual-empty')?.classList.toggle('hidden',trainer||student);
+  document.getElementById('trainer-invite-area')?.classList.toggle('hidden',!trainer);
+  document.getElementById('student-accept-area')?.classList.toggle('hidden',!student);
+  const result=document.getElementById('generated-invite-result');if(result){result.classList.toggle('hidden',!activeInvitationCode);document.getElementById('generated-invite-code').textContent=activeInvitationCode||'';document.getElementById('generated-invite-expires').textContent=activeInvitationMeta?.expires_at?formatConnectionDate(activeInvitationMeta.expires_at):'';}
+  const invitations=document.getElementById('trainer-invitations-list');if(invitations){invitations.replaceChildren();const items=state.trainerInvitations?.items||[];if(!items.length)invitations.appendChild(createConnectionItem('Nenhum convite recente'));else items.forEach(invite=>{let action=null;if(invite.status==='pending'&&new Date(invite.expires_at)>new Date()){action=document.createElement('button');action.type='button';action.className='profile-secondary mt-3 px-3';action.textContent='Cancelar convite';action.dataset.cancelInvitation=invite.id;}invitations.appendChild(createConnectionItem(invite.invite_code_prefix||'Convite',[`Status: ${invite.status}`,`Criado: ${formatConnectionDate(invite.created_at)}`,`Expira: ${formatConnectionDate(invite.expires_at)}`],action));});}
+  const list=document.getElementById('connections-list');if(list){list.replaceChildren();const items=state.connections?.items||[];if(!items.length)list.appendChild(createConnectionItem('Nenhuma conexão ativa'));else items.forEach(connection=>{const role=connection.role_in_relationship==='trainer'?'Aluno':'Treinador';const lines=[`Papel nesta conexão: ${role}`,`Status: ${connection.status}`];if(connection.role_in_relationship==='student')lines.push('Nenhuma permissão de acesso foi concedida ainda.');list.appendChild(createConnectionItem(connection.display_name||'Usuário do Forja',lines));});}
+  if(window.lucide)lucide.createIcons();
+}
+async function openConnectionsScreen(){return navigateToForjaScreen('connections');}
 async function saveProfileForm(){ const data={full_name:document.getElementById('profile-full-name')?.value,display_name:document.getElementById('profile-display-name')?.value,phone:document.getElementById('profile-phone')?.value,locale:document.getElementById('profile-locale')?.value},validation=validateAccountProfile(data),message=document.getElementById('profile-message'); if(!validation.valid){message.textContent=validation.message;document.getElementById(`profile-${validation.field.replaceAll('_','-')}`)?.focus();return false;} try{message.textContent='Salvando...';await saveCurrentUserProfile(data);message.textContent='Perfil salvo com sucesso.';fillProfileForm();return true;}catch(error){message.textContent=mapProfileError(error);return false;} }
 function openAccountMenu(force){ const menu=document.getElementById('account-menu'),button=document.getElementById('btn-account-menu');const open=force??menu.classList.contains('hidden');menu.classList.toggle('hidden',!open);button?.setAttribute('aria-expanded',String(open)); }
 function closeUnsavedDialog(){ const d=document.getElementById('profile-unsaved-dialog');if(d?.close)d.close();else d?.removeAttribute('open'); }
@@ -8906,6 +8997,7 @@ document.getElementById('onboarding-shell')?.addEventListener('input',()=>saveOn
 document.getElementById('onboarding-complete')?.addEventListener('click',completeProfileOnboarding);
 document.getElementById('btn-account-menu')?.addEventListener('click',()=>openAccountMenu());
 document.getElementById('account-open-profile')?.addEventListener('click',()=>{openAccountMenu(false);navigateToForjaScreen('profile');});
+document.getElementById('account-open-connections')?.addEventListener('click',()=>{openAccountMenu(false);openConnectionsScreen();});
 document.getElementById('account-open-export')?.addEventListener('click',()=>{openAccountMenu(false);navigateToForjaScreen('exportar');});
 document.getElementById('account-logout')?.addEventListener('click',()=>logoutForjaUser());
 document.getElementById('profile-form')?.addEventListener('input',()=>{state.profile.dirty=true;document.getElementById('profile-message').textContent='Alterações não salvas.';});
@@ -8913,6 +9005,20 @@ document.getElementById('profile-form')?.addEventListener('submit',event=>{event
 document.getElementById('profile-cancel')?.addEventListener('click',fillProfileForm);
 document.getElementById('profile-change-password')?.addEventListener('click',()=>{document.getElementById('auth-recovery-email').value=getCurrentAuthUser()?.email||'';showAuthView('forgot-password');});
 document.getElementById('profile-logout')?.addEventListener('click',()=>logoutForjaUser());
+document.getElementById('profile-open-connections')?.addEventListener('click',openConnectionsScreen);
+document.getElementById('connections-open-profile')?.addEventListener('click',()=>navigateToForjaScreen('profile'));
+document.getElementById('account-modes-save')?.addEventListener('click',async()=>{if(accountModesOperationPending)return;const message=document.getElementById('account-modes-message'),modes=Array.from(document.querySelectorAll('[data-account-mode]:checked')).map(input=>input.value);if(!modes.length){message.textContent='Selecione pelo menos um modo de uso.';return;}accountModesOperationPending=true;try{message.textContent='Salvando...';await saveMyAccountModes(modes);message.textContent='Modos de uso salvos.';renderAccountModesProfile();}catch(error){message.textContent=mapInvitationError(error);}finally{accountModesOperationPending=false;}});
+document.getElementById('generate-trainer-invite')?.addEventListener('click',async()=>{const message=document.getElementById('student-invite-message');try{await generateTrainerStudentInvitation();if(message)message.textContent='';}catch(error){toast(mapInvitationError(error));}});
+document.getElementById('copy-generated-invite')?.addEventListener('click',async()=>{if(!activeInvitationCode)return;try{await navigator.clipboard.writeText(`Use este código para se conectar comigo no Forja: ${activeInvitationCode}`);toast('Código copiado.');}catch(_){toast('Não foi possível copiar o código.');}});
+document.getElementById('dismiss-generated-invite')?.addEventListener('click',clearFullInvitationCode);
+document.getElementById('clear-student-invite')?.addEventListener('click',()=>{document.getElementById('student-invite-code').value='';document.getElementById('student-invite-message').textContent='';pendingInvitationPreview=null;});
+function closeAcceptInvitationDialog(){const dialog=document.getElementById('accept-invitation-dialog');if(dialog?.close)dialog.close();else dialog?.removeAttribute('open');pendingInvitationPreview=null;const input=document.getElementById('student-invite-code');if(input)input.value='';}
+document.getElementById('preview-student-invite')?.addEventListener('click',async()=>{const input=document.getElementById('student-invite-code'),message=document.getElementById('student-invite-message');try{const preview=await previewTrainerStudentInvitation(input.value);if(!preview?.valid){message.textContent=preview?.message||'Este código não é válido ou não está mais disponível.';input.focus();return;}message.textContent='';document.getElementById('accept-invitation-trainer').textContent=`Conectar com ${preview.trainer_display_name}?`;const dialog=document.getElementById('accept-invitation-dialog');if(dialog?.showModal)dialog.showModal();else dialog?.setAttribute('open','');document.getElementById('accept-invitation-back')?.focus();}catch(error){message.textContent=mapInvitationError(error);}});
+document.getElementById('accept-invitation-back')?.addEventListener('click',closeAcceptInvitationDialog);
+document.getElementById('accept-invitation-close')?.addEventListener('click',closeAcceptInvitationDialog);
+document.getElementById('accept-invitation-confirm')?.addEventListener('click',async()=>{const message=document.getElementById('accept-invitation-message'),code=pendingInvitationPreview?.code;if(!code)return;try{message.textContent='Conectando...';const result=await acceptTrainerStudentInvitation(code);if(!result?.accepted){message.textContent=result?.message||'Este convite não está mais disponível.';return;}closeAcceptInvitationDialog();toast('Conexão criada com sucesso.');renderConnectionsScreen();}catch(error){message.textContent=mapInvitationError(error);}});
+document.getElementById('trainer-invitations-list')?.addEventListener('click',async event=>{const button=event.target.closest('[data-cancel-invitation]');if(!button)return;try{await cancelTrainerStudentInvitation(button.dataset.cancelInvitation);toast('Convite cancelado.');}catch(error){toast(mapInvitationError(error));}});
+document.getElementById('accept-invitation-dialog')?.addEventListener('cancel',event=>{event.preventDefault();closeAcceptInvitationDialog();});
 document.getElementById('profile-unsaved-continue')?.addEventListener('click',closeUnsavedDialog);
 document.getElementById('profile-unsaved-discard')?.addEventListener('click',()=>{fillProfileForm();closeUnsavedDialog();const p=pendingProfileNavigation;pendingProfileNavigation=null;if(p)navigateToForjaScreen(p.name,{...p.options,ignoreDirty:true});});
 document.getElementById('profile-unsaved-save')?.addEventListener('click',async()=>{if(await saveProfileForm()){closeUnsavedDialog();const p=pendingProfileNavigation;pendingProfileNavigation=null;if(p)navigateToForjaScreen(p.name,{...p.options,ignoreDirty:true});}});
@@ -12235,6 +12341,9 @@ document.getElementById('input-backup-restaurar').addEventListener('change', (e)
         auth:      state.auth || { ...INITIAL_FORJA_AUTH_STATE },
         profile:   state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false },
         accessContext: state.accessContext || { loaded:false, loading:false, data:createEmptyAccessContext(), error:null },
+        accountModes: state.accountModes || { loaded:false,loading:false,values:[],error:null },
+        trainerInvitations: state.trainerInvitations || { loaded:false,loading:false,items:[],error:null },
+        connections: state.connections || { loaded:false,loading:false,items:[],error:null },
         perfil:    dados.perfil    ?? null,
         diario:    dados.diario    ?? [],
         treinos:   dados.treinos   ?? TREINOS_PADRAO,
@@ -12258,7 +12367,7 @@ document.getElementById('input-backup-restaurar').addEventListener('change', (e)
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (!confirm('Deseja apagar TODOS os dados salvos localmente?')) return;
   Object.values(LS).forEach(k => localStorage.removeItem(k));
-  state = { auth: state.auth || { ...INITIAL_FORJA_AUTH_STATE }, profile: state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false }, accessContext: state.accessContext || { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }, perfil: null, diario: [], treinos: TREINOS_PADRAO, execucoes: [], evolucao: [], agua: [] };
+  state = { auth: state.auth || { ...INITIAL_FORJA_AUTH_STATE }, profile: state.profile || { loaded:false, loading:false, data:null, error:null, dirty:false }, accessContext: state.accessContext || { loaded:false, loading:false, data:createEmptyAccessContext(), error:null }, accountModes:state.accountModes||{loaded:false,loading:false,values:[],error:null}, trainerInvitations:state.trainerInvitations||{loaded:false,loading:false,items:[],error:null}, connections:state.connections||{loaded:false,loading:false,items:[],error:null}, perfil: null, diario: [], treinos: TREINOS_PADRAO, execucoes: [], evolucao: [], agua: [] };
   dataDietaAtiva = todayISO();
   document.getElementById('perfil-resultado').classList.add('hidden');
   resetBuscaAlimento();
@@ -13004,6 +13113,58 @@ window.testWorkoutProgressionV33 = async function() {
   }
   const priorityZeroKeys = Object.keys(result).filter(key => !['applyRequiresConfirmation', 'completedPriorities', 'deferredPriorities', 'passed', 'mobileNoOverflow', 'dietStillWorks', 'foodSearchStillWorks', 'syncV31StillWorks', 'liveWorkoutStillWorks'].includes(key));
   result.passed = priorityZeroKeys.every(key => result[key] === true) && result.mobileNoOverflow && result.dietStillWorks && result.foodSearchStillWorks && result.syncV31StillWorks && result.liveWorkoutStillWorks;
+  return result;
+};
+
+window.testAccountModesInvitationsV40B2 = async function(){
+  let migrationSql='',migrationAppliedRemotely=false;
+  try{const response=await fetch(new URL('supabase/v40b2_account_modes_invitations.sql',window.location.href));if(response.ok)migrationSql=await response.text();}catch(_){}
+  if(getCurrentAuthUser()&&navigator.onLine&&supabaseClient?.rpc){try{const response=await supabaseClient.rpc('get_my_account_modes');migrationAppliedRemotely=!response.error&&Array.isArray(response.data);}catch(_){migrationAppliedRemotely=false;}}
+  const generateSource=String(generateTrainerStudentInvitation),acceptSource=String(acceptTrainerStudentInvitation),refreshSource=String(refreshAccessContextAfterRelationshipChange);
+  const allowedProbe=normalizeAccountModes(['trainer','student','trainer']),privilegedProbe=normalizeAccountModes(['owner','admin','platform_admin','support','gym_admin']);
+  const listFunction=(migrationSql.match(/create or replace function public\.list_my_trainer_invitations\(\)[\s\S]*?\$\$;/i)||[''])[0];
+  const invitationTable=(migrationSql.match(/create table if not exists public\.trainer_student_invitations[\s\S]*?\);/i)||[''])[0];
+  const result={
+    accountModesTableExpected:/create table if not exists public\.user_account_modes/i.test(migrationSql),
+    invitationsTableExpected:/create table if not exists public\.trainer_student_invitations/i.test(migrationSql),
+    onlyAllowedModesAccepted:normalizeAccountModes(['individual','student','trainer','unknown']).every(mode=>ALLOWED_ACCOUNT_MODES.includes(mode)),
+    privilegedModesBlocked:privilegedProbe.length===0,
+    multipleModesSupported:allowedProbe.length===2&&allowedProbe.includes('trainer')&&allowedProbe.includes('student'),
+    atLeastOneModeRequired:/!normalized\.length/.test(String(saveMyAccountModes)),
+    legacyUserFallsBackToIndividual:accountModesWithFallback([]).length===1&&accountModesWithFallback([])[0]==='individual',
+    accountModesProfileUiExists:document.querySelectorAll('[data-account-mode]').length===3,
+    noAdminModeInUi:!Array.from(document.querySelectorAll('[data-account-mode]')).some(input=>/admin|owner|support/.test(input.value)),
+    connectionsScreenExists:!!document.getElementById('screen-connections'),
+    trainerInviteAreaConditional:!!document.getElementById('trainer-invite-area')&&/includes\('trainer'\)/.test(String(renderConnectionsScreen)),
+    studentAcceptAreaConditional:!!document.getElementById('student-accept-area')&&/includes\('student'\)/.test(String(renderConnectionsScreen)),
+    inviteCodeGeneratedServerSide:/rpc\('create_trainer_student_invitation'\)/.test(generateSource)&&!/Math\.random|crypto\.getRandomValues/.test(generateSource),
+    inviteCodeHashedAtRest:/invite_code_hash text not null/i.test(migrationSql)&&/digest\(normalized_code\s*,\s*'sha256'\)/i.test(migrationSql),
+    inviteCodeNotPersistedClientSide:!/localStorage|sessionStorage|indexedDB/.test(generateSource+String(clearFullInvitationCode)),
+    inviteCodeExpiryConfigured:/interval '7 days'/i.test(migrationSql),
+    activeInviteLimitConfigured:/>= 20/.test(migrationSql),
+    previewReturnsMinimalData:/trainer_display_name/.test(migrationSql)&&/invite_prefix/.test(migrationSql),
+    previewDoesNotExposeEmail:!/(email|phone)/i.test((migrationSql.match(/create or replace function public\.preview_trainer_invitation[\s\S]*?\$\$;/i)||[''])[0]),
+    selfInvitationBlocked:/trainer_user_id=current_user_id/.test(migrationSql),
+    expiredInvitationBlocked:/expires_at<=now\(\)/.test(migrationSql),
+    cancelledInvitationBlocked:/status<>'pending'/.test(migrationSql),
+    duplicateRelationshipPrevented:/on conflict \(trainer_user_id,student_user_id\) where organization_id is null/i.test(migrationSql),
+    acceptanceRequiresConfirmation:!!document.getElementById('accept-invitation-dialog')&&!!document.getElementById('accept-invitation-confirm'),
+    relationshipPermissionsDefaultFalse:(migrationSql.match(/'view_(?:workouts|executions|evolution|nutrition)',false/g)||[]).length>=4&&/'assign_workouts',false/.test(migrationSql),
+    nutritionPermissionDefaultFalse:/'view_nutrition',false/.test(migrationSql),
+    directTableWritesBlocked:/revoke all on public\.user_account_modes,public\.trainer_student_invitations from public,anon,authenticated/i.test(migrationSql)&&!/create policy[^;]+for (insert|update|delete)/i.test(migrationSql),
+    anonAccessBlocked:/revoke all on function[\s\S]+from public,anon/i.test(migrationSql),
+    authenticatedRpcOnly:/grant execute on function[\s\S]+to authenticated/i.test(migrationSql),
+    invitationHashNeverReturned:listFunction.length>0&&!/invite_code_hash/.test(listFunction),
+    invitationFullCodeShownOnce:/invite_code',full_code/.test(migrationSql)&&!/\binvite_code\s+text/i.test(invitationTable)&&typeof activeInvitationCode!=='undefined',
+    accessContextRefreshedAfterAccept:/loadCurrentAccessContext/.test(refreshSource)&&/refreshAccessContextAfterRelationshipChange/.test(acceptSource),
+    individualAppStillWorks:getEffectiveAccountModes().length>=1&&!!document.getElementById('screen-home'),
+    profileStillWorks:typeof saveProfileForm==='function'&&!!document.getElementById('screen-profile'),
+    onboardingStillWorks:typeof completeProfileOnboarding==='function',authStillWorks:typeof initializeForjaAuth==='function',dashboardStillWorks:typeof renderDashboard==='function',dietStillWorks:typeof renderDiarioHoje==='function',workoutStillWorks:typeof renderTelaTreino==='function',liveWorkoutStillWorks:typeof startLiveWorkout==='function',historyStillWorks:typeof renderTreinoHistoricoV32==='function',syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
+    mobileNoOverflow:document.documentElement.scrollWidth<=window.innerWidth+1,
+    noBlockingErrors:typeof loadMyAccountModes==='function'&&typeof previewTrainerStudentInvitation==='function'&&typeof acceptTrainerStudentInvitation==='function',
+    migrationAppliedRemotely
+  };
+  result.passed=Object.values(result).every(value=>value===true);
   return result;
 };
 
