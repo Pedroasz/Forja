@@ -2110,14 +2110,14 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 profile-account-grid">
       <article class="premium-card bg-card border border-line rounded-2xl p-5"><div class="flex items-center gap-4"><div id="profile-avatar" class="profile-avatar">--</div><div><h3 id="profile-display-heading" class="font-display font-semibold text-lg">Sua conta</h3><p id="profile-full-heading" class="text-sm text-mute"></p><p id="profile-email-heading" class="text-xs text-mute mt-1"></p></div></div><p class="text-xs text-mint mt-4">Conta autenticada</p></article>
       <form id="profile-form" class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-2" novalidate><h3 class="font-display font-semibold text-lg">Informações pessoais</h3><div class="profile-form-grid mt-4"><label for="profile-full-name">Nome completo<input id="profile-full-name" autocomplete="name" maxlength="80" aria-describedby="profile-message"></label><label for="profile-display-name">Nome de exibição (opcional)<input id="profile-display-name" autocomplete="nickname" maxlength="40" aria-describedby="profile-message"></label><label for="profile-phone">Telefone (opcional)<input id="profile-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="profile-message"></label></div><h3 class="font-display font-semibold text-lg mt-6">Preferências</h3><div class="profile-form-grid mt-4"><label for="profile-locale">Idioma<select id="profile-locale"><option value="pt-BR">Português (Brasil)</option></select></label></div><div class="profile-actions"><button type="button" id="profile-cancel" class="profile-secondary">Cancelar alterações</button><button type="submit" id="profile-save" class="profile-primary">Salvar alterações</button></div><p id="profile-message" class="profile-status" role="status" aria-live="polite"></p></form>
-      <article class="premium-card bg-card border border-line rounded-2xl p-5 profile-modes-card"><h3 class="font-display font-semibold text-lg">Como você usa o Forja</h3><p class="text-sm text-mute mt-2">Essas opções personalizam sua experiência. Elas não concedem acesso aos dados de outras pessoas.</p><div id="account-mode-options" class="account-mode-options mt-4"><label class="account-mode-option"><input type="checkbox" value="individual" data-account-mode><span>Uso individual</span></label><label class="account-mode-option"><input type="checkbox" value="student" data-account-mode><span>Sou aluno</span></label><label class="account-mode-option"><input type="checkbox" value="trainer" data-account-mode><span>Sou treinador</span></label></div><div class="profile-actions"><button type="button" id="profile-open-connections" class="profile-secondary">Abrir Conexões</button><button type="button" id="account-modes-save" class="profile-primary">Salvar modos de uso</button></div><p id="account-modes-message" class="profile-status" role="status" aria-live="polite"></p></article>
+      <article class="premium-card bg-card border border-line rounded-2xl p-5 profile-modes-card"><h3 class="font-display font-semibold text-lg">Como você usa o Forja</h3><p class="text-sm text-mute mt-2">Os modos personalizam o aplicativo, mas não concedem acesso automático aos dados de outras pessoas.</p><div id="account-mode-options" class="account-mode-options mt-4"><label class="account-mode-option"><input type="checkbox" value="individual" data-account-mode><span>Uso individual</span></label><label class="account-mode-option"><input type="checkbox" value="student" data-account-mode><span>Sou aluno</span></label><label class="account-mode-option"><input type="checkbox" value="trainer" data-account-mode><span>Sou treinador</span></label><label class="account-mode-option"><input type="checkbox" value="nutritionist" data-account-mode><span>Sou nutricionista</span></label></div><div class="profile-actions"><button type="button" id="profile-open-connections" class="profile-secondary">Abrir Conexões</button><button type="button" id="account-modes-save" class="profile-primary">Salvar modos de uso</button></div><p id="account-modes-message" class="profile-status" role="status" aria-live="polite"></p></article>
       <article class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-3"><h3 class="font-display font-semibold text-lg">Conta e segurança</h3><p class="text-sm text-mute mt-2">E-mail: <strong id="profile-security-email"></strong></p><div class="profile-actions justify-start"><button type="button" id="profile-change-password" class="profile-secondary">Alterar senha</button><button type="button" id="profile-logout" class="profile-secondary">Sair da conta</button></div><p class="text-xs text-mute mt-4">Alteração de e-mail e exclusão da conta serão disponibilizadas em uma etapa futura.</p></article>
     </div>
   </section>
 
   <section id="screen-connections" class="screen rise">
-    <div class="screen-intro"><h2>Conexões</h2><p>Gerencie vínculos seguros entre treinador e aluno.</p></div>
-    <div id="connections-individual-empty" class="premium-card bg-card border border-line rounded-2xl p-5 mt-5 hidden"><h3 class="font-display font-semibold text-lg">Conexões ainda não ativadas</h3><p class="text-sm text-mute mt-2">Ative o modo Aluno ou Treinador no seu perfil para criar conexões.</p><button type="button" id="connections-open-profile" class="profile-secondary mt-4">Abrir Meu perfil</button></div>
+    <div class="screen-intro"><h2>Conexões</h2><p>Gerencie vínculos seguros com treinadores e nutricionistas.</p></div>
+    <div id="connections-individual-empty" class="premium-card bg-card border border-line rounded-2xl p-5 mt-5 hidden"><h3 class="font-display font-semibold text-lg">Conexões ainda não ativadas</h3><p class="text-sm text-mute mt-2">Ative o modo Aluno, Treinador ou Nutricionista no seu perfil para usar conexões profissionais.</p><button type="button" id="connections-open-profile" class="profile-secondary mt-4">Abrir Meu perfil</button></div>
     <div class="connections-grid mt-5">
       <article id="trainer-invite-area" class="premium-card bg-card border border-line rounded-2xl p-5 hidden"><h3 class="font-display font-semibold text-lg">Convidar aluno</h3><p class="text-sm text-mute mt-2">Gere um código seguro com validade de sete dias.</p><button type="button" id="generate-trainer-invite" class="profile-primary mt-4">Gerar código de convite</button><div id="generated-invite-result" class="profile-review mt-4 hidden"><span class="text-mute">Código</span><strong id="generated-invite-code" class="invite-code-box"></strong><span class="text-mute">Expira em</span><strong id="generated-invite-expires"></strong><p class="text-xs text-mute">Este código será mostrado integralmente apenas agora.</p><div class="connections-actions"><button type="button" id="copy-generated-invite" class="profile-secondary">Copiar código</button><button type="button" id="dismiss-generated-invite" class="profile-secondary">Ocultar código</button></div></div><h4 class="font-semibold mt-6">Convites recentes</h4><div id="trainer-invitations-list" class="connection-list"></div></article>
       <article id="student-accept-area" class="premium-card bg-card border border-line rounded-2xl p-5 hidden"><h3 class="font-display font-semibold text-lg">Conectar com treinador</h3><label for="student-invite-code" class="block text-sm text-mute mt-4">Código do convite</label><input id="student-invite-code" class="w-full mt-2 bg-card2 border border-line rounded-lg px-3 py-3 text-sm font-mono" autocomplete="off" autocapitalize="characters" maxlength="40" placeholder="FORJA-XXXX-XXXX-XXXX-XXXX-XXXX"><div class="connections-actions"><button type="button" id="preview-student-invite" class="profile-primary">Verificar código</button><button type="button" id="clear-student-invite" class="profile-secondary">Cancelar</button></div><p id="student-invite-message" class="profile-status" role="status" aria-live="polite"></p></article>
@@ -2836,8 +2836,9 @@ async function loadCurrentUserProfile(){ const user=getCurrentAuthUser(); if(!us
 async function saveCurrentUserProfile(profileData){ const user=getCurrentAuthUser(); if(!user) throw new Error('session_missing'); if(!navigator.onLine) throw new Error('network'); const update=buildSafeProfileUpdate(profileData); const {data,error}=await supabaseClient.from('profiles').update(update).eq('user_id',user.id).select('*').maybeSingle(); if(error||!data) throw error||new Error('profile_not_found'); const normalized=normalizeCurrentUserProfile(data); state.profile={loaded:true,loading:false,data:normalized,error:null,dirty:false}; writeAccountProfileCache(user.id,normalized); renderProfileIdentity(); if(typeof renderDashboard==='function') renderDashboard(); return normalized; }
 async function ensureCurrentUserProfile(){ const user=getCurrentAuthUser(); if(!user) throw new Error('session_missing'); if(profileInitializationPromise&&profileInitializationUserId===user.id) return profileInitializationPromise; profileInitializationUserId=user.id; profileInitializationPromise=(async()=>{ state.profile.loading=true; try{ let profile=await loadCurrentUserProfile(); if(!profile){ if(!navigator.onLine) throw new Error('network'); const seed=normalizeCurrentUserProfile({user_id:user.id,full_name:user.user_metadata?.full_name||user.user_metadata?.name||'',display_name:'',phone:'',timezone:detectProfileTimezone(),locale:'pt-BR',onboarding_completed:false,onboarding_step:0},{newProfile:true}); const {data,error}=await supabaseClient.from('profiles').upsert({user_id:user.id,...buildSafeProfileUpdate(seed)},{onConflict:'user_id'}).select('*').maybeSingle(); if(error||!data) throw error||new Error('profile_create_failed'); profile=normalizeCurrentUserProfile(data,{newProfile:true}); writeAccountProfileCache(user.id,profile); } state.profile={loaded:true,loading:false,data:profile,error:null,dirty:false}; return profile; }catch(error){ state.profile={loaded:false,loading:false,data:null,error:mapProfileError(error),dirty:false}; throw error; } })(); try{return await profileInitializationPromise;}finally{profileInitializationPromise=null;} }
 
-function createEmptyAccessContext(){ return { platformRoles:[], memberships:[], trainerRelationships:[], studentRelationships:[] }; }
-function normalizeAccessContext(data={}){ return { platformRoles:Array.isArray(data.platform_roles)?data.platform_roles:[], memberships:Array.isArray(data.memberships)?data.memberships:[], trainerRelationships:Array.isArray(data.trainer_relationships)?data.trainer_relationships:[], studentRelationships:Array.isArray(data.student_relationships)?data.student_relationships:[] }; }
+function createEmptyAccessContext(){ return { platformRoles:[], memberships:[], trainerRelationships:[], studentRelationships:[], professionalRelationships:[], studentProfessionalRelationships:[] }; }
+function normalizeProfessionalRelationship(relationship={}, roleInRelationship='student'){return {id:relationship.id||null,professionalType:relationship.professionalType||relationship.professional_type||'trainer',scopes:relationship.scopes&&typeof relationship.scopes==='object'?{...relationship.scopes}:{},organizationId:relationship.organizationId||relationship.organization_id||null,status:relationship.status||'pending',professionalUserId:relationship.professionalUserId||relationship.professional_user_id||null,studentUserId:relationship.studentUserId||relationship.student_user_id||null,roleInRelationship};}
+function normalizeAccessContext(data={}){const professionalSource=Array.isArray(data.professionalRelationships)?data.professionalRelationships:(Array.isArray(data.professional_relationships)?data.professional_relationships:[]),studentProfessionalSource=Array.isArray(data.studentProfessionalRelationships)?data.studentProfessionalRelationships:(Array.isArray(data.student_professional_relationships)?data.student_professional_relationships:[]);return {platformRoles:Array.isArray(data.platform_roles)?data.platform_roles:[],memberships:Array.isArray(data.memberships)?data.memberships:[],trainerRelationships:Array.isArray(data.trainer_relationships)?data.trainer_relationships:[],studentRelationships:Array.isArray(data.student_relationships)?data.student_relationships:[],professionalRelationships:professionalSource.map(item=>normalizeProfessionalRelationship(item,'professional')),studentProfessionalRelationships:studentProfessionalSource.map(item=>normalizeProfessionalRelationship(item,'student'))};}
 async function loadCurrentAccessContext(){
   const user=getCurrentAuthUser();
   if(!state.accessContext) state.accessContext={loaded:false,loading:false,data:createEmptyAccessContext(),error:null};
@@ -2856,7 +2857,7 @@ async function loadCurrentAccessContext(){
   }
 }
 
-const ALLOWED_ACCOUNT_MODES=Object.freeze(['individual','student','trainer']);
+const ALLOWED_ACCOUNT_MODES=Object.freeze(['individual','student','trainer','nutritionist']);
 let activeInvitationCode=null;
 let activeInvitationMeta=null;
 let pendingInvitationPreview=null;
@@ -8889,7 +8890,7 @@ const initialWorkoutConfig = loadWorkoutConfig();
 let state = {
   auth:      { ...INITIAL_FORJA_AUTH_STATE },
   profile:   { loaded: false, loading: false, data: null, error: null, dirty: false },
-  accessContext: { loaded: false, loading: false, data: { platformRoles: [], memberships: [], trainerRelationships: [], studentRelationships: [] }, error: null },
+  accessContext: { loaded: false, loading: false, data: { platformRoles: [], memberships: [], trainerRelationships: [], studentRelationships: [], professionalRelationships: [], studentProfessionalRelationships: [] }, error: null },
   accountModes: { loaded: false, loading: false, values: [], error: null },
   trainerInvitations: { loaded: false, loading: false, items: [], error: null },
   connections: { loaded: false, loading: false, items: [], error: null },
@@ -9102,6 +9103,11 @@ function renderAccountModesProfile(){const modes=getEffectiveAccountModes();docu
 function renderProfileScreen(){ fillProfileForm();renderAccountModesProfile();const m=document.getElementById('profile-message');if(m)m.textContent='';if(window.lucide)lucide.createIcons(); }
 function formatConnectionDate(value){if(!value)return 'Não informado';const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString('pt-BR'):'Não informado';}
 function createConnectionItem(title,lines=[],action=null){const item=document.createElement('div');item.className='connection-item';const heading=document.createElement('strong');heading.textContent=title;item.appendChild(heading);lines.forEach(line=>{const p=document.createElement('p');p.className='text-xs text-mute mt-1';p.textContent=line;item.appendChild(p);});if(action)item.appendChild(action);return item;}
+const PROFESSIONAL_SCOPE_DEFAULTS=Object.freeze({trainer:Object.freeze({manage_workout_plan:true,view_workout_executions:true,manage_nutrition_plan:false,view_nutrition_logs:false,view_evolution:false}),nutritionist:Object.freeze({manage_workout_plan:false,view_workout_executions:false,manage_nutrition_plan:true,view_nutrition_logs:true,view_evolution:false})});
+const PROFESSIONAL_SCOPE_LABELS=Object.freeze({manage_workout_plan:'Gerenciar plano de treino',view_workout_executions:'Ver execuções de treino',manage_nutrition_plan:'Gerenciar plano alimentar',view_nutrition_logs:'Ver registros nutricionais',view_evolution:'Ver evolução'});
+function getProfessionalTypeLabel(type){return type==='nutritionist'?'Nutricionista':'Treinador';}
+function getProfessionalScopeLines(scopes={}){const allowed=Object.entries(PROFESSIONAL_SCOPE_LABELS).filter(([key])=>scopes?.[key]===true).map(([,label])=>label);const blocked=Object.entries(PROFESSIONAL_SCOPE_LABELS).filter(([key])=>scopes?.[key]!==true).map(([,label])=>label);return [`Escopo permitido: ${allowed.length?allowed.join(', '):'Nenhum acesso concedido'}`,`Permanece bloqueado: ${blocked.join(', ')}`];}
+function legacyPermissionsToProfessionalScopes(permissions={}){return {manage_workout_plan:permissions.assign_workouts===true,view_workout_executions:permissions.view_executions===true,manage_nutrition_plan:false,view_nutrition_logs:permissions.view_nutrition===true,view_evolution:permissions.view_evolution===true};}
 function renderInvitationPreview(previewData = {}) {
   const trainer = document.getElementById('accept-invitation-trainer');
   const message = document.getElementById('accept-invitation-message');
@@ -9113,13 +9119,13 @@ function renderInvitationPreview(previewData = {}) {
   return Boolean(trainer && message);
 }
 function renderConnectionsScreen(){
-  const modes=getEffectiveAccountModes(),trainer=modes.includes('trainer'),student=modes.includes('student');
-  document.getElementById('connections-individual-empty')?.classList.toggle('hidden',trainer||student);
+  const modes=getEffectiveAccountModes(),trainer=modes.includes('trainer'),nutritionist=modes.includes('nutritionist'),student=modes.includes('student');
+  document.getElementById('connections-individual-empty')?.classList.toggle('hidden',trainer||nutritionist||student);
   document.getElementById('trainer-invite-area')?.classList.toggle('hidden',!trainer);
   document.getElementById('student-accept-area')?.classList.toggle('hidden',!student);
   const result=document.getElementById('generated-invite-result');if(result){result.classList.toggle('hidden',!activeInvitationCode);document.getElementById('generated-invite-code').textContent=activeInvitationCode||'';document.getElementById('generated-invite-expires').textContent=activeInvitationMeta?.expires_at?formatConnectionDate(activeInvitationMeta.expires_at):'';}
   const invitations=document.getElementById('trainer-invitations-list');if(invitations){invitations.replaceChildren();const items=state.trainerInvitations?.items||[];if(!items.length)invitations.appendChild(createConnectionItem('Nenhum convite recente'));else items.forEach(invite=>{let action=null;if(invite.status==='pending'&&new Date(invite.expires_at)>new Date()){action=document.createElement('button');action.type='button';action.className='profile-secondary mt-3 px-3';action.textContent='Cancelar convite';action.dataset.cancelInvitation=invite.id;}invitations.appendChild(createConnectionItem(invite.invite_code_prefix||'Convite',[`Status: ${invite.status}`,`Criado: ${formatConnectionDate(invite.created_at)}`,`Expira: ${formatConnectionDate(invite.expires_at)}`],action));});}
-  const list=document.getElementById('connections-list');if(list){list.replaceChildren();const items=state.connections?.items||[];if(!items.length)list.appendChild(createConnectionItem('Nenhuma conexão ativa'));else items.forEach(connection=>{const role=connection.role_in_relationship==='trainer'?'Aluno':'Treinador';const lines=[`Papel nesta conexão: ${role}`,`Status: ${connection.status}`];if(connection.role_in_relationship==='student')lines.push('Nenhuma permissão de acesso foi concedida ainda.');list.appendChild(createConnectionItem(connection.display_name||'Usuário do Forja',lines));});}
+  const list=document.getElementById('connections-list');if(list){list.replaceChildren();const legacyItems=Array.isArray(state.connections?.items)?state.connections.items:[],professionalItems=[...(state.accessContext?.data?.professionalRelationships||[]),...(state.accessContext?.data?.studentProfessionalRelationships||[])],legacyById=new Map(legacyItems.map(item=>[String(item.relationship_id||item.id),item])),renderedIds=new Set();professionalItems.forEach(connection=>{const id=String(connection.id||'');if(id&&renderedIds.has(id))return;if(id)renderedIds.add(id);const legacy=legacyById.get(id),typeLabel=getProfessionalTypeLabel(connection.professionalType),isProfessional=connection.roleInRelationship==='professional',title=legacy?.display_name||(isProfessional?'Aluno vinculado':`${typeLabel} vinculado`),lines=[`Tipo profissional: ${typeLabel}`,`Papel nesta conexão: ${isProfessional?typeLabel:'Aluno'}`,`Status: ${connection.status}`,`Organização: ${connection.organizationId?'Vínculo organizacional':'Profissional independente'}`,...getProfessionalScopeLines(connection.scopes)];list.appendChild(createConnectionItem(title,lines));});legacyItems.forEach(connection=>{const id=String(connection.relationship_id||connection.id||'');if(id&&renderedIds.has(id))return;const isTrainer=connection.role_in_relationship==='trainer',scopes=legacyPermissionsToProfessionalScopes(connection.permissions||{}),lines=['Tipo profissional: Treinador',`Papel nesta conexão: ${isTrainer?'Treinador':'Aluno'}`,`Status: ${connection.status}`,...getProfessionalScopeLines(scopes)];list.appendChild(createConnectionItem(connection.display_name||'Usuário do Forja',lines));});if(!professionalItems.length&&!legacyItems.length)list.appendChild(createConnectionItem('Nenhuma conexão ativa'));}
   if(window.lucide)lucide.createIcons();
 }
 async function openConnectionsScreen(){return navigateToForjaScreen('connections');}
@@ -13333,12 +13339,12 @@ window.testAccountModesInvitationsV40B2 = async function(){
     getAccountModesRpcCallable:accountModesRpc.ok,
     listInvitationsRpcCallable:invitationsRpc.ok,
     listConnectionsRpcCallable:connectionsRpc.ok,
-    onlyAllowedModesAccepted:normalizeAccountModes(['individual','student','trainer','unknown']).every(mode=>ALLOWED_ACCOUNT_MODES.includes(mode)),
+    onlyAllowedModesAccepted:normalizeAccountModes(['individual','student','trainer','nutritionist','unknown']).every(mode=>ALLOWED_ACCOUNT_MODES.includes(mode)),
     privilegedModesBlocked:privilegedProbe.length===0,
     multipleModesSupported:allowedProbe.length===2&&allowedProbe.includes('trainer')&&allowedProbe.includes('student'),
     atLeastOneModeRequired:/!normalized\.length/.test(String(saveMyAccountModes)),
     legacyUserFallsBackToIndividual:accountModesWithFallback([]).length===1&&accountModesWithFallback([])[0]==='individual',
-    accountModesProfileUiExists:document.querySelectorAll('[data-account-mode]').length===3,
+    accountModesProfileUiExists:document.querySelectorAll('[data-account-mode]').length===4,
     noAdminModeInUi:!Array.from(document.querySelectorAll('[data-account-mode]')).some(input=>/admin|owner|support/.test(input.value)),
     connectionsScreenExists:!!document.getElementById('screen-connections'),
     trainerInviteAreaConditional:!!document.getElementById('trainer-invite-area')&&/includes\('trainer'\)/.test(String(renderConnectionsScreen)),
@@ -13672,6 +13678,55 @@ window.testV40B24 = async function(){
     if(JSON.stringify(state.diario||[])!==mealsSnapshot) state.diario=JSON.parse(mealsSnapshot);
     if(testResult){testResult.mealsNotMutated=JSON.stringify(state.diario||[])===mealsSnapshot;testResult.passed=Object.entries(testResult).filter(([key])=>key!=='error'&&key!=='passed').every(([,value])=>value===true);}
   }
+};
+
+window.testProfessionalScopesV41A = async function(){
+  const user=getCurrentAuthUser();
+  let contextResponse={data:null,error:new Error('migration_not_checked')},relationshipResponse={data:null,error:new Error('migration_not_checked')};
+  if(user&&navigator.onLine&&supabaseClient?.rpc){
+    try{contextResponse=await supabaseClient.rpc('get_current_access_context');}catch(error){contextResponse={data:null,error};}
+    try{relationshipResponse=await supabaseClient.from('professional_student_relationships').select('id').limit(0);}catch(error){relationshipResponse={data:null,error};}
+  }
+  const rawContext=contextResponse?.data&&typeof contextResponse.data==='object'?contextResponse.data:{};
+  const migrationAppliedRemotely=!contextResponse.error&&!relationshipResponse.error&&Array.isArray(rawContext.professionalRelationships)&&Array.isArray(rawContext.studentProfessionalRelationships);
+  const normalizedContext=normalizeAccessContext(rawContext);
+  const trainerExpected={manage_workout_plan:true,view_workout_executions:true,manage_nutrition_plan:false,view_nutrition_logs:false,view_evolution:false};
+  const nutritionistExpected={manage_workout_plan:false,view_workout_executions:false,manage_nutrition_plan:true,view_nutrition_logs:true,view_evolution:false};
+  const privilegedProbe=normalizeAccountModes(['admin','owner','platform_admin','support','gym_admin','unknown']);
+  const professionalModes=normalizeAccountModes(['trainer','nutritionist','student']);
+  const renderConnectionsSource=String(renderConnectionsScreen),accessSource=String(normalizeAccessContext);
+  const result={
+    nutritionistModeExists:ALLOWED_ACCOUNT_MODES.includes('nutritionist'),
+    nutritionistModeSelectable:document.querySelector('[data-account-mode][value="nutritionist"]') instanceof HTMLInputElement,
+    privilegedModesBlocked:privilegedProbe.length===0,
+    multipleProfessionalModesSupported:professionalModes.includes('trainer')&&professionalModes.includes('nutritionist')&&professionalModes.includes('student'),
+    nutritionistOrganizationRoleSupported:migrationAppliedRemotely&&typeof getProfessionalTypeLabel==='function'&&getProfessionalTypeLabel('nutritionist')==='Nutricionista',
+    professionalRelationshipSchemaExpected:!relationshipResponse.error&&Array.isArray(relationshipResponse.data),
+    trainerScopesCorrect:JSON.stringify(PROFESSIONAL_SCOPE_DEFAULTS.trainer)===JSON.stringify(trainerExpected),
+    nutritionistScopesCorrect:JSON.stringify(PROFESSIONAL_SCOPE_DEFAULTS.nutritionist)===JSON.stringify(nutritionistExpected),
+    evolutionScopeDefaultsFalse:PROFESSIONAL_SCOPE_DEFAULTS.trainer.view_evolution===false&&PROFESSIONAL_SCOPE_DEFAULTS.nutritionist.view_evolution===false,
+    unknownScopesBlocked:!Object.prototype.hasOwnProperty.call(PROFESSIONAL_SCOPE_LABELS,'unknown')&&!getProfessionalScopeLines({unknown:true}).join(' ').includes('unknown'),
+    professionalCannotExpandOwnScopes:!document.querySelector('[data-action="expand-professional-scopes"],#professional-scope-editor')&&!/insert\(|update\(|upsert\(/.test(renderConnectionsSource),
+    legacyTrainerRelationshipsPreserved:Array.isArray(rawContext.trainer_relationships)&&Array.isArray(rawContext.student_relationships)&&Array.isArray(normalizedContext.trainerRelationships)&&Array.isArray(normalizedContext.studentRelationships),
+    accessContextSupportsProfessionalTypes:Array.isArray(normalizedContext.professionalRelationships)&&Array.isArray(normalizedContext.studentProfessionalRelationships)&&/professionalRelationships/.test(accessSource),
+    profileModeUiUpdated:document.querySelectorAll('[data-account-mode]').length===4&&document.getElementById('account-mode-options')?.textContent.includes('Sou nutricionista'),
+    connectionsUiShowsProfessionalType:/getProfessionalTypeLabel/.test(renderConnectionsSource)&&/getProfessionalScopeLines/.test(renderConnectionsSource),
+    noProfessionalDashboardYet:!document.getElementById('professional-dashboard')&&!document.getElementById('nutritionist-dashboard'),
+    noWorkoutAssignmentYet:!document.querySelector('[data-action="assign-workout"],#assign-workout-to-student'),
+    noNutritionAssignmentYet:!document.querySelector('[data-action="assign-nutrition"],#assign-nutrition-to-student'),
+    individualAppStillWorks:accountModesWithFallback([])[0]==='individual'&&!!document.getElementById('screen-home'),
+    authStillWorks:typeof initializeForjaAuth==='function'&&typeof logoutForjaUser==='function',
+    profileStillWorks:typeof saveProfileForm==='function'&&!!document.getElementById('screen-profile'),
+    dashboardStillWorks:typeof renderDashboard==='function'&&!!document.getElementById('screen-home'),
+    dietStillWorks:typeof renderDiarioHoje==='function'&&!!document.getElementById('screen-dieta'),
+    workoutStillWorks:typeof renderTelaTreino==='function'&&!!document.getElementById('screen-treino'),
+    liveWorkoutStillWorks:typeof requestStartLiveWorkout==='function'&&typeof closeLiveWorkoutScreen==='function',
+    historyStillWorks:typeof renderTreinoHistoricoV32==='function',
+    syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
+    noBlockingErrors:typeof normalizeProfessionalRelationship==='function'&&typeof getProfessionalScopeLines==='function'&&typeof loadCurrentAccessContext==='function'
+  };
+  result.passed=Object.values(result).every(value=>value===true);
+  return result;
 };
 
 window.testRolesFoundationV40B1 = async function(){
