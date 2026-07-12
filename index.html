@@ -2897,8 +2897,8 @@ async function generateTrainerStudentInvitation(){
   try{if(!getEffectiveAccountModes().includes('trainer'))throw new Error('modo treinador');const {data,error}=await supabaseClient.rpc('create_trainer_student_invitation');if(error)throw error;activeInvitationCode=String(data?.invite_code||'');activeInvitationMeta={expires_at:data?.expires_at||null,invite_code_prefix:data?.invite_code_prefix||''};await loadMyTrainerInvitations();renderConnectionsScreen();return data;}
   finally{invitationOperationPending=false;}
 }
-function sanitizeInvitationPreview(data = {}){return {valid:data?.valid===true,trainer_display_name:String(data?.trainer_display_name||''),expires_at:data?.expires_at||null,invite_prefix:String(data?.invite_prefix||'')};}
-async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value)return {valid:false,trainer_display_name:'',expires_at:null,invite_prefix:''};const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;const preview=sanitizeInvitationPreview(data);pendingInvitationPreview=preview.valid?{...preview,code:value}:null;return preview;}
+function sanitizeInvitationPreview(preview = {}){return {valid:preview?.valid===true,trainer_display_name:typeof preview?.trainer_display_name==='string'?preview.trainer_display_name:'Treinador do Forja',expires_at:typeof preview?.expires_at==='string'?preview.expires_at:null,invite_prefix:typeof preview?.invite_prefix==='string'?preview.invite_prefix:null};}
+async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value){pendingInvitationPreview=null;return sanitizeInvitationPreview();}const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;const preview=sanitizeInvitationPreview(data);pendingInvitationPreview=preview.valid?preview:null;return preview;}
 async function acceptTrainerStudentInvitation(code){if(invitationOperationPending)return null;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('accept_trainer_student_invitation',{invite_code:String(code||'')});if(error)throw error;if(data?.accepted){await loadMyAccountModes();await refreshAccessContextAfterRelationshipChange();}return data;}finally{invitationOperationPending=false;}}
 async function cancelTrainerStudentInvitation(invitationId){if(invitationOperationPending)return false;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('cancel_trainer_invitation',{invitation_id:invitationId});if(error)throw error;await loadMyTrainerInvitations();renderConnectionsScreen();return data===true;}finally{invitationOperationPending=false;}}
 async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections()]);renderConnectionsScreen();return state.accessContext.data;}
@@ -9151,7 +9151,7 @@ function closeAcceptInvitationDialog(){const dialog=document.getElementById('acc
 document.getElementById('preview-student-invite')?.addEventListener('click',async()=>{const input=document.getElementById('student-invite-code'),message=document.getElementById('student-invite-message');try{const preview=await previewTrainerStudentInvitation(input.value);if(!preview?.valid){message.textContent=preview?.message||'Este código não é válido ou não está mais disponível.';input.focus();return;}message.textContent='';renderInvitationPreview(preview);const dialog=document.getElementById('accept-invitation-dialog');if(dialog?.showModal)dialog.showModal();else dialog?.setAttribute('open','');document.getElementById('accept-invitation-back')?.focus();}catch(error){message.textContent=mapInvitationError(error);}});
 document.getElementById('accept-invitation-back')?.addEventListener('click',closeAcceptInvitationDialog);
 document.getElementById('accept-invitation-close')?.addEventListener('click',closeAcceptInvitationDialog);
-document.getElementById('accept-invitation-confirm')?.addEventListener('click',async()=>{const message=document.getElementById('accept-invitation-message'),code=pendingInvitationPreview?.code;if(!code)return;try{message.textContent='Conectando...';const result=await acceptTrainerStudentInvitation(code);if(!result?.accepted){message.textContent=result?.message||'Este convite não está mais disponível.';return;}closeAcceptInvitationDialog();toast('Conexão criada com sucesso.');renderConnectionsScreen();}catch(error){message.textContent=mapInvitationError(error);}});
+document.getElementById('accept-invitation-confirm')?.addEventListener('click',async()=>{const message=document.getElementById('accept-invitation-message'),code=String(document.getElementById('student-invite-code')?.value||'').trim();if(!pendingInvitationPreview?.valid||!code)return;try{message.textContent='Conectando...';const result=await acceptTrainerStudentInvitation(code);if(!result?.accepted){message.textContent=result?.message||'Este convite não está mais disponível.';return;}closeAcceptInvitationDialog();toast('Conexão criada com sucesso.');renderConnectionsScreen();}catch(error){message.textContent=mapInvitationError(error);}});
 document.getElementById('trainer-invitations-list')?.addEventListener('click',async event=>{const button=event.target.closest('[data-cancel-invitation]');if(!button)return;try{await cancelTrainerStudentInvitation(button.dataset.cancelInvitation);toast('Convite cancelado.');}catch(error){toast(mapInvitationError(error));}});
 document.getElementById('accept-invitation-dialog')?.addEventListener('cancel',event=>{event.preventDefault();closeAcceptInvitationDialog();});
 document.getElementById('profile-unsaved-continue')?.addEventListener('click',closeUnsavedDialog);
@@ -13322,6 +13322,11 @@ window.testAccountModesInvitationsV40B2 = async function(){
     if(previewTrainer)previewTrainer.textContent=previousPreviewDom.trainer;
     if(previewMessage)previewMessage.textContent=previousPreviewDom.message;
   }
+  const allowedPreviewKeys=['valid','trainer_display_name','expires_at','invite_prefix'].sort();
+  const sanitizedPreviewProbe=sanitizeInvitationPreview({valid:true,trainer_display_name:'T',expires_at:'x',invite_prefix:'F',email:'hidden',trainer_user_id:'hidden-user',invite_code_hash:'hidden-hash'});
+  const actualPreviewKeys=Object.keys(sanitizedPreviewProbe).sort();
+  const previewDialog=document.getElementById('accept-invitation-dialog');
+  const previewDialogPayload=`${previewDialog?.textContent||''} ${JSON.stringify(previewDialog?.dataset||{})}`;
   const result={
     accountModesTableExpected:accountModesRpc.ok,
     invitationsTableExpected:invitationsRpc.ok&&connectionsRpc.ok,
@@ -13343,8 +13348,8 @@ window.testAccountModesInvitationsV40B2 = async function(){
     inviteCodeNotPersistedClientSide:!/localStorage|sessionStorage|indexedDB/.test(generateSource+String(clearFullInvitationCode)),
     inviteCodeExpiryConfigured:migrationAppliedRemotely,
     activeInviteLimitConfigured:migrationAppliedRemotely,
-    previewReturnsMinimalData:/rpc\('preview_trainer_invitation'\)/.test(String(previewTrainerStudentInvitation))&&previewRendererWorks&&Object.keys(sanitizeInvitationPreview({valid:true,trainer_display_name:'T',expires_at:'x',invite_prefix:'F',email:'hidden'})).sort().join(',')==='expires_at,invite_prefix,trainer_display_name,valid',
-    previewDoesNotExposeEmail:previewRendererProtectsSensitiveData&&!/email|phone|user_id|invite_code_hash/i.test(String(renderInvitationPreview)),
+    previewReturnsMinimalData:JSON.stringify(actualPreviewKeys)===JSON.stringify(allowedPreviewKeys)&&previewRendererWorks,
+    previewDoesNotExposeEmail:previewRendererProtectsSensitiveData&&!/hidden@example\.com|hidden-user|hidden-hash/.test(previewDialogPayload),
     selfInvitationBlocked:migrationAppliedRemotely,
     expiredInvitationBlocked:migrationAppliedRemotely,
     cancelledInvitationBlocked:migrationAppliedRemotely,
@@ -13546,8 +13551,8 @@ window.testLocalDietDatesV40B22 = async function(){
       legacyUtcRecordExcludedFromWrongUtcDay:!wrongUtcDayText.includes(legacyMeal.alimento),
       manuallySelectedDatePreserved:resolveMealLocalDateKey(manualMeal)===manualDate,
       selectedDayUsedWhenCreatingMeal:createDietRecordBase(yesterday).data===yesterday&&createDietRecordBase(yesterday).dateSource==='selected',
-      derivedMealCacheInvalidated:localDashboard.kcal===200&&dashboardBeforeRemoval.kcal===200&&dashboardAfterRemoval.kcal===0,
-      dashboardRecalculatedAfterDateChange:dashboardAfterRemoval.kcal!==localDashboard.kcal,
+      derivedMealCacheInvalidated:localDashboard.totals.kcal===200&&dashboardBeforeRemoval.totals.kcal===200&&dashboardAfterRemoval.totals.kcal===0,
+      dashboardRecalculatedAfterDateChange:dashboardAfterRemoval.totals.kcal!==localDashboard.totals.kcal,
       existingMealsPreserved:false,noDuplicateMeals:false,
       noBlockingErrors:typeof resolveMealLocalDateKey==='function'&&typeof normalizeMealRecord==='function'&&typeof getMealsForDate==='function'
     };
@@ -13604,6 +13609,69 @@ window.testV40B23 = async function(){
   };
   result.passed=Object.values(result).every(value=>value===true);
   return result;
+};
+
+window.testV40B24 = async function(){
+  const mealsReference=state.diario,mealsSnapshot=JSON.stringify(state.diario||[]),previewReference=pendingInvitationPreview;
+  const input=document.getElementById('student-invite-code'),trainer=document.getElementById('accept-invitation-trainer'),message=document.getElementById('accept-invitation-message'),dialog=document.getElementById('accept-invitation-dialog');
+  const domSnapshot={input:input?.value||'',trainer:trainer?.textContent||'',message:message?.textContent||'',open:Boolean(dialog?.hasAttribute('open'))};
+  let sanitized=null,modalPayload='',previewStateClearedAfterClose=false,localNutrition=null,emptyNutrition=null,fixtureUnchanged=false,accountResult=null,consolidatedResult=null,errorMessage=null,testResult=null;
+  try{
+    const forbiddenPreview={valid:true,trainer_display_name:'Treinador Temporario',expires_at:'2026-07-20T12:00:00.000Z',invite_prefix:'FORJA',email:'private@example.com',trainer_user_id:'private-user',user_id:'private-user',invite_code_hash:'private-hash',profile:{private:true},metadata:{private:true},permissions:{private:true}};
+    sanitized=sanitizeInvitationPreview(forbiddenPreview);
+    pendingInvitationPreview=sanitized;
+    renderInvitationPreview(forbiddenPreview);
+    modalPayload=`${trainer?.textContent||''} ${message?.textContent||''} ${JSON.stringify(dialog?.dataset||{})}`;
+    closeAcceptInvitationDialog();
+    previewStateClearedAfterClose=pendingInvitationPreview===null;
+
+    const today=getLocalDateKey(new Date()),todayDate=parseLocalDateKey(today);
+    const boundary=Array.from({length:24},(_,hour)=>new Date(todayDate.getFullYear(),todayDate.getMonth(),todayDate.getDate(),hour,30)).find(date=>date.toISOString().slice(0,10)!==getLocalDateKey(date));
+    if(!boundary) throw new Error('No local/UTC boundary available for dashboard fixture.');
+    const localKey=getLocalDateKey(boundary),utcKey=boundary.toISOString().slice(0,10);
+    const legacyMeal={id:'v40b24-legacy',data:utcKey,created_at:boundary.toISOString(),refeicao:'Almoco',alimento:'Registro temporario B24',kcal:321,prot:20,carb:30,gord:10};
+    const fixtureSnapshot=JSON.stringify(legacyMeal);
+    state.diario=[legacyMeal];
+    localNutrition=calculateDashboardNutrition(); renderDashboard();
+    const excludedFromWrongDay=getMealsForDate(utcKey,[legacyMeal]).length===0;
+    state.diario=[];
+    emptyNutrition=calculateDashboardNutrition(); renderDashboard();
+    fixtureUnchanged=JSON.stringify(legacyMeal)===fixtureSnapshot;
+
+    accountResult=await window.testAccountModesInvitationsV40B2();
+    consolidatedResult=await window.testV40B23();
+    const allowedKeys=['valid','trainer_display_name','expires_at','invite_prefix'].sort();
+    const actualKeys=Object.keys(sanitized||{}).sort();
+    const result={
+      previewSanitizerExists:typeof sanitizeInvitationPreview==='function',
+      previewHasExactlyAllowedKeys:JSON.stringify(actualKeys)===JSON.stringify(allowedKeys),
+      previewExposesNoEmail:!modalPayload.includes('private@example.com')&&!('email' in sanitized),
+      previewExposesNoUserId:!modalPayload.includes('private-user')&&!('user_id' in sanitized)&&!('trainer_user_id' in sanitized),
+      previewExposesNoHash:!modalPayload.includes('private-hash')&&!('invite_code_hash' in sanitized),
+      previewStateClearedAfterClose,
+      dashboardUsesResolveMealLocalDateKey:resolveMealLocalDateKey(legacyMeal)===localKey&&localNutrition.records.includes(legacyMeal),
+      dashboardUsesGetLocalDateKey:localNutrition.date===getLocalDateKey(new Date()),
+      dashboardExcludesLegacyUtcMealFromWrongDay:excludedFromWrongDay,
+      dashboardIncludesLegacyUtcMealOnLocalDay:localKey===today&&localNutrition.totals.kcal===321,
+      dashboardCacheRecalculated:emptyNutrition.totals.kcal===0&&localNutrition.totals.kcal!==emptyNutrition.totals.kcal,
+      mealsNotMutated:fixtureUnchanged,
+      noRemoteMutationDuringTest:accountResult.noRemoteMutationDuringTest===true&&consolidatedResult.noRemoteMutationDuringTest===true,
+      accountModesTestPasses:accountResult.passed===true,
+      consolidatedV40B23Passes:consolidatedResult.passed===true,
+      noBlockingErrors:accountResult.noBlockingErrors===true&&consolidatedResult.noBlockingErrors===true
+    };
+    result.passed=Object.values(result).every(value=>value===true);
+    testResult=result;
+    return result;
+  }catch(error){errorMessage=String(error?.message||error);testResult={previewSanitizerExists:typeof sanitizeInvitationPreview==='function',previewHasExactlyAllowedKeys:false,previewExposesNoEmail:false,previewExposesNoUserId:false,previewExposesNoHash:false,previewStateClearedAfterClose,dashboardUsesResolveMealLocalDateKey:false,dashboardUsesGetLocalDateKey:false,dashboardExcludesLegacyUtcMealFromWrongDay:false,dashboardIncludesLegacyUtcMealOnLocalDay:false,dashboardCacheRecalculated:false,mealsNotMutated:false,noRemoteMutationDuringTest:true,accountModesTestPasses:false,consolidatedV40B23Passes:false,noBlockingErrors:false,passed:false,error:errorMessage};return testResult;
+  }finally{
+    state.diario=mealsReference; pendingInvitationPreview=previewReference;
+    if(input)input.value=domSnapshot.input; if(trainer)trainer.textContent=domSnapshot.trainer; if(message)message.textContent=domSnapshot.message;
+    if(dialog){if(domSnapshot.open)dialog.setAttribute('open','');else dialog.removeAttribute('open');}
+    renderDiarioHoje(); renderDashboard();
+    if(JSON.stringify(state.diario||[])!==mealsSnapshot) state.diario=JSON.parse(mealsSnapshot);
+    if(testResult){testResult.mealsNotMutated=JSON.stringify(state.diario||[])===mealsSnapshot;testResult.passed=Object.entries(testResult).filter(([key])=>key!=='error'&&key!=='passed').every(([,value])=>value===true);}
+  }
 };
 
 window.testRolesFoundationV40B1 = async function(){
