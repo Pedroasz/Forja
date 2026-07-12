@@ -1386,13 +1386,159 @@
     #screen-profile .profile-account-grid > :last-child { grid-column:1 / -1; }
   }
   @media(max-width:639px){ .profile-shell{padding:18px 14px 34px}.profile-actions>*{flex:1}.profile-review div{display:grid;gap:3px}.profile-account-grid{grid-template-columns:1fr!important}.account-mode-options,.connections-grid{grid-template-columns:1fr}.connections-actions>*{flex:1}.invite-code-box{font-size:13px} }
+
+  /* V4.1A.1.1 - one signup form, responsive presentation only. */
+  #tela-auth.auth-page {
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    overflow-x: clip;
+    overflow-y: auto;
+    padding: 28px 20px;
+  }
+  .auth-desktop-shell {
+    width: min(100%, 1120px);
+    min-width: 0;
+    margin: auto;
+  }
+  .auth-brand-panel { display: none; }
+  .auth-form-panel { width: 100%; min-width: 0; display: flex; align-items: center; }
+  .auth-form-panel .auth-card {
+    width: 100%;
+    max-width: 760px;
+    min-width: 0;
+    margin: auto;
+    padding: 32px !important;
+  }
+  .auth-view,
+  .auth-view fieldset,
+  .auth-password-field { min-width: 0; }
+  .auth-view > .auth-primary-button,
+  .auth-view > .auth-secondary-button { width: 100%; }
+  #auth-signup-account-types { margin-top: 7px; }
+  #auth-signup-account-types legend { width: 100%; color: var(--forja-text); font-weight: 700; }
+  #auth-signup-account-types > .auth-helper { margin-top: 10px; line-height: 1.45; }
+  #auth-signup-view .account-mode-options {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+  }
+  #auth-signup-view .account-mode-option {
+    min-width: 0;
+    min-height: 128px;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: start;
+    align-content: start;
+    gap: 11px;
+    padding: 15px 14px;
+  }
+  .auth-card .account-mode-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    min-height: 0;
+    margin: 2px 0 0;
+    flex: none;
+  }
+  .account-type-content { min-width: 0; display: grid; align-content: start; gap: 7px; }
+  .account-type-title { display: block; color: var(--forja-text); font-size: 13px; line-height: 1.3; overflow-wrap: normal; word-break: normal; }
+  .account-type-description { display: block; color: var(--forja-muted); font-size: 11px; line-height: 1.48; overflow-wrap: break-word; word-break: normal; }
+  .account-mode-option:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent); }
+  .auth-consent span { min-width: 0; overflow-wrap: break-word; }
+
+  @media (min-width: 1024px) {
+    #tela-auth.auth-page { padding: 16px; }
+    .auth-desktop-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
+      align-items: stretch;
+      min-height: min(760px, calc(100dvh - 64px));
+      border: 1px solid rgba(83,88,103,.62);
+      border-radius: 20px;
+      background: rgba(14,16,22,.98);
+      box-shadow: 0 28px 90px rgba(0,0,0,.52);
+    }
+    .auth-brand-panel {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 42px;
+      padding: clamp(34px, 4vw, 56px);
+      background: linear-gradient(155deg, rgba(31,25,23,.98), rgba(15,16,22,.98));
+      border-right: 1px solid rgba(83,88,103,.48);
+      border-radius: 19px 0 0 19px;
+    }
+    .auth-brand-panel .forja-brand { justify-content: flex-start; }
+    .auth-brand-copy { margin-block: auto; }
+    .auth-brand-eyebrow { color: var(--color-primary); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .auth-brand-copy h2 { max-width: 390px; margin-top: 12px; font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 3vw, 40px); font-weight: 750; line-height: 1.08; }
+    .auth-brand-copy > p:last-child { max-width: 390px; margin-top: 16px; color: var(--forja-muted); font-size: 13px; line-height: 1.65; }
+    .auth-brand-benefits { display: grid; gap: 12px; }
+    .auth-brand-benefits li { min-width: 0; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 11px; color: var(--forja-muted); font-size: 11px; line-height: 1.45; }
+    .auth-brand-benefits li > svg { width: 34px; height: 34px; padding: 8px; color: var(--color-primary); border: 1px solid rgba(255,107,33,.35); border-radius: 8px; }
+    .auth-brand-benefits strong { display: block; margin-bottom: 2px; color: var(--forja-text); font-size: 12px; }
+    .auth-form-panel { padding: 8px; background: rgba(18,20,27,.92); border-radius: 0 19px 19px 0; }
+    .auth-form-panel .auth-card { max-width: 620px; padding: 24px 18px !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+    .auth-card-brand { display: none; }
+    #auth-signup-view .account-mode-options { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  }
+
+  @media (min-width: 1200px) {
+    #tela-auth.auth-page { padding: 32px; }
+    .auth-form-panel { padding: 24px; }
+    .auth-form-panel .auth-card { padding: 28px 30px !important; }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    #tela-auth.auth-page { padding: 28px 24px; }
+    .auth-desktop-shell { max-width: 820px; }
+    .auth-form-panel .auth-card { max-width: 780px; padding: 34px !important; }
+    #auth-signup-view .account-mode-options { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  }
+
+  @media (max-width: 767px) {
+    #tela-auth.auth-page { display: flex; align-items: flex-start; padding: 20px 18px max(28px, env(safe-area-inset-bottom)); }
+    #tela-auth.auth-page::before { inset: 10px; }
+    .auth-desktop-shell,
+    .auth-form-panel { width: 100%; }
+    .auth-form-panel .auth-card { width: 100%; max-width: none; margin: 0; padding: 25px 20px !important; }
+    .auth-card-brand { margin-bottom: 26px !important; }
+    #auth-signup-view .account-mode-options { grid-template-columns: 1fr; gap: 10px; }
+    #auth-signup-view .account-mode-option { min-height: 92px; grid-template-columns: 20px minmax(0, 1fr); padding: 14px; }
+    .auth-view input:not([type="checkbox"]):not([type="radio"]),
+    .auth-view .auth-primary-button,
+    .auth-view .auth-secondary-button { width: 100%; }
+  }
+
+  @media (max-width: 359px) {
+    #tela-auth.auth-page { padding-inline: 16px; }
+    .auth-form-panel .auth-card { padding-inline: 16px !important; }
+    #auth-signup-view .account-mode-option { padding: 13px 12px; }
+    .account-type-title { font-size: 12px; }
+    .account-type-description { font-size: 10.5px; }
+  }
 </style>
 </head>
 <body class="font-body text-ink min-h-screen pb-24">
 
-<div id="tela-auth" class="auth-shell min-h-screen flex flex-col justify-center items-center px-4 bg-bg">
-  <div class="auth-card w-full max-w-md bg-card border border-line/40 rounded-2xl p-7 shadow-2xl shadow-black/40" aria-live="polite">
-    <div class="forja-brand justify-center mb-7">
+<div id="tela-auth" class="auth-page auth-shell min-h-screen bg-bg">
+  <div class="auth-desktop-shell">
+    <aside class="auth-brand-panel" aria-label="Sobre o Forja">
+      <div class="forja-brand">
+        <span class="forja-mark"><i data-lucide="flame"></i></span>
+        <div><p class="forja-wordmark">Forja</p><p class="forja-tagline">Seu ecossistema de alta performance</p></div>
+      </div>
+      <div class="auth-brand-copy"><p class="auth-brand-eyebrow">Performance diária</p><h2>Uma base forte para cada objetivo.</h2><p>Organize sua rotina pessoal e prepare sua jornada profissional em um só lugar.</p></div>
+      <ul class="auth-brand-benefits">
+        <li><i data-lucide="user-round"></i><span><strong>Uso pessoal</strong>Treinos, alimentação e evolução organizados.</span></li>
+        <li><i data-lucide="dumbbell"></i><span><strong>Treinadores</strong>Acompanhamento profissional preparado para crescer.</span></li>
+        <li><i data-lucide="apple"></i><span><strong>Nutricionistas</strong>Uma experiência clara para seus pacientes.</span></li>
+      </ul>
+    </aside>
+    <main class="auth-form-panel">
+  <div class="auth-card w-full bg-card border border-line/40 rounded-2xl p-7 shadow-2xl shadow-black/40" aria-live="polite">
+    <div class="auth-card-brand forja-brand justify-center mb-7">
       <span class="forja-mark"><i data-lucide="flame"></i></span>
       <div>
         <h1 class="forja-wordmark">Forja</h1>
@@ -1416,7 +1562,7 @@
       <label for="auth-signup-password">Senha</label><div class="auth-password-field"><input type="password" id="auth-signup-password" autocomplete="new-password" aria-describedby="auth-password-requirements auth-mensagem"><button type="button" class="auth-password-toggle" data-password-target="auth-signup-password" aria-label="Mostrar senha"><i data-lucide="eye"></i></button></div>
       <p id="auth-password-requirements" class="auth-helper">Use pelo menos 8 caracteres.</p>
       <label for="auth-signup-confirm">Confirmar senha</label><div class="auth-password-field"><input type="password" id="auth-signup-confirm" autocomplete="new-password" aria-describedby="auth-mensagem"><button type="button" class="auth-password-toggle" data-password-target="auth-signup-confirm" aria-label="Mostrar senha"><i data-lucide="eye"></i></button></div>
-      <fieldset id="auth-signup-account-types" class="mt-2"><legend class="text-sm mb-2">Como você usará o Forja?</legend><div class="account-mode-options"><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="individual"><span><strong>Uso pessoal / aluno</strong><small>Organize seus treinos, alimentação e evolução e receba planos de profissionais.</small></span></label><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="trainer"><span><strong>Treinador</strong><small>Crie e acompanhe treinos para seus alunos.</small></span></label><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="nutritionist"><span><strong>Nutricionista</strong><small>Crie e acompanhe planos alimentares para seus pacientes.</small></span></label></div><p class="auth-helper mt-2">Contas profissionais também podem utilizar os recursos pessoais.</p></fieldset>
+      <fieldset id="auth-signup-account-types" class="mt-2"><legend class="text-sm mb-2">Como você usará o Forja?</legend><div class="account-mode-options"><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="individual"><span class="account-type-content"><strong class="account-type-title">Uso pessoal / aluno</strong><small class="account-type-description">Organize seus treinos, alimentação e evolução e receba planos de profissionais.</small></span></label><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="trainer"><span class="account-type-content"><strong class="account-type-title">Treinador</strong><small class="account-type-description">Crie e acompanhe treinos para seus alunos.</small></span></label><label class="account-mode-option"><input type="radio" name="signup-primary-account-type" value="nutritionist"><span class="account-type-content"><strong class="account-type-title">Nutricionista</strong><small class="account-type-description">Crie e acompanhe planos alimentares para seus pacientes.</small></span></label></div><p class="auth-helper mt-2">Contas profissionais também podem utilizar os recursos pessoais.</p></fieldset>
       <label class="auth-consent"><input type="checkbox" id="auth-terms-accepted"> <span>Li e aceito os <button type="button" data-legal-document="terms">Termos de Uso</button>.</span></label>
       <label class="auth-consent"><input type="checkbox" id="auth-privacy-accepted"> <span>Li e estou ciente da <button type="button" data-legal-document="privacy">Política de Privacidade</button>.</span></label>
       <button type="submit" id="auth-signup-submit" class="auth-primary-button" disabled>Criar conta</button>
@@ -1443,6 +1589,8 @@
       <button type="button" id="auth-resend-confirmation" class="auth-primary-button mt-5">Reenviar confirmação</button><button type="button" id="auth-confirmation-continue" class="auth-primary-button mt-5 hidden">Continuar</button><button type="button" class="auth-secondary-button mt-2" data-auth-go="login">Voltar para entrar</button><button type="button" class="auth-link-button" data-auth-go="signup">Corrigir e-mail</button>
     </section>
     <p id="auth-mensagem" class="text-sm mt-4 text-center hidden" role="status" aria-live="polite"></p>
+  </div>
+    </main>
   </div>
 </div>
 
@@ -13848,6 +13996,70 @@ window.testAccountRegistrationPlansV41A1 = async function(){
   result.passed=Object.values(result).every(value=>value===true);
   return result;
   }finally{cpfDetectorProbe.remove();}
+};
+
+window.testSignupResponsiveV41A11 = async function(){
+  const keys=['singleSignupFormExists','noDuplicateFormIds','desktopShellExists','desktopTwoColumnLayoutExpected','desktopFormWidthReadable','desktopAccountCardsThreeColumns','desktopCardsDoNotOverlap','desktopTextDoesNotOverflow','tabletLayoutExpected','mobileSingleColumnLayoutExpected','mobileCardsStacked','mobileNoHorizontalOverflow','mobileInputsFullWidth','mobileButtonsFullWidth','termsRemainAccessible','radioInputsRemainAccessible','keyboardNavigationPreserved','signupValidationStillWorks','accountTypeSelectionStillWorks','loginSwitchStillWorks','noCpfCollected','noRemoteMutationDuringTest','noBlockingErrors'];
+  const result=Object.fromEntries(keys.map(key=>[key,false])),frames=[];
+  let blockingError=null,remoteMutationCount=0;
+  const rectanglesOverlap=(a,b)=>Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1;
+  const hasOverlaps=rectangles=>rectangles.some((rect,index)=>rectangles.slice(index+1).some(other=>rectanglesOverlap(rect,other)));
+  const styleOf=element=>element?.ownerDocument?.defaultView?.getComputedStyle(element);
+  const normalizeField=value=>String(value||'').replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  const isCpfField=value=>/(^|_)(cpf|cpf_number|taxpayer_id|tax_id|document_cpf)($|_)/.test(normalizeField(value));
+  const createViewport=async(width,height)=>{
+    const source=document.getElementById('tela-auth')?.cloneNode(true);
+    if(!source)throw new Error('auth_shell_missing');
+    source.style.display='';source.classList.remove('hidden');
+    source.querySelectorAll('[data-auth-view]').forEach(view=>view.classList.toggle('hidden',view.dataset.authView!=='signup'));
+    const styles=Array.from(document.querySelectorAll('style')).map(style=>style.textContent||'').join('\n').replace(/<\/style/gi,'<\\/style');
+    const frame=document.createElement('iframe');frames.push(frame);
+    frame.title=`Teste responsivo ${width}px`;frame.setAttribute('aria-hidden','true');
+    frame.style.cssText=`position:fixed;left:-20000px;top:0;width:${width}px;height:${height}px;border:0;visibility:hidden;pointer-events:none;`;
+    const loaded=new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error(`responsive_frame_timeout_${width}`)),4000);frame.addEventListener('load',()=>{clearTimeout(timeout);resolve();},{once:true});});
+    frame.srcdoc=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${styles}</style></head><body class="font-body text-ink">${source.outerHTML}</body></html>`;
+    document.body.appendChild(frame);await loaded;
+    return frame.contentDocument;
+  };
+  try{
+    const signupForm=document.getElementById('auth-signup-view'),allIds=Array.from(document.querySelectorAll('[id]')).map(element=>element.id);
+    result.singleSignupFormExists=document.querySelectorAll('form#auth-signup-view').length===1;
+    result.noDuplicateFormIds=new Set(allIds).size===allIds.length;
+    result.desktopShellExists=Boolean(document.querySelector('#tela-auth.auth-page > .auth-desktop-shell > .auth-brand-panel')&&document.querySelector('#tela-auth.auth-page > .auth-desktop-shell > .auth-form-panel #auth-signup-view'));
+
+    const desktop=await createViewport(1100,800),desktopShell=desktop.querySelector('.auth-desktop-shell'),desktopCard=desktop.querySelector('.auth-card'),desktopCards=Array.from(desktop.querySelectorAll('#auth-signup-view .account-mode-option')),desktopRects=desktopCards.map(card=>card.getBoundingClientRect()),desktopGrid=styleOf(desktop.querySelector('#auth-signup-view .account-mode-options'));
+    const desktopColumns=desktopGrid.gridTemplateColumns.split(' ').filter(Boolean);
+    result.desktopTwoColumnLayoutExpected=styleOf(desktopShell).display==='grid'&&styleOf(desktopShell).gridTemplateColumns.split(' ').filter(Boolean).length===2;
+    result.desktopFormWidthReadable=desktopCard.getBoundingClientRect().width>=520&&desktopCard.getBoundingClientRect().width<=620.5;
+    result.desktopAccountCardsThreeColumns=desktopCards.length===3&&desktopColumns.length===3;
+    result.desktopCardsDoNotOverlap=!hasOverlaps(desktopRects)&&desktopRects.every(rect=>rect.width>130&&rect.height>80);
+    result.desktopTextDoesNotOverflow=desktopCards.every(card=>card.scrollWidth<=card.clientWidth+1&&Array.from(card.querySelectorAll('.account-type-title,.account-type-description')).every(text=>text.scrollWidth<=text.clientWidth+1));
+
+    const tablet=await createViewport(800,1024),tabletShell=tablet.querySelector('.auth-desktop-shell'),tabletBrand=tablet.querySelector('.auth-brand-panel'),tabletCard=tablet.querySelector('.auth-card'),tabletCards=Array.from(tablet.querySelectorAll('#auth-signup-view .account-mode-option'));
+    result.tabletLayoutExpected=styleOf(tabletShell).display!=='grid'&&styleOf(tabletBrand).display==='none'&&tabletCard.getBoundingClientRect().width>=700&&!hasOverlaps(tabletCards.map(card=>card.getBoundingClientRect()));
+
+    const mobile=await createViewport(390,844),mobileRoot=mobile.documentElement,mobileCards=Array.from(mobile.querySelectorAll('#auth-signup-view .account-mode-option')),mobileRects=mobileCards.map(card=>card.getBoundingClientRect()),mobileForm=mobile.querySelector('#auth-signup-view'),mobileInputs=Array.from(mobileForm.querySelectorAll('input:not([type="radio"]):not([type="checkbox"])')),mobileButtons=Array.from(mobileForm.querySelectorAll(':scope > .auth-primary-button,:scope > .auth-secondary-button'));
+    result.mobileSingleColumnLayoutExpected=styleOf(mobile.querySelector('.auth-brand-panel')).display==='none'&&styleOf(mobile.querySelector('.auth-form-panel')).width===styleOf(mobile.querySelector('.auth-desktop-shell')).width;
+    result.mobileCardsStacked=mobileRects.length===3&&mobileRects.every((rect,index)=>index===0||Math.abs(rect.left-mobileRects[0].left)<1&&rect.top>mobileRects[index-1].bottom);
+    result.mobileNoHorizontalOverflow=mobileRoot.scrollWidth<=mobileRoot.clientWidth+1&&mobile.body.scrollWidth<=mobile.body.clientWidth+1;
+    result.mobileInputsFullWidth=mobileInputs.length===3&&mobileInputs.every(input=>input.getBoundingClientRect().width>=mobileForm.getBoundingClientRect().width-2);
+    result.mobileButtonsFullWidth=mobileButtons.length===2&&mobileButtons.every(button=>button.getBoundingClientRect().width>=mobileForm.getBoundingClientRect().width-2);
+    const terms=mobile.querySelector('[data-legal-document="terms"]'),privacy=mobile.querySelector('[data-legal-document="privacy"]'),radios=Array.from(mobile.querySelectorAll('[name="signup-primary-account-type"]'));
+    result.termsRemainAccessible=Boolean(terms&&privacy&&terms.getBoundingClientRect().width>0&&privacy.getBoundingClientRect().width>0);
+    result.radioInputsRemainAccessible=radios.length===3&&radios.every(radio=>radio.type==='radio'&&radio.closest('label.account-mode-option')&&!radio.disabled);
+    result.keyboardNavigationPreserved=radios.every(radio=>radio.tabIndex>=0)&&mobileButtons.every(button=>button.tabIndex>=0);
+    const validSignup=validateSignupForm({email:'responsivo@example.com',password:'SenhaSegura123',confirmation:'SenhaSegura123',accountType:'trainer',termsAccepted:true,privacyAccepted:true}),invalidSignup=validateSignupForm({email:'invalido',password:'123',confirmation:'456',accountType:'',termsAccepted:false,privacyAccepted:false});
+    result.signupValidationStillWorks=validSignup.valid&&!invalidSignup.valid;
+    radios[1]?.click();result.accountTypeSelectionStillWorks=radios[1]?.checked===true&&styleOf(radios[1].closest('.account-mode-option')).borderColor!==styleOf(radios[0].closest('.account-mode-option')).borderColor;
+    result.loginSwitchStillWorks=Boolean(signupForm&&document.querySelector('#auth-signup-view [data-auth-go="login"]')&&typeof showAuthView==='function');
+    const collectionAttributes=['id','name','placeholder','aria-label','autocomplete','data-field'];
+    result.noCpfCollected=!Array.from(document.querySelectorAll('#auth-signup-view input,#auth-signup-view select,#auth-signup-view textarea')).some(control=>collectionAttributes.some(attribute=>isCpfField(control.getAttribute(attribute))));
+    const remoteTokens=[['supabase','Client'].join(''),['.r','pc('].join(''),['.sign','Up('].join('')];
+    result.noRemoteMutationDuringTest=remoteMutationCount===0&&!remoteTokens.some(token=>String(window.testSignupResponsiveV41A11).includes(token));
+  }catch(error){blockingError=error;}finally{frames.forEach(frame=>frame.remove());}
+  result.noBlockingErrors=blockingError===null;
+  result.passed=Object.values(result).every(value=>value===true);
+  return result;
 };
 
 window.testRolesFoundationV40B1 = async function(){
