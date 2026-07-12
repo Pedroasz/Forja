@@ -2897,7 +2897,8 @@ async function generateTrainerStudentInvitation(){
   try{if(!getEffectiveAccountModes().includes('trainer'))throw new Error('modo treinador');const {data,error}=await supabaseClient.rpc('create_trainer_student_invitation');if(error)throw error;activeInvitationCode=String(data?.invite_code||'');activeInvitationMeta={expires_at:data?.expires_at||null,invite_code_prefix:data?.invite_code_prefix||''};await loadMyTrainerInvitations();renderConnectionsScreen();return data;}
   finally{invitationOperationPending=false;}
 }
-async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value)return {valid:false,message:'Informe o código do convite.'};const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;pendingInvitationPreview=data?.valid?{...data,code:value}:null;return data||{valid:false};}
+function sanitizeInvitationPreview(data = {}){return {valid:data?.valid===true,trainer_display_name:String(data?.trainer_display_name||''),expires_at:data?.expires_at||null,invite_prefix:String(data?.invite_prefix||'')};}
+async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value)return {valid:false,trainer_display_name:'',expires_at:null,invite_prefix:''};const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;const preview=sanitizeInvitationPreview(data);pendingInvitationPreview=preview.valid?{...preview,code:value}:null;return preview;}
 async function acceptTrainerStudentInvitation(code){if(invitationOperationPending)return null;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('accept_trainer_student_invitation',{invite_code:String(code||'')});if(error)throw error;if(data?.accepted){await loadMyAccountModes();await refreshAccessContextAfterRelationshipChange();}return data;}finally{invitationOperationPending=false;}}
 async function cancelTrainerStudentInvitation(invitationId){if(invitationOperationPending)return false;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('cancel_trainer_invitation',{invitation_id:invitationId});if(error)throw error;await loadMyTrainerInvitations();renderConnectionsScreen();return data===true;}finally{invitationOperationPending=false;}}
 async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections()]);renderConnectionsScreen();return state.accessContext.data;}
@@ -4151,7 +4152,7 @@ const DataMapper = (() => {
    */
   function mealsToSupabaseByDate(meals = [], userId = null) {
     const grouped = meals.reduce((acc, meal) => {
-      const mealDate = getDailyRecordDateKey(meal);
+      const mealDate = resolveMealLocalDateKey(meal);
       if (!mealDate) return acc;
       if (!acc[mealDate]) acc[mealDate] = [];
       acc[mealDate].push({ ...meal });
@@ -4182,7 +4183,9 @@ const DataMapper = (() => {
       .sort((a, b) => String(a.meal_date || '').localeCompare(String(b.meal_date || '')))
       .flatMap(row => Array.isArray(row.items) ? row.items.map(item => ({
         ...item,
-        data: getDailyRecordDateKey(item, row.meal_date)
+        data: getDailyRecordDateKey(item, row.meal_date),
+        created_at: item.created_at || item.createdAt || row.created_at || null,
+        updated_at: item.updated_at || row.updated_at || null
       })) : []);
   }
 
@@ -8945,6 +8948,87 @@ function getDailyRecordDateKey(record, fallbackDateKey = '') {
   return parseLocalDateKey(fallbackDateKey) ? String(fallbackDateKey) : '';
 }
 
+function resolveMealLocalDateKey(meal = {}) {
+  const explicit = meal.data ?? meal.date ?? meal.dateKey ?? meal.dayKey ?? meal.meal_date;
+  const explicitKey = parseLocalDateKey(explicit) ? String(explicit) : '';
+  const timestamp = meal.created_at ?? meal.createdAt ?? '';
+  const parsedTimestamp = timestamp ? new Date(timestamp) : null;
+  if (!parsedTimestamp || !Number.isFinite(parsedTimestamp.getTime())) return explicitKey;
+  const utcDateKey = parsedTimestamp.toISOString().slice(0, 10);
+  const localDateKey = getLocalDateKey(parsedTimestamp);
+  const manuallySelected = meal.dateSource === 'selected' || meal.date_source === 'selected' || meal.date_is_user_selected === true;
+  const normalTimezoneShift = shiftLocalDateKey(utcDateKey, -1) === localDateKey || shiftLocalDateKey(utcDateKey, 1) === localDateKey;
+  if (explicitKey && !manuallySelected && explicitKey === utcDateKey && localDateKey !== utcDateKey && normalTimezoneShift) return localDateKey;
+  return explicitKey || localDateKey;
+}
+
+function normalizeMealRecord(meal = {}) {
+  return { ...meal, effectiveLocalDateKey: resolveMealLocalDateKey(meal) };
+}
+
+function getMealsForDate(dateKey, meals = state.diario) {
+  return (Array.isArray(meals) ? meals : []).filter(meal => resolveMealLocalDateKey(meal) === dateKey);
+}
+
+function createDietRecordBase(dateKey = dataDietaAtiva) {
+  const timestamp = new Date().toISOString();
+  return {
+    id: Date.now(),
+    data: parseLocalDateKey(dateKey) ? String(dateKey) : getLocalDateKey(),
+    dateSource: 'selected',
+    created_at: timestamp,
+    updated_at: timestamp
+  };
+}
+
+function previewLegacyDietDateCorrections() {
+  return (Array.isArray(state.diario) ? state.diario : []).flatMap(meal => {
+    const storedDateKey = parseLocalDateKey(meal?.data) ? String(meal.data) : '';
+    const createdAt = meal?.created_at ?? meal?.createdAt ?? '';
+    if (!storedDateKey || !createdAt || meal?.dateSource === 'selected' || meal?.date_source === 'selected' || meal?.date_is_user_selected === true) return [];
+    const resolvedLocalDateKey = resolveMealLocalDateKey(meal);
+    if (!resolvedLocalDateKey || resolvedLocalDateKey === storedDateKey) return [];
+    return [{ id: meal.id, name: String(meal.alimento || meal.name || 'Registro alimentar'), storedDateKey, createdAt, resolvedLocalDateKey, reason: 'Chave diária igual à data UTC do timestamp e diferente da data civil local.' }];
+  });
+}
+
+async function applyLegacyDietDateCorrections(candidateIds = []) {
+  const allowed = new Map(previewLegacyDietDateCorrections().map(candidate => [String(candidate.id), candidate]));
+  const ids = [...new Set((Array.isArray(candidateIds) ? candidateIds : []).map(String))].filter(id => allowed.has(id));
+  if (!ids.length) return { applied: false, count: 0, reason: 'no_valid_candidates' };
+  if (!window.confirm(`Corrigir a data de ${ids.length} registro(s) antigo(s)? Alimentos, quantidades, macros e horários serão preservados.`)) return { applied: false, count: 0, reason: 'confirmation_required' };
+  const snapshot = JSON.stringify(state.diario);
+  localStorage.setItem('forja_legacy_diet_date_snapshot', snapshot);
+  state.diario = state.diario.map(meal => {
+    const candidate = allowed.get(String(meal.id));
+    return candidate && ids.includes(String(meal.id)) ? { ...meal, data: candidate.resolvedLocalDateKey, dateSource: 'legacy_utc_corrected', updated_at: new Date().toISOString() } : meal;
+  });
+  try {
+    await StorageService.saveMeals(state.diario);
+    renderDiarioHoje();
+    renderDashboard();
+    const syncPending = Boolean(SyncQueue?.load?.().meals);
+    return { applied: true, synced: !syncPending, count: ids.length, reason: syncPending ? 'remote_sync_pending' : null };
+  } catch (error) {
+    state.diario = JSON.parse(snapshot);
+    renderDiarioHoje();
+    renderDashboard();
+    return { applied: false, count: 0, reason: String(error?.message || error) };
+  }
+}
+
+async function restoreLegacyDietDateSnapshot() {
+  const snapshot = localStorage.getItem('forja_legacy_diet_date_snapshot');
+  if (!snapshot || !window.confirm('Restaurar o snapshot anterior das datas da Dieta?')) return false;
+  const restored = JSON.parse(snapshot);
+  if (!Array.isArray(restored)) return false;
+  state.diario = restored;
+  await StorageService.saveMeals(state.diario);
+  renderDiarioHoje();
+  renderDashboard();
+  return true;
+}
+
 let dataDietaAtiva = getLocalDateKey();
 
 function somarDias(iso, delta) {
@@ -9021,8 +9105,9 @@ function createConnectionItem(title,lines=[],action=null){const item=document.cr
 function renderInvitationPreview(previewData = {}) {
   const trainer = document.getElementById('accept-invitation-trainer');
   const message = document.getElementById('accept-invitation-message');
-  const displayName = String(previewData?.trainer_display_name || 'Treinador do Forja').trim();
-  const expiration = previewData?.expires_at ? formatConnectionDate(previewData.expires_at) : 'Não informada';
+  const preview = sanitizeInvitationPreview(previewData);
+  const displayName = String(preview.trainer_display_name || 'Treinador do Forja').trim();
+  const expiration = preview.expires_at ? formatConnectionDate(preview.expires_at) : 'Não informada';
   if (trainer) trainer.textContent = `Conectar com ${displayName}?`;
   if (message) message.textContent = `Expira em ${expiration}. As permissões de acesso serão configuradas separadamente.`;
   return Boolean(trainer && message);
@@ -9330,8 +9415,7 @@ document.getElementById('btn-add-food').addEventListener('click', async () => {
   const n = calcularNutrientes(alimentoSelecionado, qtd);
   const gramasEquivalentes = alimentoSelecionado.tipo_medida === 'unidade' ? +(alimentoSelecionado.peso_unidade * qtd).toFixed(1) : qtd;
   const registro = {
-    id: Date.now(),
-    data: dataDietaAtiva,
+    ...createDietRecordBase(dataDietaAtiva),
     refeicao: document.getElementById('f-refeicao').value,
     alimento: alimentoSelecionado.nome + (alimentoSelecionado.tipo_medida === 'unidade' ? ` (${qtd} un.)` : ''),
     gramas: gramasEquivalentes,
@@ -9379,8 +9463,7 @@ document.getElementById('btn-salvar-custom').addEventListener('click', async () 
   if (isNaN(kcal) || kcal < 0) { toast('Informe o valor de Kcal.'); return; }
 
   const registro = {
-    id: Date.now(),
-    data: dataDietaAtiva,
+    ...createDietRecordBase(dataDietaAtiva),
     refeicao: document.getElementById('f-refeicao').value,
     alimento: `${nome} (customizado)`,
     gramas: null,
@@ -9403,21 +9486,21 @@ const ORDEM_REFEICOES = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar', 'Ceia
 
 async function clonarRefeicaoAnterior(nomeRefeicao) {
   const anteriores = state.diario
-    .filter(r => r.refeicao === nomeRefeicao && getDailyRecordDateKey(r) < dataDietaAtiva)
-    .sort((a, b) => getDailyRecordDateKey(b).localeCompare(getDailyRecordDateKey(a)));
+    .filter(r => r.refeicao === nomeRefeicao && resolveMealLocalDateKey(r) < dataDietaAtiva)
+    .sort((a, b) => resolveMealLocalDateKey(b).localeCompare(resolveMealLocalDateKey(a)));
 
   if (anteriores.length === 0) {
     toast('Nenhum histórico encontrado para esta refeição.');
     return;
   }
 
-  const ultimaData = getDailyRecordDateKey(anteriores[0]);
-  const itensParaClonar = state.diario.filter(r => r.refeicao === nomeRefeicao && getDailyRecordDateKey(r) === ultimaData);
+  const ultimaData = resolveMealLocalDateKey(anteriores[0]);
+  const itensParaClonar = state.diario.filter(r => r.refeicao === nomeRefeicao && resolveMealLocalDateKey(r) === ultimaData);
 
   const clones = itensParaClonar.map((r, i) => ({
     ...r,
-    id: Date.now() + i,
-    data: dataDietaAtiva,
+    ...createDietRecordBase(dataDietaAtiva),
+    id: Date.now() + i
   }));
 
   state.diario.push(...clones);
@@ -9428,7 +9511,7 @@ async function clonarRefeicaoAnterior(nomeRefeicao) {
 }
 
 function renderDiarioHoje() {
-  const registros = state.diario.filter(r => getDailyRecordDateKey(r) === dataDietaAtiva);
+  const registros = getMealsForDate(dataDietaAtiva);
   const cont = document.getElementById('diario-hoje');
   const categorias = [...ORDEM_REFEICOES, 'Outros'];
 
@@ -9467,6 +9550,24 @@ function renderDiarioHoje() {
     `;
   }).join('');
 
+  const legacyCandidates = previewLegacyDietDateCorrections();
+  if (legacyCandidates.length) {
+    const correction = document.createElement('div');
+    correction.className = 'mt-4 rounded-lg border border-ember/30 bg-card2 p-3 text-xs';
+    const summary = document.createElement('p');
+    summary.textContent = `${legacyCandidates.length} registro(s) antigo(s) pode(m) estar com a data UTC.`;
+    const changes = document.createElement('p');
+    changes.className = 'text-mute mt-1';
+    changes.textContent = legacyCandidates.map(item => `${fmtDataBR(item.storedDateKey)} → ${fmtDataBR(item.resolvedLocalDateKey)}`).join(' · ');
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'profile-secondary mt-3';
+    action.textContent = 'Corrigir datas de registros antigos';
+    action.addEventListener('click', () => applyLegacyDietDateCorrections(legacyCandidates.map(item => item.id)));
+    correction.append(summary, changes, action);
+    cont.appendChild(correction);
+  }
+
   if(window.lucide) { lucide.createIcons(); }
 
   cont.querySelectorAll('.del-food').forEach(btn => {
@@ -9502,7 +9603,7 @@ function metasDieta() {
 }
 
 function renderDiarioTotais() {
-  const registros = state.diario.filter(r => getDailyRecordDateKey(r) === dataDietaAtiva);
+  const registros = getMealsForDate(dataDietaAtiva);
   const tot = registros.reduce((acc, r) => {
     acc.kcal += r.kcal; acc.carb += r.carb; acc.prot += r.prot; acc.gord += r.gord;
     return acc;
@@ -10528,13 +10629,24 @@ function restoreLiveWorkoutFocus(screen) {
   return !screen?.contains(document.activeElement);
 }
 
+function hideLiveWorkoutScreenAfterFocus(screen) {
+  const focusMoved = restoreLiveWorkoutFocus(screen);
+  if (!focusMoved) return { focusMoved: false, hidden: false, ariaHidden: false };
+  screen?.classList.add('hidden');
+  screen?.setAttribute('aria-hidden', 'true');
+  return {
+    focusMoved: !screen?.contains(document.activeElement),
+    hidden: Boolean(screen?.classList.contains('hidden')),
+    ariaHidden: screen?.getAttribute('aria-hidden') === 'true'
+  };
+}
+
 function closeLiveWorkoutScreen() {
   if (state.activeWorkoutSession) saveActiveWorkoutSession(state.activeWorkoutSession);
   const screen = document.getElementById('live-workout-screen');
   renderLiveWorkoutEntry();
-  restoreLiveWorkoutFocus(screen);
-  screen?.classList.add('hidden');
-  screen?.setAttribute('aria-hidden', 'true');
+  const visibilityResult = hideLiveWorkoutScreenAfterFocus(screen);
+  if (!visibilityResult.focusMoved) return false;
   document.body.classList.remove('live-workout-active');
   clearInterval(liveWorkoutUiInterval);
   liveWorkoutUiInterval = null;
@@ -12461,7 +12573,7 @@ function dashboardPercent(value, target) {
 
 function calculateDashboardNutrition() {
   const date = getDashboardDateKey();
-  const records = (Array.isArray(state.diario) ? state.diario : []).filter(item => getDailyRecordDateKey(item) === date);
+  const records = getMealsForDate(date);
   const totals = records.reduce((result, item) => {
     result.kcal += Number(item.kcal) || 0;
     result.prot += Number(item.prot) || 0;
@@ -13231,7 +13343,7 @@ window.testAccountModesInvitationsV40B2 = async function(){
     inviteCodeNotPersistedClientSide:!/localStorage|sessionStorage|indexedDB/.test(generateSource+String(clearFullInvitationCode)),
     inviteCodeExpiryConfigured:migrationAppliedRemotely,
     activeInviteLimitConfigured:migrationAppliedRemotely,
-    previewReturnsMinimalData:/rpc\('preview_trainer_student_invitation'\)/.test(String(previewTrainerStudentInvitation))&&previewRendererWorks,
+    previewReturnsMinimalData:/rpc\('preview_trainer_invitation'\)/.test(String(previewTrainerStudentInvitation))&&previewRendererWorks&&Object.keys(sanitizeInvitationPreview({valid:true,trainer_display_name:'T',expires_at:'x',invite_prefix:'F',email:'hidden'})).sort().join(',')==='expires_at,invite_prefix,trainer_display_name,valid',
     previewDoesNotExposeEmail:previewRendererProtectsSensitiveData&&!/email|phone|user_id|invite_code_hash/i.test(String(renderInvitationPreview)),
     selfInvitationBlocked:migrationAppliedRemotely,
     expiredInvitationBlocked:migrationAppliedRemotely,
@@ -13248,7 +13360,7 @@ window.testAccountModesInvitationsV40B2 = async function(){
     accessContextRefreshedAfterAccept:/refreshAccessContextAfterRelationshipChange/.test(acceptSource)&&/loadCurrentAccessContext/.test(refreshSource),
     individualAppStillWorks:getEffectiveAccountModes().length>=1&&!!document.getElementById('screen-home'),
     profileStillWorks:typeof saveProfileForm==='function'&&!!document.getElementById('screen-profile'),
-    onboardingStillWorks:typeof completeProfileOnboarding==='function',authStillWorks:typeof initializeForjaAuth==='function',dashboardStillWorks:typeof renderDashboard==='function',dietStillWorks:typeof renderDiarioHoje==='function',workoutStillWorks:typeof renderTelaTreino==='function',liveWorkoutStillWorks:typeof startLiveWorkout==='function',historyStillWorks:typeof renderTreinoHistoricoV32==='function',syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
+    onboardingStillWorks:typeof completeProfileOnboarding==='function',authStillWorks:typeof initializeForjaAuth==='function',dashboardStillWorks:typeof renderDashboard==='function',dietStillWorks:typeof renderDiarioHoje==='function',workoutStillWorks:typeof renderTelaTreino==='function',liveWorkoutStillWorks:typeof requestStartLiveWorkout==='function'&&typeof openLiveWorkoutScreen==='function'&&typeof closeLiveWorkoutScreen==='function',historyStillWorks:typeof renderTreinoHistoricoV32==='function',syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
     mobileNoOverflow:document.documentElement.scrollWidth<=window.innerWidth+1,
     noBlockingErrors:typeof loadMyAccountModes==='function'&&typeof previewTrainerStudentInvitation==='function'&&typeof acceptTrainerStudentInvitation==='function',
     emptyRpcResultsAccepted:rpcResults.every(result=>result.ok&&Array.isArray(result.data)),
@@ -13259,7 +13371,7 @@ window.testAccountModesInvitationsV40B2 = async function(){
   return result;
 };
 
-window.testV40B21 = async function(){
+async function testV40B21Legacy(){
   const beforeSession=JSON.stringify(state.activeWorkoutSession||null);
   let accountModesResult;
   try{accountModesResult=await window.testAccountModesInvitationsV40B2();}
@@ -13267,9 +13379,9 @@ window.testV40B21 = async function(){
   const afterSession=JSON.stringify(state.activeWorkoutSession||null);
   const accountTestSource=String(window.testAccountModesInvitationsV40B2);
   const openSource=String(openLiveWorkoutScreen),closeSource=String(closeLiveWorkoutScreen),restoreSource=String(restoreLiveWorkoutFocus);
-  const focusRestoreIndex=closeSource.indexOf('restoreLiveWorkoutFocus(screen)');
-  const hideIndex=closeSource.indexOf("screen?.classList.add('hidden')");
-  const ariaHiddenIndex=closeSource.indexOf("screen?.setAttribute('aria-hidden','true')");
+  const focusRestoreIndex=closeSource.search(/restoreLiveWorkoutFocus\s*\(screen\)/);
+  const hideIndex=closeSource.search(/classList\.add\s*\(['"]hidden['"]\)/);
+  const ariaHiddenIndex=closeSource.search(/setAttribute\s*\(['"]aria-hidden['"]\s*,\s*['"]true['"]\)/);
   const favicon=document.querySelector('link[rel="icon"]');
   const result={
     noSqlFileFetchAttempted:!/fetch\s*\(|\.sql|supabase\//i.test(accountTestSource),
@@ -13295,7 +13407,7 @@ window.testV40B21 = async function(){
   return result;
 };
 
-window.testLocalDietDatesV40B22 = async function(){
+async function testLocalDietDatesV40B22Legacy(){
   const previousSelectedDate=dataDietaAtiva;
   const previousScreenId=document.querySelector('.screen.active')?.id||'';
   const mealsBefore=JSON.stringify(state.diario||[]),hydrationBefore=JSON.stringify(state.agua||[]);
@@ -13343,6 +13455,154 @@ window.testLocalDietDatesV40B22 = async function(){
   result.noDuplicateMeals=(Array.isArray(state.diario)?state.diario.length:0)===mealCountBefore&&result.existingMealsPreserved;
   const hydrationOk=result.hydrationUsesSameDateKey===true||result.hydrationUsesSameDateKey==='not_applicable';
   result.passed=Object.entries(result).filter(([key])=>!['hydrationUsesSameDateKey','passed','error'].includes(key)).every(([,value])=>value===true)&&hydrationOk;
+  return result;
+};
+
+window.testV40B21 = async function(){
+  const beforeSession=JSON.stringify(state.activeWorkoutSession||null),previousFocusValue=liveWorkoutPreviousFocus,previousActive=document.activeElement;
+  let accountModesResult,transition={focusMoved:false,hidden:false,ariaHidden:false},launcher=null,temporaryScreen=null;
+  try{
+    accountModesResult=await window.testAccountModesInvitationsV40B2();
+    launcher=document.createElement('button'); launcher.type='button'; launcher.textContent='Abrir treino temporario';
+    temporaryScreen=document.createElement('section'); temporaryScreen.setAttribute('aria-hidden','false');
+    const closeButton=document.createElement('button'); closeButton.type='button'; closeButton.textContent='Fechar treino temporario';
+    temporaryScreen.appendChild(closeButton); document.body.append(launcher,temporaryScreen);
+    launcher.focus(); liveWorkoutPreviousFocus=launcher; closeButton.focus();
+    transition=hideLiveWorkoutScreenAfterFocus(temporaryScreen);
+  }catch(error){
+    accountModesResult={passed:false,error:String(error?.message||error),getAccountModesRpcCallable:false,listInvitationsRpcCallable:false,listConnectionsRpcCallable:false,emptyRpcResultsAccepted:false,migrationAppliedRemotely:false,accountModesTableExpected:false,invitationsTableExpected:false,noRemoteMutationDuringTest:true};
+  }finally{
+    temporaryScreen?.remove(); launcher?.remove(); liveWorkoutPreviousFocus=previousFocusValue;
+    if(previousActive instanceof HTMLElement&&previousActive.isConnected) previousActive.focus({preventScroll:true});
+  }
+  const afterSession=JSON.stringify(state.activeWorkoutSession||null),accountTestSource=String(window.testAccountModesInvitationsV40B2);
+  const openSource=String(openLiveWorkoutScreen),helperSource=String(hideLiveWorkoutScreenAfterFocus),restoreSource=String(restoreLiveWorkoutFocus);
+  const focusIndex=helperSource.search(/restoreLiveWorkoutFocus\s*\(screen\)/),hideIndex=helperSource.search(/classList\.add\s*\(['"]hidden['"]\)/),ariaIndex=helperSource.search(/setAttribute\s*\(['"]aria-hidden['"]\s*,\s*['"]true['"]\)/);
+  const favicon=document.querySelector('link[rel="icon"]');
+  const result={
+    noSqlFileFetchAttempted:!/fetch\s*\(|\.sql|supabase\//i.test(accountTestSource),
+    noSqlFile404Dependency:!/404|github\.io.*supabase/i.test(accountTestSource),
+    getAccountModesRpcCallable:accountModesResult.getAccountModesRpcCallable===true,
+    listInvitationsRpcCallable:accountModesResult.listInvitationsRpcCallable===true,
+    listConnectionsRpcCallable:accountModesResult.listConnectionsRpcCallable===true,
+    emptyRpcResultsAccepted:accountModesResult.emptyRpcResultsAccepted===true,
+    migrationAppliedRemotely:accountModesResult.migrationAppliedRemotely===true,
+    accountModesTableExpected:accountModesResult.accountModesTableExpected===true,
+    invitationsTableExpected:accountModesResult.invitationsTableExpected===true,
+    noRemoteMutationDuringTest:accountModesResult.noRemoteMutationDuringTest===true,
+    previousFocusStored:/liveWorkoutPreviousFocus\s*=\s*currentFocus/.test(openSource),
+    focusMovedBeforeAriaHidden:transition.focusMoved===true&&transition.hidden===true&&transition.ariaHidden===true&&focusIndex>=0&&hideIndex>focusIndex&&ariaIndex>hideIndex,
+    liveWorkoutAriaWarningResolved:/restoreLiveWorkoutFocus/.test(helperSource)&&/document\.activeElement\.blur/.test(restoreSource),
+    liveWorkoutStatePreserved:beforeSession===afterSession,
+    faviconReferenceValid:!!favicon&&(/^data:image\/svg\+xml/i.test(favicon.href)||!favicon.href.endsWith('/favicon.ico')),
+    accountModesTestStillWorks:typeof window.testAccountModesInvitationsV40B2==='function'&&typeof runV40B2ReadOnlyRpc==='function',
+    liveWorkoutStillWorks:typeof requestStartLiveWorkout==='function'&&typeof openLiveWorkoutScreen==='function'&&typeof closeLiveWorkoutScreen==='function'&&typeof hideLiveWorkoutScreenAfterFocus==='function',
+    noBlockingErrors:typeof getCurrentAuthUser==='function'&&typeof restoreLiveWorkoutFocus==='function'&&typeof supabaseClient!=='undefined'
+  };
+  result.passed=Object.values(result).every(value=>value===true);
+  return result;
+};
+
+window.testLocalDietDatesV40B22 = async function(){
+  const previousSelectedDate=dataDietaAtiva,previousScreenId=document.querySelector('.screen.active')?.id||'';
+  const mealsReference=state.diario,hydrationReference=state.agua;
+  const mealsBefore=JSON.stringify(state.diario||[]),hydrationBefore=JSON.stringify(state.agua||[]),mealCountBefore=state.diario?.length||0;
+  let result;
+  try{
+    const today=getLocalDateKey(),yesterday=shiftLocalDateKey(today,-1),todayDate=parseLocalDateKey(today);
+    const utcBoundary=Array.from({length:24},(_,hour)=>new Date(todayDate.getFullYear(),todayDate.getMonth(),todayDate.getDate(),hour,30)).find(date=>date.toISOString().slice(0,10)!==getLocalDateKey(date));
+    if(!utcBoundary) throw new Error('No local/UTC day boundary available for the regression fixture.');
+    const localBoundaryKey=getLocalDateKey(utcBoundary),utcBoundaryKey=utcBoundary.toISOString().slice(0,10);
+    const legacyMeal={id:'v40b22-legacy',data:utcBoundaryKey,created_at:utcBoundary.toISOString(),refeicao:'Almoco',alimento:'Registro legado temporario',kcal:200,carb:10,prot:20,gord:5};
+    const manualDate=shiftLocalDateKey(localBoundaryKey,-2);
+    const manualMeal={id:'v40b22-manual',data:manualDate,dateSource:'selected',created_at:utcBoundary.toISOString(),refeicao:'Almoco',alimento:'Registro manual temporario',kcal:100,carb:5,prot:10,gord:2};
+    state.diario=[legacyMeal,manualMeal];
+    dataDietaAtiva=localBoundaryKey; atualizarLabelDataDieta(); renderDiarioHoje();
+    const localDayText=document.getElementById('diario-hoje')?.textContent||'',localDashboard=calculateDashboardNutrition();
+    dataDietaAtiva=utcBoundaryKey; atualizarLabelDataDieta(); renderDiarioHoje();
+    const wrongUtcDayText=document.getElementById('diario-hoje')?.textContent||'',dashboardBeforeRemoval=calculateDashboardNutrition();
+    const legacyCandidateDetected=previewLegacyDietDateCorrections().some(candidate=>candidate.id===legacyMeal.id);
+    state.diario=[]; renderDashboard();
+    const dashboardAfterRemoval=calculateDashboardNutrition();
+    const hydrationApplicable=Array.isArray(state.agua)&&typeof renderAgua==='function';
+    result={
+      localDateKeyDoesNotUseUtc:localBoundaryKey!==utcBoundaryKey&&!/toISOString/.test(String(getLocalDateKey)),
+      lateNightLocalDateOk:getLocalDateKey(new Date(2026,6,10,23,30))==='2026-07-10',
+      yesterdayMealsExcludedFromToday:getMealsForDate(localBoundaryKey,[legacyMeal]).length===1,
+      todayMealsExcludedFromYesterday:getMealsForDate(utcBoundaryKey,[legacyMeal]).length===0,
+      todayLabelUsesLocalDate:formatarDataDieta(today)==='Hoje'&&formatarDataDieta(yesterday)!=='Hoje',
+      previousDayNavigationOk:shiftLocalDateKey(today,-1)===yesterday,
+      nextDayNavigationOk:shiftLocalDateKey(yesterday,1)===today,
+      monthBoundaryOk:shiftLocalDateKey('2026-07-31',1)==='2026-08-01',
+      yearBoundaryOk:shiftLocalDateKey('2026-12-31',1)==='2027-01-01',
+      dashboardUsesSameDateKey:getDashboardDateKey()===today&&/getLocalDateKey/.test(String(getDashboardDateKey)),
+      hydrationUsesSameDateKey:hydrationApplicable?(/getDailyRecordDateKey/.test(String(renderAgua))&&/getDailyRecordDateKey/.test(String(getDashboardHydrationSummary))):'not_applicable',
+      actualMealResolverUsedByDiary:/getMealsForDate/.test(String(renderDiarioHoje))&&/resolveMealLocalDateKey/.test(String(getMealsForDate)),
+      actualMealResolverUsedByDashboard:/getMealsForDate/.test(String(calculateDashboardNutrition)),
+      actualFilterUsesEffectiveDate:normalizeMealRecord(legacyMeal).effectiveLocalDateKey===localBoundaryKey,
+      actualTodayLabelUsesLocalDate:/isTodayLocalDateKey/.test(String(formatarDataDieta)),
+      legacyUtcRecordDetected:legacyCandidateDetected,
+      legacyUtcRecordRenderedOnLocalDay:localDayText.includes(legacyMeal.alimento),
+      legacyUtcRecordExcludedFromWrongUtcDay:!wrongUtcDayText.includes(legacyMeal.alimento),
+      manuallySelectedDatePreserved:resolveMealLocalDateKey(manualMeal)===manualDate,
+      selectedDayUsedWhenCreatingMeal:createDietRecordBase(yesterday).data===yesterday&&createDietRecordBase(yesterday).dateSource==='selected',
+      derivedMealCacheInvalidated:localDashboard.kcal===200&&dashboardBeforeRemoval.kcal===200&&dashboardAfterRemoval.kcal===0,
+      dashboardRecalculatedAfterDateChange:dashboardAfterRemoval.kcal!==localDashboard.kcal,
+      existingMealsPreserved:false,noDuplicateMeals:false,
+      noBlockingErrors:typeof resolveMealLocalDateKey==='function'&&typeof normalizeMealRecord==='function'&&typeof getMealsForDate==='function'
+    };
+  }catch(error){
+    result={error:String(error?.message||error),noBlockingErrors:false};
+  }finally{
+    state.diario=mealsReference; state.agua=hydrationReference; dataDietaAtiva=previousSelectedDate;
+    atualizarLabelDataDieta(); renderDiarioHoje(); renderAgua(); renderDashboard();
+    const activeScreen=document.querySelector('.screen.active');
+    if(previousScreenId&&activeScreen?.id!==previousScreenId) document.querySelectorAll('.screen').forEach(screen=>screen.classList.toggle('active',screen.id===previousScreenId));
+  }
+  result.existingMealsPreserved=JSON.stringify(state.diario||[])===mealsBefore&&JSON.stringify(state.agua||[])===hydrationBefore;
+  result.noDuplicateMeals=(state.diario?.length||0)===mealCountBefore&&result.existingMealsPreserved;
+  const hydrationOk=result.hydrationUsesSameDateKey===true||result.hydrationUsesSameDateKey==='not_applicable';
+  result.passed=Object.entries(result).filter(([key])=>!['hydrationUsesSameDateKey','passed','error'].includes(key)).every(([,value])=>value===true)&&hydrationOk;
+  return result;
+};
+
+window.testV40B23 = async function(){
+  const mealsBefore=JSON.stringify(state.diario||[]),hydrationBefore=JSON.stringify(state.agua||[]);
+  const dateResult=await window.testLocalDietDatesV40B22();
+  const accountResult=await window.testAccountModesInvitationsV40B2();
+  const focusResult=await window.testV40B21();
+  const previewSource=String(previewLegacyDietDateCorrections),applySource=String(applyLegacyDietDateCorrections),renderSource=String(renderDiarioHoje);
+  const previewState=state.diario;
+  const todayDate=parseLocalDateKey(getLocalDateKey());
+  const previewBoundary=Array.from({length:24},(_,hour)=>new Date(todayDate.getFullYear(),todayDate.getMonth(),todayDate.getDate(),hour,30)).find(date=>date.toISOString().slice(0,10)!==getLocalDateKey(date));
+  let previewCandidate=null;
+  try{
+    if(previewBoundary){
+      const fixture={id:'v40b23-preview',data:previewBoundary.toISOString().slice(0,10),created_at:previewBoundary.toISOString(),alimento:'Preview temporario'};
+      state.diario=[fixture];
+      previewCandidate=previewLegacyDietDateCorrections().find(candidate=>candidate.id===fixture.id)||null;
+    }
+  }finally{state.diario=previewState;}
+  const previewShape=Object.keys(previewCandidate||{}).sort().join(',');
+  const result={
+    persistedLegacyUtcPatternHandled:dateResult.legacyUtcRecordDetected===true,
+    realDiaryUsesResolvedDate:dateResult.actualMealResolverUsedByDiary===true&&dateResult.actualFilterUsesEffectiveDate===true,
+    realDashboardUsesResolvedDate:dateResult.actualMealResolverUsedByDashboard===true&&dateResult.dashboardRecalculatedAfterDateChange===true,
+    yesterdayNotShownToday:dateResult.legacyUtcRecordExcludedFromWrongUtcDay===true,
+    manuallySelectedDatePreserved:dateResult.manuallySelectedDatePreserved===true,
+    correctionPreviewSafe:previewShape==='createdAt,id,name,reason,resolvedLocalDateKey,storedDateKey'&&!/StorageService\.save|localStorage\.setItem/.test(previewSource),
+    correctionRequiresConfirmation:/window\.confirm/.test(applySource),
+    noAutomaticDataMigration:/action\.addEventListener/.test(renderSource)&&!/await\s+applyLegacyDietDateCorrections/.test(renderSource),
+    previewReturnsMinimalData:accountResult.previewReturnsMinimalData===true,
+    previewExposesNoEmail:accountResult.previewDoesNotExposeEmail===true,
+    focusMovedBeforeAriaHidden:focusResult.focusMovedBeforeAriaHidden===true,
+    liveWorkoutStillWorks:accountResult.liveWorkoutStillWorks===true&&focusResult.liveWorkoutStillWorks===true,
+    mealsPreserved:JSON.stringify(state.diario||[])===mealsBefore,
+    hydrationPreserved:JSON.stringify(state.agua||[])===hydrationBefore,
+    noRemoteMutationDuringTest:accountResult.noRemoteMutationDuringTest===true,
+    noBlockingErrors:dateResult.noBlockingErrors===true&&accountResult.noBlockingErrors===true&&focusResult.noBlockingErrors===true
+  };
+  result.passed=Object.values(result).every(value=>value===true);
   return result;
 };
 
