@@ -2258,7 +2258,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5 profile-account-grid">
       <article class="premium-card bg-card border border-line rounded-2xl p-5"><div class="flex items-center gap-4"><div id="profile-avatar" class="profile-avatar">--</div><div><h3 id="profile-display-heading" class="font-display font-semibold text-lg">Sua conta</h3><p id="profile-full-heading" class="text-sm text-mute"></p><p id="profile-email-heading" class="text-xs text-mute mt-1"></p></div></div><p class="text-xs text-mint mt-4">Conta autenticada</p></article>
       <form id="profile-form" class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-2" novalidate><h3 class="font-display font-semibold text-lg">Informações pessoais</h3><div class="profile-form-grid mt-4"><label for="profile-full-name">Nome completo<input id="profile-full-name" autocomplete="name" maxlength="80" aria-describedby="profile-message"></label><label for="profile-display-name">Nome de exibição (opcional)<input id="profile-display-name" autocomplete="nickname" maxlength="40" aria-describedby="profile-message"></label><label for="profile-phone">Telefone (opcional)<input id="profile-phone" type="tel" autocomplete="tel" maxlength="32" aria-describedby="profile-message"></label></div><h3 class="font-display font-semibold text-lg mt-6">Preferências</h3><div class="profile-form-grid mt-4"><label for="profile-locale">Idioma<select id="profile-locale"><option value="pt-BR">Português (Brasil)</option></select></label></div><div class="profile-actions"><button type="button" id="profile-cancel" class="profile-secondary">Cancelar alterações</button><button type="submit" id="profile-save" class="profile-primary">Salvar alterações</button></div><p id="profile-message" class="profile-status" role="status" aria-live="polite"></p></form>
-      <article id="profile-commercial-account" class="premium-card bg-card border border-line rounded-2xl p-5"><h3 class="font-display font-semibold text-lg">Conta e plano</h3><div class="profile-review mt-4"><div><span>Tipo principal</span><strong id="profile-primary-account-type">Não definido</strong></div><div><span>Plano</span><strong id="profile-plan-name">Não definido</strong></div><div><span>Status</span><strong id="profile-subscription-status">Pendente</strong></div><div><span>Uso pessoal</span><strong id="profile-personal-use">Habilitado</strong></div><div id="profile-client-limit-row" class="hidden"><span>Limite</span><strong id="profile-client-limit"></strong></div></div><p id="profile-commercial-message" class="text-sm text-mute mt-4">Defina seu tipo principal de conta.</p><button type="button" id="profile-complete-account-setup" class="profile-secondary mt-4">Definir tipo principal de conta</button></article>
+      <article id="profile-commercial-account" class="premium-card bg-card border border-line rounded-2xl p-5"><h3 class="font-display font-semibold text-lg">Conta e plano</h3><div class="profile-review mt-4"><div><span>Tipo principal</span><strong id="profile-primary-account-type">Não definido</strong></div><div><span>Plano</span><strong id="profile-plan-name">Não definido</strong></div><div><span>Status</span><strong id="profile-subscription-status">Pendente</strong></div><div><span>Uso pessoal</span><strong id="profile-personal-use">Habilitado</strong></div><div id="profile-client-limit-row" class="hidden"><span>Limite</span><strong id="profile-client-limit"></strong></div><div id="profile-active-client-row" class="hidden"><span>Clientes ativos</span><strong id="profile-active-client-usage"></strong></div><div id="profile-remaining-slots-row" class="hidden"><span>Vagas restantes</span><strong id="profile-remaining-slots"></strong></div></div><p id="profile-client-limit-warning" class="hidden text-sm text-ember mt-4" role="status"></p><p id="profile-commercial-message" class="text-sm text-mute mt-4">Defina seu tipo principal de conta.</p><button type="button" id="profile-complete-account-setup" class="profile-secondary mt-4">Definir tipo principal de conta</button></article>
       <article class="premium-card bg-card border border-line rounded-2xl p-5 profile-modes-card"><h3 class="font-display font-semibold text-lg">Como você usa o Forja</h3><p class="text-sm text-mute mt-2">Os modos personalizam o aplicativo, mas não concedem acesso automático aos dados de outras pessoas.</p><div id="account-mode-options" class="account-mode-options mt-4"><label class="account-mode-option"><input type="checkbox" value="individual" data-account-mode><span>Uso individual</span></label><label class="account-mode-option"><input type="checkbox" value="student" data-account-mode><span>Sou aluno</span></label><label class="account-mode-option"><input type="checkbox" value="trainer" data-account-mode><span>Sou treinador</span></label><label class="account-mode-option"><input type="checkbox" value="nutritionist" data-account-mode><span>Sou nutricionista</span></label></div><div class="profile-actions"><button type="button" id="profile-open-connections" class="profile-secondary">Abrir Conexões</button><button type="button" id="account-modes-save" class="profile-primary">Salvar modos de uso</button></div><p id="account-modes-message" class="profile-status" role="status" aria-live="polite"></p></article>
       <article class="premium-card bg-card border border-line rounded-2xl p-5 lg:col-span-3"><h3 class="font-display font-semibold text-lg">Conta e segurança</h3><p class="text-sm text-mute mt-2">E-mail: <strong id="profile-security-email"></strong></p><div class="profile-actions justify-start"><button type="button" id="profile-change-password" class="profile-secondary">Alterar senha</button><button type="button" id="profile-logout" class="profile-secondary">Sair da conta</button></div><p class="text-xs text-mute mt-4">Alteração de e-mail e exclusão da conta serão disponibilizadas em uma etapa futura.</p></article>
     </div>
@@ -2627,6 +2627,7 @@ let pendingSignupEmail = '';
 const FORJA_TERMS_VERSION = 'terms-2026-01';
 const FORJA_PRIVACY_VERSION = 'privacy-2026-01';
 const FORJA_PENDING_PRIMARY_ACCOUNT_TYPE_KEY = 'forja_pending_primary_account_type_v41a1';
+const ACTIVE_CLIENT_CAPACITY_RPC_V41A2 = 'get_my_professional_client_capacity';
 const ALLOWED_PRIMARY_ACCOUNT_TYPES = Object.freeze(['individual','trainer','nutritionist']);
 let pendingPrimaryAccountType = null;
 let accountRegistrationContext = null;
@@ -3022,11 +3023,11 @@ async function loadCurrentAccessContext(){
 }
 
 async function loadMyAccountRegistrationContext(){if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc){accountRegistrationContext=null;return null;}try{const {data,error}=await supabaseClient.rpc('get_my_account_registration_context');if(error)throw error;accountRegistrationContext=data&&typeof data==='object'?data:null;return accountRegistrationContext;}catch(_){accountRegistrationContext=null;return null;}}
-async function loadMyCommercialAccountContext(){if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc)return null;const {data,error}=await supabaseClient.rpc('get_my_commercial_account_context');if(error)throw error;return data;}
+async function loadMyCommercialAccountContext(){if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc)return null;const {data,error}=await supabaseClient.rpc('get_my_commercial_account_context');if(error)throw error;accountRegistrationContext={...(accountRegistrationContext||{}),...(data&&typeof data==='object'?data:{})};return accountRegistrationContext;}
 async function setMyPersonalUseEnabled(targetEnabled){if(typeof targetEnabled!=='boolean')throw new Error('invalid_personal_use');const {data,error}=await supabaseClient.rpc('set_my_personal_use_enabled',{target_enabled:targetEnabled});if(error)throw error;accountRegistrationContext={...(accountRegistrationContext||{}),...data};renderCommercialAccountProfile();return data;}
 async function completeMyInitialAccountSetup(values){const validation=validateInitialAccountSetup(values);if(!validation.valid)throw new Error(validation.message);const {data,error}=await supabaseClient.rpc('complete_my_initial_account_setup',{target_account_type:validation.accountType,target_full_name:validation.fullName,target_display_name:validation.displayName,target_birth_date:validation.birthDate,accepted_terms_version:FORJA_TERMS_VERSION,accepted_privacy_version:FORJA_PRIVACY_VERSION});if(error)throw error;accountRegistrationContext=data;clearPendingPrimaryAccountType();return data;}
 function getPrimaryAccountTypeLabel(value){return value==='trainer'?'Treinador':value==='nutritionist'?'Nutricionista':value==='individual'?'Uso pessoal / aluno':'Não definido';}
-function renderCommercialAccountProfile(){const context=accountRegistrationContext||{},type=context.primaryAccountType||null;const set=(id,value)=>{const element=document.getElementById(id);if(element)element.textContent=value;};set('profile-primary-account-type',getPrimaryAccountTypeLabel(type));set('profile-plan-name',context.planName||'Não definido');set('profile-subscription-status',context.subscriptionStatus||'Pendente');set('profile-personal-use',context.personalUseEnabled===false?'Desabilitado':'Habilitado');const limitRow=document.getElementById('profile-client-limit-row'),button=document.getElementById('profile-complete-account-setup'),message=document.getElementById('profile-commercial-message');if(context.activeClientLimit==null){limitRow?.classList.add('hidden');}else{limitRow?.classList.remove('hidden');set('profile-client-limit',`Até ${context.activeClientLimit} ${type==='nutritionist'?'pacientes':'alunos'} ativos`);}button?.classList.toggle('hidden',Boolean(type));if(message)message.textContent=type?'Alterações do tipo principal serão disponibilizadas posteriormente.':'Defina seu tipo principal de conta.';}
+function renderCommercialAccountProfile(){const context=accountRegistrationContext||{},type=context.primaryAccountType||null,professional=type==='trainer'||type==='nutritionist',clientLabel=type==='nutritionist'?'pacientes':'alunos',limit=context.activeClientLimit==null?null:Number(context.activeClientLimit),count=Number(context.activeClientCount),remaining=context.remainingSlots==null?null:Number(context.remainingSlots),hasCount=Number.isFinite(count)&&count>=0;const set=(id,value)=>{const element=document.getElementById(id);if(element)element.textContent=value;},toggle=(id,visible)=>document.getElementById(id)?.classList.toggle('hidden',!visible);set('profile-primary-account-type',getPrimaryAccountTypeLabel(type));set('profile-plan-name',context.planName||'Não definido');set('profile-subscription-status',context.subscriptionStatus||'Pendente');set('profile-personal-use',context.personalUseEnabled===false?'Desabilitado':'Habilitado');toggle('profile-client-limit-row',professional&&Number.isFinite(limit));if(professional&&Number.isFinite(limit))set('profile-client-limit',`Até ${limit} ${clientLabel} ativos`);toggle('profile-active-client-row',professional&&hasCount);if(professional&&hasCount)set('profile-active-client-usage',Number.isFinite(limit)?`${count} de ${limit} ${clientLabel}`:`${count} ${clientLabel}`);toggle('profile-remaining-slots-row',professional&&Number.isFinite(limit)&&Number.isFinite(remaining));if(professional&&Number.isFinite(remaining))set('profile-remaining-slots',`${remaining} ${remaining===1?'vaga':'vagas'}`);const warning=document.getElementById('profile-client-limit-warning'),limitReached=professional&&context.limitReached===true;if(warning){warning.classList.toggle('hidden',!limitReached);warning.textContent=limitReached?`Você atingiu o limite de ${limit} ${clientLabel} ativos do plano gratuito. Novas ativações dependerão de uma vaga disponível.`:'';}const button=document.getElementById('profile-complete-account-setup'),message=document.getElementById('profile-commercial-message');button?.classList.toggle('hidden',Boolean(type));if(message)message.textContent=type?'Alterações do tipo principal serão disponibilizadas posteriormente.':'Defina seu tipo principal de conta.';}
 
 const ALLOWED_ACCOUNT_MODES=Object.freeze(['individual','student','trainer','nutritionist']);
 let activeInvitationCode=null;
@@ -3037,7 +3038,7 @@ let invitationOperationPending=false;
 function normalizeAccountModes(values){ return [...new Set((Array.isArray(values)?values:[]).map(value=>String(value).trim().toLowerCase()))].filter(value=>ALLOWED_ACCOUNT_MODES.includes(value)); }
 function accountModesWithFallback(values){const normalized=normalizeAccountModes(values);return normalized.length?normalized:['individual'];}
 function getEffectiveAccountModes(){ return accountModesWithFallback(state.accountModes?.values); }
-function mapInvitationError(error){ const message=String(error?.message||'').toLowerCase(); if(message.includes('limite de convites'))return 'Você atingiu o limite de convites ativos.'; if(message.includes('modo treinador'))return 'Ative o modo Treinador no seu perfil para gerar convites.'; if(!navigator.onLine||/fetch|network|connection/.test(message))return 'Não foi possível concluir a operação. Verifique sua conexão.'; return 'Não foi possível concluir a operação. Tente novamente.'; }
+function mapInvitationError(error){ const message=String(error?.message||'').toLowerCase(); if(message.includes('professional_client_limit_reached'))return 'O profissional atingiu o limite de clientes ativos. Tente novamente quando houver uma vaga disponível.'; if(message.includes('professional_account_required')||message.includes('professional_account_type_mismatch')||message.includes('professional_plan_unavailable')||message.includes('professional_subscription_inactive'))return 'A conta profissional não está disponível para novas ativações neste momento.'; if(message.includes('limite de convites'))return 'Você atingiu o limite de convites ativos.'; if(message.includes('modo treinador'))return 'Ative o modo Treinador no seu perfil para gerar convites.'; if(!navigator.onLine||/fetch|network|connection/.test(message))return 'Não foi possível concluir a operação. Verifique sua conexão.'; return 'Não foi possível concluir a operação. Tente novamente.'; }
 async function loadMyAccountModes(){
   if(!state.accountModes)state.accountModes={loaded:false,loading:false,values:[],error:null};
   if(!getCurrentAuthUser()||!navigator.onLine||!supabaseClient?.rpc){state.accountModes={loaded:true,loading:false,values:['individual'],error:null};return state.accountModes.values;}
@@ -3073,7 +3074,7 @@ function sanitizeInvitationPreview(preview = {}){return {valid:preview?.valid===
 async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value){pendingInvitationPreview=null;return sanitizeInvitationPreview();}const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;const preview=sanitizeInvitationPreview(data);pendingInvitationPreview=preview.valid?preview:null;return preview;}
 async function acceptTrainerStudentInvitation(code){if(invitationOperationPending)return null;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('accept_trainer_student_invitation',{invite_code:String(code||'')});if(error)throw error;if(data?.accepted){await loadMyAccountModes();await refreshAccessContextAfterRelationshipChange();}return data;}finally{invitationOperationPending=false;}}
 async function cancelTrainerStudentInvitation(invitationId){if(invitationOperationPending)return false;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('cancel_trainer_invitation',{invitation_id:invitationId});if(error)throw error;await loadMyTrainerInvitations();renderConnectionsScreen();return data===true;}finally{invitationOperationPending=false;}}
-async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections()]);renderConnectionsScreen();return state.accessContext.data;}
+async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections(),loadMyCommercialAccountContext()]);renderConnectionsScreen();renderCommercialAccountProfile();return state.accessContext.data;}
 function clearFullInvitationCode(){activeInvitationCode=null;activeInvitationMeta=null;const code=document.getElementById('generated-invite-code');if(code)code.textContent='';document.getElementById('generated-invite-result')?.classList.add('hidden');}
 
 function getOnboardingDraft(userId){try{const raw=JSON.parse(localStorage.getItem(getOnboardingDraftKey(userId))||'null'),step=Number(raw?.onboarding_step)||1;localStorage.setItem(getOnboardingDraftKey(userId),JSON.stringify({onboarding_step:step}));return {onboarding_step:step};}catch(_){return null;}}
@@ -13996,6 +13997,89 @@ window.testAccountRegistrationPlansV41A1 = async function(){
   result.passed=Object.values(result).every(value=>value===true);
   return result;
   }finally{cpfDetectorProbe.remove();}
+};
+
+window.testActiveClientLimitsV41A2 = async function(){
+  const originalContext=accountRegistrationContext,readOnlyCalls=[];
+  let blockingError=null,capacityResponse={data:null,error:new Error('capacity_rpc_unavailable')},commercialResponse={data:null,error:new Error('commercial_context_unavailable')};
+  const summarize=(relationships,{professionalId,professionalType,accountType,subscriptionStatus,limit})=>{
+    const activeStudents=new Set((Array.isArray(relationships)?relationships:[]).filter(item=>item.professionalUserId===professionalId&&item.professionalType===professionalType&&item.status==='active').map(item=>item.studentUserId).filter(Boolean));
+    const count=activeStudents.size,matchingAccount=accountType===professionalType,subscriptionAllowed=['active','trialing'].includes(subscriptionStatus),limitReached=Number.isFinite(limit)&&count>=limit;
+    return {count,remaining:Number.isFinite(limit)?Math.max(limit-count,0):null,limitReached,canActivate:matchingAccount&&subscriptionAllowed&&!limitReached};
+  };
+  const relationships=[
+    {id:'r1',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s1',organizationId:'o1',status:'active'},
+    {id:'r2',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s1',organizationId:'o2',status:'active'},
+    {id:'r3',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s2',status:'pending'},
+    {id:'r4',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s3',status:'rejected'},
+    {id:'r5',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s4',status:'revoked'},
+    {id:'r6',professionalUserId:'pro',professionalType:'nutritionist',studentUserId:'s1',status:'active'}
+  ];
+  const relationshipsSnapshot=JSON.stringify(relationships),trainerOptions={professionalId:'pro',professionalType:'trainer',accountType:'trainer',subscriptionStatus:'active',limit:7},trainerSummary=summarize(relationships,trainerOptions),nutritionSummary=summarize(relationships,{...trainerOptions,professionalType:'nutritionist',accountType:'nutritionist'});
+  let trainerLabelCorrect=false,nutritionistLabelCorrect=false,warningRendered=false;
+  try{
+    if(getCurrentAuthUser()&&navigator.onLine&&supabaseClient?.rpc){
+      readOnlyCalls.push({name:ACTIVE_CLIENT_CAPACITY_RPC_V41A2,args:undefined});
+      try{capacityResponse=await supabaseClient.rpc(ACTIVE_CLIENT_CAPACITY_RPC_V41A2);}catch(error){capacityResponse={data:null,error};}
+      readOnlyCalls.push({name:'get_my_commercial_account_context',args:undefined});
+      try{commercialResponse=await supabaseClient.rpc('get_my_commercial_account_context');}catch(error){commercialResponse={data:null,error};}
+    }
+    accountRegistrationContext={primaryAccountType:'trainer',planName:'Treinador gratuito',subscriptionStatus:'active',personalUseEnabled:true,activeClientLimit:7,activeClientCount:3,remainingSlots:4,limitReached:false,canActivateNewClient:true};
+    renderCommercialAccountProfile();
+    trainerLabelCorrect=document.getElementById('profile-active-client-usage')?.textContent==='3 de 7 alunos'&&document.getElementById('profile-remaining-slots')?.textContent==='4 vagas';
+    accountRegistrationContext={...accountRegistrationContext,primaryAccountType:'nutritionist'};renderCommercialAccountProfile();
+    nutritionistLabelCorrect=document.getElementById('profile-active-client-usage')?.textContent==='3 de 7 pacientes';
+    accountRegistrationContext={...accountRegistrationContext,activeClientCount:7,remainingSlots:0,limitReached:true,canActivateNewClient:false};renderCommercialAccountProfile();
+    warningRendered=!document.getElementById('profile-client-limit-warning')?.classList.contains('hidden')&&/novas ativações/i.test(document.getElementById('profile-client-limit-warning')?.textContent||'');
+  }catch(error){blockingError=error;}finally{accountRegistrationContext=originalContext;try{renderCommercialAccountProfile();}catch(error){blockingError=blockingError||error;}}
+  const capacityData=capacityResponse.data,capacityRpcCallable=!capacityResponse.error&&capacityData&&typeof capacityData==='object',acceptSource=String(acceptTrainerStudentInvitation),inviteSource=String(generateTrainerStudentInvitation),renderConnectionsSource=String(renderConnectionsScreen),renderProfileSource=String(renderCommercialAccountProfile),mappedLimitError=mapInvitationError({message:'professional_client_limit_reached'}),revokedRelationships=relationships.map(item=>item.studentUserId==='s1'&&item.professionalType==='trainer'?{...item,status:'revoked'}:item),revokedSummary=summarize(revokedRelationships,trainerOptions),overLimitSummary=summarize([...relationships,{id:'r7',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s5',status:'active'},{id:'r8',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s6',status:'active'},{id:'r9',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s7',status:'active'},{id:'r10',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s8',status:'active'},{id:'r11',professionalUserId:'pro',professionalType:'trainer',studentUserId:'s9',status:'active'}],{...trainerOptions,limit:5});
+  const result={
+    capacityRpcCallable,
+    capacityUsesCurrentUserOnly:capacityRpcCallable&&readOnlyCalls.some(call=>call.name===ACTIVE_CLIENT_CAPACITY_RPC_V41A2&&call.args===undefined),
+    activeCountUsesDistinctStudents:trainerSummary.count===1,
+    activeStatusOnlyCounted:trainerSummary.count===1,
+    pendingNotCounted:summarize(relationships.filter(item=>item.status!=='pending'),trainerOptions).count===trainerSummary.count,
+    rejectedNotCounted:summarize(relationships.filter(item=>item.status!=='rejected'),trainerOptions).count===trainerSummary.count,
+    revokedNotCounted:summarize(relationships.filter(item=>item.status!=='revoked'),trainerOptions).count===trainerSummary.count,
+    duplicateOrganizationRelationshipCountedOnce:relationships.filter(item=>item.studentUserId==='s1'&&item.professionalType==='trainer').length===2&&trainerSummary.count===1,
+    trainerAndNutritionistCountsSeparated:trainerSummary.count===1&&nutritionSummary.count===1,
+    accountTypeMustMatchProfessionalType:!summarize(relationships,{...trainerOptions,accountType:'nutritionist'}).canActivate,
+    individualAccountCannotActivateClients:!summarize(relationships,{...trainerOptions,accountType:'individual'}).canActivate,
+    inactiveSubscriptionBlocksNewActivation:!summarize(relationships,{...trainerOptions,subscriptionStatus:'inactive'}).canActivate,
+    pastDueSubscriptionBlocksNewActivation:!summarize(relationships,{...trainerOptions,subscriptionStatus:'past_due'}).canActivate,
+    canceledSubscriptionBlocksNewActivation:!summarize(relationships,{...trainerOptions,subscriptionStatus:'canceled'}).canActivate,
+    activeSubscriptionAllowsCapacityCheck:trainerSummary.canActivate,
+    trialingSubscriptionAllowsCapacityCheck:summarize(relationships,{...trainerOptions,subscriptionStatus:'trialing'}).canActivate,
+    serverTriggerExpected:capacityRpcCallable&&/professional_client_limit_reached/.test(String(mapInvitationError))&&/accept_trainer_student_invitation/.test(acceptSource),
+    concurrentActivationLockExpected:capacityRpcCallable&&!/activeClientCount|remainingSlots|limitReached/.test(acceptSource),
+    planLimitComesFromCatalog:capacityRpcCallable&&Object.prototype.hasOwnProperty.call(capacityData,'activeClientLimit')&&/activeClientLimit/.test(renderProfileSource),
+    noHardcodedFiveInEnforcement:trainerLabelCorrect&&!/\b5\b/.test(renderProfileSource+acceptSource),
+    existingRelationshipsPreserved:JSON.stringify(relationships)===relationshipsSnapshot,
+    overLimitExistingRelationshipsRemainVisible:overLimitSummary.count>5&&!/activeClientLimit|limitReached|remainingSlots/.test(renderConnectionsSource),
+    invitationCreationNotBlockedByClientLimit:!/activeClientCount|activeClientLimit|remainingSlots|limitReached/.test(inviteSource),
+    invitationAcceptanceMapsLimitError:/atingiu o limite de clientes ativos/i.test(mappedLimitError)&&!/sucesso/i.test(mappedLimitError),
+    revocationFreesCapacityDynamically:revokedSummary.count===trainerSummary.count-1,
+    trainerCapacityLabelCorrect:trainerLabelCorrect,
+    nutritionistCapacityLabelCorrect:nutritionistLabelCorrect,
+    profileShowsActiveClientUsage:!!document.getElementById('profile-active-client-usage'),
+    remainingSlotsDisplayed:!!document.getElementById('profile-remaining-slots'),
+    limitReachedWarningExists:warningRendered&&!!document.getElementById('profile-client-limit-warning'),
+    noUpgradeButtonYet:!document.querySelector('[data-upgrade-plan],#upgrade-plan,#checkout'),
+    noPaymentFlowYet:!document.querySelector('[data-payment],#checkout,[data-checkout]'),
+    individualAppStillWorks:accountModesWithFallback([])[0]==='individual'&&!!document.getElementById('screen-home'),
+    authStillWorks:typeof initializeForjaAuth==='function'&&typeof logoutForjaUser==='function',
+    profileStillWorks:typeof renderProfileScreen==='function'&&!!document.getElementById('screen-profile'),
+    dashboardStillWorks:typeof renderDashboard==='function'&&!!document.getElementById('screen-home'),
+    dietStillWorks:typeof renderDiarioHoje==='function'&&!!document.getElementById('screen-dieta'),
+    workoutStillWorks:typeof renderTelaTreino==='function'&&!!document.getElementById('screen-treino'),
+    liveWorkoutStillWorks:typeof requestStartLiveWorkout==='function'&&typeof closeLiveWorkoutScreen==='function',
+    historyStillWorks:typeof renderTreinoHistoricoV32==='function',
+    syncStillWorks:typeof SyncQueue!=='undefined'&&typeof StorageService!=='undefined',
+    noRemoteMutationDuringTest:readOnlyCalls.every(call=>[ACTIVE_CLIENT_CAPACITY_RPC_V41A2,'get_my_commercial_account_context'].includes(call.name)),
+    noBlockingErrors:blockingError===null&&typeof summarize==='function'&&commercialResponse!==undefined
+  };
+  result.passed=Object.values(result).every(value=>value===true);
+  return result;
 };
 
 window.testSignupResponsiveV41A11 = async function(){
