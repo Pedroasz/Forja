@@ -13779,7 +13779,24 @@ window.testAccountRegistrationPlansV41A1 = async function(){
   const adultDate=`${new Date().getFullYear()-25}-01-15`,minorDate=`${new Date().getFullYear()-15}-01-15`,futureDate=`${new Date().getFullYear()+1}-01-15`,implausibleDate=`${new Date().getFullYear()-121}-01-15`;
   const signupSource=String(handleSignupSubmit)+String(rememberPendingPrimaryAccountType)+String(recoverPendingPrimaryAccountType),draftSource=String(saveOnboardingDraft)+String(getOnboardingDraft),setupSource=String(completeMyInitialAccountSetup),showAuthenticatedSource=String(showAuthenticatedApp);
   const migrationReady=!plans.error&&!commercialSchema.error&&!identitySchema.error&&!legalSchema.error&&!registrationContext.error&&!commercialContext.error;
-  const forbiddenUi=Array.from(document.querySelectorAll('#auth-signup-view input,#onboarding-personal-view input,#profile-commercial-account input')).some(input=>/cpf|rg|cep|address|payment|card/i.test(`${input.id} ${input.name}`));
+  const normalizeDetectorKey=value=>String(value||'').replace(/([a-z0-9])([A-Z])/g,'$1_$2').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  const isCpfCollectionKey=value=>/(^|_)(cpf|cpf_number|taxpayer_id|tax_id|document_cpf)($|_)/.test(normalizeDetectorKey(value));
+  const controlCollectsCpf=control=>['id','name','placeholder','aria-label','autocomplete','data-field'].some(attribute=>isCpfCollectionKey(control.getAttribute(attribute)));
+  const hasCpfObjectKey=(value,seen=new WeakSet())=>{if(!value||typeof value!=='object')return false;if(seen.has(value))return false;seen.add(value);return Object.entries(value).some(([key,nested])=>isCpfCollectionKey(key)||hasCpfObjectKey(nested,seen));};
+  const storageHasCpfKey=storage=>{try{for(let index=0;index<storage.length;index+=1){if(isCpfCollectionKey(storage.key(index)))return true;}}catch(_){}return false;};
+  const extractCallPayloadKeys=(source,pattern)=>{const match=String(source).match(pattern);if(!match)return {};return Object.fromEntries([...match[1].matchAll(/([A-Za-z_$][\w$]*)\s*:/g)].map(entry=>[entry[1],true]));};
+  const signupPayloadKeys=extractCallPayloadKeys(String(handleSignupSubmit),/\.signUp\s*\(\s*\{([\s\S]*?)\}\s*\)/);
+  const setupPayloadKeys=extractCallPayloadKeys(String(completeMyInitialAccountSetup),/\.rpc\s*\(\s*['"]complete_my_initial_account_setup['"]\s*,\s*\{([\s\S]*?)\}\s*\)/);
+  const realFormControls=Array.from(document.querySelectorAll('input,select,textarea'));
+  const temporaryRegistrationState={pendingPrimaryAccountType};
+  const cpfDetectorProbe=document.createElement('input');
+  cpfDetectorProbe.type='text';cpfDetectorProbe.hidden=true;cpfDetectorProbe.setAttribute('data-field','cpf_number');document.body.appendChild(cpfDetectorProbe);
+  try{
+  const cpfDetectorRejectsProbe=controlCollectsCpf(cpfDetectorProbe);
+  const forbiddenUi=realFormControls.some(controlCollectsCpf);
+  const forbiddenPayload=hasCpfObjectKey(signupPayloadKeys)||hasCpfObjectKey(setupPayloadKeys);
+  const forbiddenTemporaryState=hasCpfObjectKey(temporaryRegistrationState);
+  const forbiddenStorage=storageHasCpfKey(localStorage)||storageHasCpfKey(sessionStorage);
   const result={
     signupAccountTypeStepExists:document.querySelectorAll('[name="signup-primary-account-type"]').length===3,
     signupRequiresPrimaryAccountType:validSignup.valid&&!invalidTypeSignup.valid,
@@ -13817,8 +13834,8 @@ window.testAccountRegistrationPlansV41A1 = async function(){
     personalUseRpcCallable:typeof setMyPersonalUseEnabled==='function'&&/set_my_personal_use_enabled/.test(String(setMyPersonalUseEnabled)),
     existingUsersNotBlocked:!/requiresAccountTypeSelection/.test(showAuthenticatedSource)&&!!document.getElementById('profile-complete-account-setup'),
     profileShowsPrimaryAccountType:!!document.getElementById('profile-primary-account-type'),profileShowsFreePlan:!!document.getElementById('profile-plan-name'),profileShowsProfessionalLimit:!!document.getElementById('profile-client-limit'),
-    noCpfCollected:!forbiddenUi&&!/cpf/i.test(document.getElementById('auth-signup-view')?.textContent||''),
-    noCpfStoredLocally:!/cpf/.test(draftSource+signupSource),
+    noCpfCollected:cpfDetectorRejectsProbe&&!forbiddenUi&&!forbiddenPayload&&!forbiddenTemporaryState,
+    noCpfStoredLocally:!forbiddenStorage&&!/cpf/.test(draftSource+signupSource),
     noPaymentFlowYet:!document.querySelector('[data-payment],#checkout,#upgrade-plan'),
     noClientLimitEnforcementYet:!document.querySelector('[data-enforce-client-limit],#client-limit-blocker'),
     modesStillSupported:Array.isArray(normalizeAccountModes(['individual','student','trainer','nutritionist'])),nutritionistStillSupported:ALLOWED_ACCOUNT_MODES.includes('nutritionist'),trainerStillSupported:ALLOWED_ACCOUNT_MODES.includes('trainer'),
@@ -13830,6 +13847,7 @@ window.testAccountRegistrationPlansV41A1 = async function(){
   };
   result.passed=Object.values(result).every(value=>value===true);
   return result;
+  }finally{cpfDetectorProbe.remove();}
 };
 
 window.testRolesFoundationV40B1 = async function(){
