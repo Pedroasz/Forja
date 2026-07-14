@@ -14,7 +14,14 @@ with function_info as (
 ), normalized_functions as (
   select
     *,
-    pg_catalog.lower(pg_catalog.regexp_replace(definition, '\\s+', '', 'g')) as compact_definition
+    pg_catalog.lower(
+      pg_catalog.regexp_replace(
+        definition,
+        '[[:space:]]+',
+        '',
+        'g'
+      )
+    ) as compact_definition
   from function_info
 ), canonical_scopes as (
   select
@@ -86,8 +93,10 @@ with function_info as (
     'both workout and nutrition assignment RPCs reject inactive relationships'
   union all select '10_v41d_monitoring_rpcs_require_active_relationship', 'CRITICAL',
     exists(select 1 from normalized_functions where proname = 'get_my_professional_monitoring_entitlement_v41d' and compact_definition like '%relationship.status=''active''%')
-      and (select count(*) = 3 from normalized_functions where proname in ('list_my_student_workout_executions', 'list_my_student_nutrition_logs', 'list_my_student_evolution') and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%'),
-    'all V4.1D monitoring RPCs use the active-relationship entitlement guard'
+      and exists(select 1 from normalized_functions where proname = 'list_my_student_workout_executions' and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%')
+      and exists(select 1 from normalized_functions where proname = 'list_my_student_nutrition_logs' and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%')
+      and exists(select 1 from normalized_functions where proname = 'list_my_student_evolution' and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%'),
+    'each V4.1D monitoring RPC uses the active-relationship entitlement guard'
   union all select '11_active_legacy_trainers_are_synchronized', 'CRITICAL',
     not exists(select 1 from public.trainer_student_relationships legacy join public.professional_student_relationships relationship on relationship.id = legacy.id
       where legacy.status = 'active' and (legacy.permissions is distinct from (select trainer_permissions from canonical_scopes) or relationship.status is distinct from 'active' or relationship.professional_type is distinct from 'trainer' or relationship.scopes is distinct from (select trainer_scopes from canonical_scopes))),
@@ -96,18 +105,34 @@ with function_info as (
     not pg_catalog.has_table_privilege('authenticated', 'public.professional_student_relationships', 'UPDATE')
       and not pg_catalog.has_table_privilege('authenticated', 'public.trainer_student_relationships', 'UPDATE'),
     'authenticated has no direct UPDATE privilege on relationship tables'
+), structural_validity as (
+  select
+    count(*) = 12
+      and count(*) filter (where severity = 'CRITICAL') = 12
+      and count(*) filter (where severity = 'WARNING') = 0
+      and count(distinct check_name) = count(*)
+      and bool_and(passed is not null) as passed
+  from all_checks
+), normalized_checks as (
+  select
+    check_name,
+    severity,
+    coalesce(all_checks.passed, false) and structural_validity.passed as passed,
+    details
+  from all_checks
+  cross join structural_validity
 ), summarized as (
   select
     check_name,
     severity,
-    case when passed then 'PASS' else 'FAIL' end as result,
+    case when coalesce(passed, false) then 'PASS' else 'FAIL' end as result,
     details,
     count(*) over () as total_tests,
     count(*) filter (where severity = 'CRITICAL') over () as critical_tests,
     count(*) filter (where severity = 'WARNING') over () as warning_tests,
-    count(*) filter (where severity = 'CRITICAL' and not passed) over () as critical_failures,
-    count(*) filter (where severity = 'WARNING' and not passed) over () as triggered_warnings
-  from all_checks
+    count(*) filter (where severity = 'CRITICAL' and not coalesce(passed, false)) over () as critical_failures,
+    count(*) filter (where severity = 'WARNING' and not coalesce(passed, false)) over () as triggered_warnings
+  from normalized_checks
 )
 select
   check_name,
