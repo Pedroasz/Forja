@@ -1,10 +1,3 @@
-begin;
-
-drop table if exists pg_temp.v41d_verify_results;
-
-create temporary table v41d_verify_results
-on commit preserve rows
-as
 with
 functions as (
   select
@@ -359,47 +352,91 @@ checks as (
         and not attribute.attnotnull
     ),
     'all source user_id columns are declared NOT NULL for RLS ownership'
+),
+base_checks as (
+  select
+    row_number() over (order by test_name)::integer as test_number,
+    test_name as check_name,
+    case
+      when test_name < '20_' then 'RPC contract and grants'
+      when test_name < '39_' then 'Authorization'
+      when test_name < '54_' then 'Pagination and RPC safety'
+      when test_name < '66_' then 'RLS and schema safety'
+      else 'Data quality'
+    end as category,
+    severity,
+    coalesce(passed, false) as passed,
+    details
+  from checks
+),
+test_inventory as (
+  select
+    count(*)::integer as total_tests,
+    count(*) filter (where severity = 'CRITICAL')::integer as critical_tests,
+    count(*) filter (where severity = 'WARNING')::integer as warning_tests,
+    count(distinct check_name)::integer as unique_check_names
+  from base_checks
+),
+structural_check as (
+  select
+    total_tests = 69
+      and critical_tests = 66
+      and warning_tests = 3
+      and unique_check_names = 69 as passed,
+    format(
+      'structural inventory: total=%s/69, critical=%s/66, warning=%s/3, unique=%s/69',
+      total_tests,
+      critical_tests,
+      warning_tests,
+      unique_check_names
+    ) as details
+  from test_inventory
+),
+all_checks as (
+  select
+    check_row.test_number,
+    check_row.check_name,
+    check_row.category,
+    check_row.severity,
+    check_row.passed and structural_check.passed as passed,
+    case when check_row.passed and structural_check.passed then 'true' else 'false' end as found_value,
+    'true'::text as expected_value,
+    check_row.details
+      || case when structural_check.passed then '' else ' | ' || structural_check.details end as details
+  from base_checks check_row
+  cross join structural_check
+),
+summary as (
+  select
+    count(*)::integer as total_tests,
+    count(*) filter (where severity = 'CRITICAL')::integer as critical_tests,
+    count(*) filter (where severity = 'WARNING')::integer as warning_tests,
+    count(*) filter (where not passed and severity = 'CRITICAL')::integer as critical_failures,
+    count(*) filter (where not passed and severity = 'WARNING')::integer as triggered_warnings
+  from all_checks
 )
-select row_number() over (order by test_name)::integer as test_number, test_name, severity,
-  coalesce(passed, false) as passed, details
-from checks;
-
-select test_number, test_name, severity,
-  case when passed then 'PASS' when severity = 'WARNING' then 'WARN' else 'FAIL' end as result,
-  details
-from pg_temp.v41d_verify_results
-order by test_number;
-
 select
-  count(*) as total_tests,
-  count(*) filter (where severity = 'CRITICAL') as critical_tests,
-  count(*) filter (where severity = 'WARNING') as warning_tests,
-  count(*) filter (where not passed and severity = 'CRITICAL') as critical_failures,
-  count(*) filter (where not passed and severity = 'WARNING') as warnings,
+  all_checks.check_name,
+  all_checks.category,
+  all_checks.severity,
   case
-    when count(*) filter (where not passed and severity = 'CRITICAL') > 0 then 'FAIL'
-    when count(*) filter (where not passed and severity = 'WARNING') > 0 then 'WARN'
+    when all_checks.passed then 'PASS'
+    when all_checks.severity = 'WARNING' then 'WARN'
+    else 'FAIL'
+  end as result,
+  all_checks.found_value,
+  all_checks.expected_value,
+  all_checks.details,
+  summary.total_tests,
+  summary.critical_tests,
+  summary.warning_tests,
+  summary.critical_failures,
+  summary.triggered_warnings,
+  case
+    when summary.critical_failures > 0 then 'FAIL'
+    when summary.triggered_warnings > 0 then 'WARN'
     else 'PASS'
   end as overall_result
-from pg_temp.v41d_verify_results;
-
-do $v41d_gate$
-declare
-  critical_failures integer;
-  failed_tests text;
-begin
-  select
-    count(*) filter (where not passed and severity = 'CRITICAL'),
-    pg_catalog.string_agg(test_name, ', ' order by test_number) filter (where not passed and severity = 'CRITICAL')
-  into critical_failures, failed_tests
-  from pg_temp.v41d_verify_results;
-
-  if critical_failures > 0 then
-    raise exception 'V4.1D verification failed (% critical): %', critical_failures, failed_tests;
-  end if;
-end;
-$v41d_gate$;
-
-drop table if exists pg_temp.v41d_verify_results;
-
-commit;
+from all_checks
+cross join summary
+order by all_checks.test_number;
