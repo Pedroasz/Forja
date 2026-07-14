@@ -1,89 +1,95 @@
 with function_info as (
   select
     procedure.oid,
+    procedure.proname,
     procedure.prosecdef,
     procedure.proconfig,
     procedure.proacl,
     procedure.proowner,
     pg_catalog.pg_get_functiondef(procedure.oid) as definition,
-    pg_catalog.pg_get_function_identity_arguments(procedure.oid) as identity_arguments,
-    pg_catalog.pg_get_userbyid(procedure.proowner) as owner_name
+    pg_catalog.pg_get_function_identity_arguments(procedure.oid) as identity_arguments
   from pg_catalog.pg_proc procedure
   join pg_catalog.pg_namespace namespace on namespace.oid = procedure.pronamespace
   where namespace.nspname = 'public'
-    and procedure.proname = 'set_my_professional_relationship_scopes'
-), normalized_function as (
+), normalized_functions as (
   select
     *,
     pg_catalog.lower(pg_catalog.regexp_replace(definition, '\\s+', '', 'g')) as compact_definition
   from function_info
-), relation_info as (
+), canonical_scopes as (
   select
-    pg_catalog.to_regclass('public.professional_student_relationships') as professional_relationships,
-    pg_catalog.to_regclass('public.trainer_student_relationships') as legacy_relationships
+    pg_catalog.jsonb_build_object(
+      'manage_workout_plan', true,
+      'view_workout_executions', true,
+      'view_evolution', true,
+      'manage_nutrition_plan', false,
+      'view_nutrition_logs', false
+    ) as trainer_scopes,
+    pg_catalog.jsonb_build_object(
+      'manage_workout_plan', false,
+      'view_workout_executions', false,
+      'view_evolution', true,
+      'manage_nutrition_plan', true,
+      'view_nutrition_logs', true
+    ) as nutritionist_scopes,
+    pg_catalog.jsonb_build_object(
+      'view_workouts', true,
+      'assign_workouts', true,
+      'view_executions', true,
+      'view_evolution', true,
+      'view_nutrition', false
+    ) as trainer_permissions
 ), all_checks as (
-  select '01_rpc_exists_with_exact_signature'::text as check_name, 'CRITICAL'::text as severity,
-    exists(select 1 from normalized_function where identity_arguments = 'target_relationship_id uuid, target_scopes jsonb') as passed,
-    'student scope RPC exists with only relationship and scopes parameters'::text as details
-  union all select '02_rpc_uses_security_definer', 'CRITICAL',
-    exists(select 1 from normalized_function where prosecdef),
-    'RPC uses SECURITY DEFINER for the guarded update'
-  union all select '03_rpc_uses_empty_search_path', 'CRITICAL',
-    exists(select 1 from normalized_function where 'search_path=' = any(coalesce(proconfig, array[]::text[]))),
-    'RPC has an empty search_path'
-  union all select '04_public_and_anon_cannot_execute', 'CRITICAL',
-    exists(select 1 from normalized_function function where not exists (
-      select 1 from pg_catalog.aclexplode(coalesce(function.proacl, pg_catalog.acldefault('f', function.proowner))) privilege
-      where privilege.grantee = 0 and privilege.privilege_type = 'EXECUTE'
-    ) and not pg_catalog.has_function_privilege('anon', function.oid, 'EXECUTE')),
-    'PUBLIC and anon cannot execute the RPC'
-  union all select '05_authenticated_can_execute', 'CRITICAL',
-    exists(select 1 from normalized_function function where pg_catalog.has_function_privilege('authenticated', function.oid, 'EXECUTE')),
-    'authenticated can execute the RPC'
-  union all select '06_requires_authenticated_student', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%auth.uid()isnull%' and compact_definition like '%relationship.student_user_id=auth.uid()%'),
-    'only the authenticated student can change a relationship'
-  union all select '07_requires_active_relationship', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%relationship_record.status<>''active''%'),
-    'inactive relationships are rejected'
-  union all select '08_rejects_unknown_scope_keys', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%relationship_scope_unknown_key%' and compact_definition like '%jsonb_each(target_scopes)%'),
-    'scope payload keys are allowlisted'
-  union all select '09_rejects_non_boolean_values', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%relationship_scope_value_must_be_boolean%' and compact_definition like '%jsonb_typeof(requested_value)<>''boolean''%'),
-    'all accepted scope values are booleans'
-  union all select '10_trainer_scopes_are_isolated', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%relationship_scope_not_allowed_for_trainer%' and compact_definition like '%''manage_nutrition_plan'',false%' and compact_definition like '%''view_nutrition_logs'',false%'),
-    'trainer relationships cannot receive nutrition scopes'
-  union all select '11_nutritionist_scopes_are_isolated', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%relationship_scope_not_allowed_for_nutritionist%' and compact_definition like '%''manage_workout_plan'',false%' and compact_definition like '%''view_workout_executions'',false%'),
-    'nutritionist relationships cannot receive workout scopes'
-  union all select '12_no_user_id_parameters', 'CRITICAL',
-    exists(select 1 from normalized_function where identity_arguments = 'target_relationship_id uuid, target_scopes jsonb'),
-    'RPC does not accept professional or student user IDs'
-  union all select '13_legacy_trainer_mapping_present', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%trainer_student_relationships%' and compact_definition like '%''assign_workouts'',normalized_scopes->''manage_workout_plan''%' and compact_definition like '%''view_executions'',normalized_scopes->''view_workout_executions''%' and compact_definition like '%''view_nutrition'',false%'),
-    'legacy trainer permissions are mapped before the existing synchronizer runs'
-  union all select '14_direct_scope_fallback_present', 'CRITICAL',
-    exists(select 1 from normalized_function where compact_definition like '%updatepublic.professional_student_relationshipssetscopes=normalized_scopes%'),
-    'non-legacy relationships update their own scopes directly'
-  union all select '15_authenticated_has_no_direct_relationship_update', 'CRITICAL',
-    (select professional_relationships is not null and not pg_catalog.has_table_privilege('authenticated', professional_relationships, 'UPDATE') from relation_info),
-    'authenticated has no direct UPDATE on professional relationships'
-  union all select '16_legacy_authenticated_has_no_direct_update', 'CRITICAL',
-    (select legacy_relationships is null or not pg_catalog.has_table_privilege('authenticated', legacy_relationships, 'UPDATE') from relation_info),
-    'authenticated has no direct UPDATE on legacy trainer relationships'
-  union all select '17_no_v41e1_helper_is_frontend_callable', 'CRITICAL',
-    not exists(
-      select 1
-      from pg_catalog.pg_proc procedure
-      join pg_catalog.pg_namespace namespace on namespace.oid = procedure.pronamespace
-      where namespace.nspname = 'public'
-        and procedure.proname like '%v41e1%'
-        and procedure.proname <> 'set_my_professional_relationship_scopes'
-        and pg_catalog.has_function_privilege('authenticated', procedure.oid, 'EXECUTE')
-    ),
-    'no V4.1E1 helper is executable by authenticated users'
+  select '01_default_helper_returns_exact_trainer_scopes'::text as check_name, 'CRITICAL'::text as severity,
+    exists(select 1 from normalized_functions where proname = 'default_professional_relationship_scopes_v41e1' and identity_arguments = 'target_professional_type text')
+      and public.default_professional_relationship_scopes_v41e1('trainer') = (select trainer_scopes from canonical_scopes) as passed,
+    'trainer helper result is the canonical automatic scope set'::text as details
+  union all select '02_default_helper_returns_exact_nutritionist_scopes', 'CRITICAL',
+    public.default_professional_relationship_scopes_v41e1('nutritionist') = (select nutritionist_scopes from canonical_scopes),
+    'nutritionist helper result is the canonical automatic scope set'
+  union all select '03_default_helper_is_internal', 'CRITICAL',
+    exists(select 1 from normalized_functions function where function.proname = 'default_professional_relationship_scopes_v41e1'
+      and not pg_catalog.has_function_privilege('public', function.oid, 'EXECUTE')
+      and not pg_catalog.has_function_privilege('anon', function.oid, 'EXECUTE')
+      and not pg_catalog.has_function_privilege('authenticated', function.oid, 'EXECUTE')),
+    'default helper is not executable by public, anon, or authenticated'
+  union all select '04_before_trigger_normalizes_every_write', 'CRITICAL',
+    exists(select 1 from pg_catalog.pg_trigger trigger join pg_catalog.pg_class relation on relation.oid = trigger.tgrelid join pg_catalog.pg_namespace namespace on namespace.oid = relation.relnamespace join normalized_functions function on function.oid = trigger.tgfoid
+      where namespace.nspname = 'public' and relation.relname = 'professional_student_relationships'
+        and trigger.tgname = 'apply_default_professional_relationship_scopes_v41e1' and not trigger.tgisinternal
+        and (trigger.tgtype & 2) <> 0 and (trigger.tgtype & 16) <> 0
+        and function.compact_definition like '%new.scopes:=public.default_professional_relationship_scopes_v41e1(new.professional_type)%'),
+    'BEFORE INSERT OR UPDATE trigger always replaces supplied scopes with defaults'
+  union all select '05_invitation_grants_canonical_legacy_permissions', 'CRITICAL',
+    exists(select 1 from normalized_functions where proname = 'accept_trainer_student_invitation'
+      and compact_definition like '%''view_workouts'',true%' and compact_definition like '%''assign_workouts'',true%'
+      and compact_definition like '%''view_executions'',true%' and compact_definition like '%''view_evolution'',true%'
+      and compact_definition like '%''view_nutrition'',false%' and compact_definition like '%permissions=excluded.permissions%'),
+    'accepted trainer invitation creates the canonical legacy permissions'
+  union all select '06_active_trainers_have_only_canonical_scopes', 'CRITICAL',
+    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'trainer' and relationship.scopes <> (select trainer_scopes from canonical_scopes)),
+    'every active trainer relationship has only workout and evolution scopes'
+  union all select '07_active_nutritionists_have_only_canonical_scopes', 'CRITICAL',
+    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'nutritionist' and relationship.scopes <> (select nutritionist_scopes from canonical_scopes)),
+    'every active nutritionist relationship has only nutrition and evolution scopes'
+  union all select '08_manual_scope_rpc_is_absent', 'CRITICAL',
+    not exists(select 1 from normalized_functions where proname = 'set_my_professional_relationship_scopes'),
+    'no public RPC remains for students to edit relationship scopes'
+  union all select '09_assignment_rpc_requires_active_relationship', 'CRITICAL',
+    exists(select 1 from normalized_functions where proname = 'assign_nutrition_template_to_student' and compact_definition like '%relationship_record.status<>''active''%'),
+    'the versioned assignment RPC rejects inactive relationships'
+  union all select '10_v41d_monitoring_rpcs_require_active_relationship', 'CRITICAL',
+    exists(select 1 from normalized_functions where proname = 'get_my_professional_monitoring_entitlement_v41d' and compact_definition like '%relationship.status=''active''%')
+      and (select count(*) = 3 from normalized_functions where proname in ('list_my_student_workout_executions', 'list_my_student_nutrition_logs', 'list_my_student_evolution') and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%'),
+    'all V4.1D monitoring RPCs use the active-relationship entitlement guard'
+  union all select '11_active_legacy_trainers_are_synchronized', 'CRITICAL',
+    not exists(select 1 from public.trainer_student_relationships legacy join public.professional_student_relationships relationship on relationship.id = legacy.id
+      where legacy.status = 'active' and (legacy.permissions <> (select trainer_permissions from canonical_scopes) or relationship.status <> 'active' or relationship.professional_type <> 'trainer' or relationship.scopes <> (select trainer_scopes from canonical_scopes))),
+    'active legacy trainer rows and professional rows are synchronized to defaults'
+  union all select '12_authenticated_has_no_direct_relationship_update', 'CRITICAL',
+    not pg_catalog.has_table_privilege('authenticated', 'public.professional_student_relationships', 'UPDATE')
+      and not pg_catalog.has_table_privilege('authenticated', 'public.trainer_student_relationships', 'UPDATE'),
+    'authenticated has no direct UPDATE privilege on relationship tables'
 ), summarized as (
   select
     check_name,
