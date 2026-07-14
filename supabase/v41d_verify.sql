@@ -23,7 +23,7 @@ functions as (
     ) as empty_search_path,
     exists (
       select 1
-      from pg_catalog.aclexplode(pg_catalog.coalesce(procedure.proacl, pg_catalog.acldefault('f', procedure.proowner))) acl
+      from pg_catalog.aclexplode(coalesce(procedure.proacl, pg_catalog.acldefault('f', procedure.proowner))) acl
       where acl.grantee = 0 and acl.privilege_type = 'EXECUTE'
     ) as public_execute
   from pg_catalog.pg_proc procedure
@@ -69,7 +69,7 @@ source_policies as (
     policy.polcmd,
     policy.polroles,
     pg_catalog.regexp_replace(
-      pg_catalog.lower(pg_catalog.coalesce(pg_catalog.pg_get_expr(policy.polqual, policy.polrelid), '')),
+      pg_catalog.lower(coalesce(pg_catalog.pg_get_expr(policy.polqual, policy.polrelid), '')),
       '[[:space:]]', '', 'g'
     ) as compact_using
   from pg_catalog.pg_policy policy
