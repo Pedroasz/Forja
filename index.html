@@ -3331,7 +3331,7 @@ function sanitizeInvitationPreview(preview = {}){return {valid:preview?.valid===
 async function previewTrainerStudentInvitation(code){const value=String(code||'').trim();if(!value){pendingInvitationPreview=null;return sanitizeInvitationPreview();}const {data,error}=await supabaseClient.rpc('preview_trainer_invitation',{invite_code:value});if(error)throw error;const preview=sanitizeInvitationPreview(data);pendingInvitationPreview=preview.valid?preview:null;return preview;}
 async function acceptTrainerStudentInvitation(code){if(invitationOperationPending)return null;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('accept_trainer_student_invitation',{invite_code:String(code||'')});if(error)throw error;if(data?.accepted){await loadMyAccountModes();await refreshAccessContextAfterRelationshipChange();}return data;}finally{invitationOperationPending=false;}}
 async function cancelTrainerStudentInvitation(invitationId){if(invitationOperationPending)return false;invitationOperationPending=true;try{const {data,error}=await supabaseClient.rpc('cancel_trainer_invitation',{invitation_id:invitationId});if(error)throw error;await loadMyTrainerInvitations();renderConnectionsScreen();return data===true;}finally{invitationOperationPending=false;}}
-async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections(),loadMyCommercialAccountContext()]);renderConnectionsScreen();renderCommercialAccountProfile();return state.accessContext.data;}
+async function refreshAccessContextAfterRelationshipChange(){await Promise.all([loadCurrentAccessContext(),loadMyConnections(),loadMyCommercialAccountContext()]);await Promise.all([loadTrainerWorkoutWorkspace(),loadNutritionistWorkspaceV41C()]);renderConnectionsScreen();renderCommercialAccountProfile();renderProfessionalMonitoringWorkspaceV41E();return state.accessContext.data;}
 function clearFullInvitationCode(){activeInvitationCode=null;activeInvitationMeta=null;const code=document.getElementById('generated-invite-code');if(code)code.textContent='';document.getElementById('generated-invite-result')?.classList.add('hidden');}
 
 function getOnboardingDraft(userId){try{const raw=JSON.parse(localStorage.getItem(getOnboardingDraftKey(userId))||'null'),step=Number(raw?.onboarding_step)||1;localStorage.setItem(getOnboardingDraftKey(userId),JSON.stringify({onboarding_step:step}));return {onboarding_step:step};}catch(_){return null;}}
@@ -14334,8 +14334,10 @@ window.testRelationshipDefaultScopesV41E1 = function(){
     trainerNoticeExists:renderSource.includes('Este treinador pode atribuir treinos e acompanhar suas execuções e evolução enquanto a conexão estiver ativa.'),
     nutritionistNoticeExists:renderSource.includes('Este nutricionista pode atribuir planos alimentares e acompanhar seus registros nutricionais e evolução enquanto a conexão estiver ativa.'),
     activeStudentOnlyGetsNotice:renderSource.includes("connection.roleInRelationship==='student'&&connection.status==='active'"),
-    acceptanceReloadsContextsAndConnections:/refreshAccessContextAfterRelationshipChange\(\)/.test(acceptSource)&&/loadCurrentAccessContext\(\).*loadMyConnections\(/.test(refreshSource),
-    monitoringWorkspacePreserved:typeof renderProfessionalMonitoringWorkspaceV41E==='function'&&documentSource.includes('professional-monitoring'),
+    acceptanceReloadsContextsAndConnections:/refreshAccessContextAfterRelationshipChange\(\)/.test(acceptSource)&&/loadCurrentAccessContext\(\).*loadMyConnections\(\).*loadMyCommercialAccountContext\(/.test(refreshSource),
+    trainerWorkspaceReloaded:/loadTrainerWorkoutWorkspace\(\)/.test(refreshSource),
+    nutritionWorkspaceReloaded:/loadNutritionistWorkspaceV41C\(\)/.test(refreshSource),
+    monitoringWorkspaceRendered:/renderProfessionalMonitoringWorkspaceV41E\(\)/.test(refreshSource)&&typeof renderProfessionalMonitoringWorkspaceV41E==='function'&&documentSource.includes('professional-monitoring'),
     noDirectRelationshipWrites:!/\.from\(['"](?:professional_student_relationships|trainer_student_relationships)['"]\)/.test(renderSource+acceptSource),
     noScopeStorage:!/localStorage|sessionStorage|StorageService/.test(renderSource+acceptSource),
     noRemoteMutationDuringTest:true

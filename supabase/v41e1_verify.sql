@@ -57,9 +57,14 @@ with function_info as (
     exists(select 1 from pg_catalog.pg_trigger trigger join pg_catalog.pg_class relation on relation.oid = trigger.tgrelid join pg_catalog.pg_namespace namespace on namespace.oid = relation.relnamespace join normalized_functions function on function.oid = trigger.tgfoid
       where namespace.nspname = 'public' and relation.relname = 'professional_student_relationships'
         and trigger.tgname = 'apply_default_professional_relationship_scopes_v41e1' and not trigger.tgisinternal
-        and (trigger.tgtype & 2) <> 0 and (trigger.tgtype & 16) <> 0
+        and (trigger.tgtype & 1) <> 0 and (trigger.tgtype & 2) <> 0 and (trigger.tgtype & 4) <> 0 and (trigger.tgtype & 16) <> 0
+        and function.prosecdef
+        and 'search_path=' = any(coalesce(function.proconfig, array[]::text[]))
+        and not pg_catalog.has_function_privilege('public', function.oid, 'EXECUTE')
+        and not pg_catalog.has_function_privilege('anon', function.oid, 'EXECUTE')
+        and not pg_catalog.has_function_privilege('authenticated', function.oid, 'EXECUTE')
         and function.compact_definition like '%new.scopes:=public.default_professional_relationship_scopes_v41e1(new.professional_type)%'),
-    'BEFORE INSERT OR UPDATE trigger always replaces supplied scopes with defaults'
+    'ROW BEFORE INSERT OR UPDATE trigger is internal, protected, and always replaces supplied scopes with defaults'
   union all select '05_invitation_grants_canonical_legacy_permissions', 'CRITICAL',
     exists(select 1 from normalized_functions where proname = 'accept_trainer_student_invitation'
       and compact_definition like '%''view_workouts'',true%' and compact_definition like '%''assign_workouts'',true%'
@@ -67,24 +72,25 @@ with function_info as (
       and compact_definition like '%''view_nutrition'',false%' and compact_definition like '%permissions=excluded.permissions%'),
     'accepted trainer invitation creates the canonical legacy permissions'
   union all select '06_active_trainers_have_only_canonical_scopes', 'CRITICAL',
-    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'trainer' and relationship.scopes <> (select trainer_scopes from canonical_scopes)),
+    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'trainer' and relationship.scopes is distinct from (select trainer_scopes from canonical_scopes)),
     'every active trainer relationship has only workout and evolution scopes'
   union all select '07_active_nutritionists_have_only_canonical_scopes', 'CRITICAL',
-    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'nutritionist' and relationship.scopes <> (select nutritionist_scopes from canonical_scopes)),
+    not exists(select 1 from public.professional_student_relationships relationship where relationship.status = 'active' and relationship.professional_type = 'nutritionist' and relationship.scopes is distinct from (select nutritionist_scopes from canonical_scopes)),
     'every active nutritionist relationship has only nutrition and evolution scopes'
   union all select '08_manual_scope_rpc_is_absent', 'CRITICAL',
     not exists(select 1 from normalized_functions where proname = 'set_my_professional_relationship_scopes'),
     'no public RPC remains for students to edit relationship scopes'
-  union all select '09_assignment_rpc_requires_active_relationship', 'CRITICAL',
-    exists(select 1 from normalized_functions where proname = 'assign_nutrition_template_to_student' and compact_definition like '%relationship_record.status<>''active''%'),
-    'the versioned assignment RPC rejects inactive relationships'
+  union all select '09_assignment_rpcs_require_active_relationship', 'CRITICAL',
+    exists(select 1 from normalized_functions where proname = 'assign_workout_template_to_student' and compact_definition like '%relationship_record.status<>''active''%')
+      and exists(select 1 from normalized_functions where proname = 'assign_nutrition_template_to_student' and compact_definition like '%relationship_record.status<>''active''%'),
+    'both workout and nutrition assignment RPCs reject inactive relationships'
   union all select '10_v41d_monitoring_rpcs_require_active_relationship', 'CRITICAL',
     exists(select 1 from normalized_functions where proname = 'get_my_professional_monitoring_entitlement_v41d' and compact_definition like '%relationship.status=''active''%')
       and (select count(*) = 3 from normalized_functions where proname in ('list_my_student_workout_executions', 'list_my_student_nutrition_logs', 'list_my_student_evolution') and compact_definition like '%public.get_my_professional_monitoring_entitlement_v41d(%'),
     'all V4.1D monitoring RPCs use the active-relationship entitlement guard'
   union all select '11_active_legacy_trainers_are_synchronized', 'CRITICAL',
     not exists(select 1 from public.trainer_student_relationships legacy join public.professional_student_relationships relationship on relationship.id = legacy.id
-      where legacy.status = 'active' and (legacy.permissions <> (select trainer_permissions from canonical_scopes) or relationship.status <> 'active' or relationship.professional_type <> 'trainer' or relationship.scopes <> (select trainer_scopes from canonical_scopes))),
+      where legacy.status = 'active' and (legacy.permissions is distinct from (select trainer_permissions from canonical_scopes) or relationship.status is distinct from 'active' or relationship.professional_type is distinct from 'trainer' or relationship.scopes is distinct from (select trainer_scopes from canonical_scopes))),
     'active legacy trainer rows and professional rows are synchronized to defaults'
   union all select '12_authenticated_has_no_direct_relationship_update', 'CRITICAL',
     not pg_catalog.has_table_privilege('authenticated', 'public.professional_student_relationships', 'UPDATE')

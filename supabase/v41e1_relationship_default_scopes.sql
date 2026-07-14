@@ -70,6 +70,7 @@ $function$;
 create or replace function public.apply_default_professional_relationship_scopes_v41e1()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $function$
 begin
