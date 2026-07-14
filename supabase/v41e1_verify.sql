@@ -66,7 +66,11 @@ with function_info as (
         and trigger.tgname = 'apply_default_professional_relationship_scopes_v41e1' and not trigger.tgisinternal
         and (trigger.tgtype & 1) <> 0 and (trigger.tgtype & 2) <> 0 and (trigger.tgtype & 4) <> 0 and (trigger.tgtype & 16) <> 0
         and function.prosecdef
-        and 'search_path=' = any(coalesce(function.proconfig, array[]::text[]))
+        and exists (
+          select 1
+          from unnest(coalesce(function.proconfig, array[]::text[])) as config(setting)
+          where pg_catalog.replace(config.setting, '"', '') = 'search_path='
+        )
         and not pg_catalog.has_function_privilege('public', function.oid, 'EXECUTE')
         and not pg_catalog.has_function_privilege('anon', function.oid, 'EXECUTE')
         and not pg_catalog.has_function_privilege('authenticated', function.oid, 'EXECUTE')
