@@ -187,6 +187,28 @@ jobs:
           console.log(`Local and remote migration histories are aligned at ${expectedVersion}.`);
           NODE
 
+      - name: Test structured migration-history validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture_dir="$RUNNER_TEMP/migration-history-validator-fixtures"
+          mkdir -p "$fixture_dir"
+          cat > "$fixture_dir/registered.json" <<'JSON'
+          {"migrations":[{"local":"","remote":"20260715144255"}]}
+          JSON
+          cat > "$fixture_dir/aligned.json" <<'JSON'
+          {"migrations":[{"local":"20260715144255","remote":"20260715144255"}]}
+          JSON
+          node "$RUNNER_TEMP/check-migration-history.mjs" \
+            "$fixture_dir/registered.json" registered 20260715144255 forja_remote_baseline
+          node "$RUNNER_TEMP/check-migration-history.mjs" \
+            "$fixture_dir/aligned.json" aligned 20260715144255 forja_remote_baseline
+          if node "$RUNNER_TEMP/check-migration-history.mjs" \
+            "$fixture_dir/aligned.json" aligned 20260715144255; then
+            echo "Validator accepted a missing expected migration name."
+            exit 1
+          fi
+
       - name: Link the confirmed production project
         run: pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
@@ -281,7 +303,7 @@ jobs:
           pnpm exec supabase --output-format json migration list --linked \
             | tee artifacts/migration-list-after.json
           node "$RUNNER_TEMP/check-migration-history.mjs" \
-            artifacts/migration-list-after.json aligned "$BASELINE_VERSION"
+            artifacts/migration-list-after.json aligned "$BASELINE_VERSION" forja_remote_baseline
 
       - name: Require an empty production dry-run
         shell: bash
