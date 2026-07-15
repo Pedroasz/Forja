@@ -357,21 +357,38 @@ jobs:
 
       - name: Run local performance advisors
         run: pnpm exec supabase db advisors --local --type performance --fail-on error
-
       - name: Generate public database types from the validated local database
         shell: bash
         run: |
           set -euo pipefail
+
           env -u SUPABASE_ACCESS_TOKEN -u SUPABASE_DB_PASSWORD \
             pnpm exec supabase gen types --local --lang typescript --schema public \
             > supabase/database.types.ts
+
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const file = "supabase/database.types.ts";
+          const source = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+
+          const normalized =
+            source
+              .split("\n")
+              .map((line) => line.replace(/[ \t]+$/u, ""))
+              .join("\n")
+              .replace(/\n+$/u, "") + "\n";
+
+          writeFileSync(file, normalized, "utf8");
+          NODE
+
           test -s supabase/database.types.ts
           grep -Fq 'export type Database' supabase/database.types.ts
+
           if grep -Eiq 'sb_secret_[A-Za-z0-9_-]+|sbp_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' supabase/database.types.ts; then
             echo "Secret scan failed for generated database types."
             exit 1
           fi
-
       - name: Stop and remove local Supabase containers
         if: always()
         shell: bash
