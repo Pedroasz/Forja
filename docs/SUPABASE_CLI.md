@@ -16,6 +16,20 @@ NÃ£o copie scripts histÃ³ricos para `supabase/migrations/` e nunca execute `
 
 Enquanto `supabase/migrations/` não existir, o baseline está pendente e nenhum `db push` deve ser executado. Antes de gerar o baseline, confirme Docker, credenciais de ambiente, projeto vinculado e histórico remoto.
 
+## Captura temporária do baseline remoto
+
+O workflow `Supabase baseline capture` existe somente para a adoção inicial das migrations e deve ser executado manualmente pela aba Actions, selecionando a `main`. Ele não possui gatilhos de `push`, pull request ou agendamento.
+
+1. Informe exatamente `yncintjylzmvzcadjfqa` no campo obrigatório `confirm_project_ref`.
+2. Aguarde a aprovação do environment `production`, quando essa proteção estiver configurada.
+3. O workflow confirma que o histórico remoto está vazio, publica um backup privado somente do schema `public` e executa `db pull`.
+4. O `db pull --yes` cria a migration com timestamp do CLI e registra esse baseline como aplicado no histórico remoto; ele não executa o SQL gerado contra o banco.
+5. O workflow exige que `migration list` fique alinhado e que `db push --dry-run` não encontre pendências. Nenhum `db push` real é executado.
+6. Depois da reconstrução local, lint, advisors e geração de tipos, uma branch exclusiva e um novo pull request draft são publicados.
+7. O pull request gerado inclui a migration, `supabase/database.types.ts` e a remoção do próprio workflow temporário.
+
+Se qualquer migration remota já existir, o Project Ref divergir, o Docker estiver indisponível ou o dry-run mostrar pendências, o workflow falha sem tentar reparar o histórico e sem abrir o pull request.
+
 ## InstalaÃ§Ã£o
 
 ```bash
