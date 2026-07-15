@@ -6,6 +6,13 @@ supabase/.env
 supabase/.temp/
 supabase/.branches/
 
+# Dumps e arquivos locais que podem conter dados
+supabase/*.dump
+supabase/*.backup
+supabase/*.tar
+supabase/*.data.sql
+supabase/dumps/
+
 # Dependências e logs
 node_modules/
 *.log
