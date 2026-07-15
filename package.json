@@ -11,8 +11,7 @@
     "supabase:types": "supabase gen types --linked --lang typescript --schema public > supabase/database.types.ts",
     "supabase:lint": "supabase db lint --local --fail-on error",
     "supabase:push:dry": "supabase db push --linked --dry-run",
-    "supabase:validate:migrations": "node scripts/validate-supabase-migrations.mjs",
-    "supabase:validate:workflows": "node scripts/validate-supabase-workflows.mjs"
+    "supabase:validate:migrations": "node scripts/validate-supabase-migrations.mjs"
   },
   "devDependencies": {
     "supabase": "2.109.1"

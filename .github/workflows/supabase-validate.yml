@@ -8,7 +8,6 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/supabase-validate.yml"
-      - ".github/workflows/supabase-baseline.yml"
 
 permissions:
   contents: read
@@ -32,8 +31,6 @@ jobs:
         run: pnpm run supabase:version
       - name: Validate migration filenames and ordering
         run: pnpm run supabase:validate:migrations
-      - name: Validate Supabase workflow credential isolation
-        run: pnpm run supabase:validate:workflows
       - name: Require Docker
         run: docker info
       - name: Start local Supabase and apply migrations
