@@ -1,0 +1,19 @@
+﻿# Credenciais e configurações locais
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp/
+supabase/.branches/
+
+# Dependências e logs
+node_modules/
+*.log
+
+# Repositório Git antigo preservado
+.git-invalido-*/
+
+# Backups locais do FORJA
+index.backup-*.html
+index.before-*.html
+index.v33-working.html
