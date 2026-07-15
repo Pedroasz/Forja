@@ -1,0 +1,59 @@
+name: Supabase deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Show pinned CLI version
+        run: pnpm run supabase:version
+      - name: Validate required configuration
+        shell: bash
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Missing SUPABASE_ACCESS_TOKEN secret"; exit 1; }
+          test -n "$SUPABASE_DB_PASSWORD" || { echo "Missing SUPABASE_DB_PASSWORD secret"; exit 1; }
+          test -n "$SUPABASE_PROJECT_REF" || { echo "Missing SUPABASE_PROJECT_REF variable"; exit 1; }
+      - name: Link production project
+        run: pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - name: Inspect migration history before deploy
+        run: pnpm exec supabase migration list --linked
+      - name: Dry-run production migrations
+        run: pnpm exec supabase db push --linked --dry-run
+      - name: Apply approved migrations
+        run: pnpm exec supabase db push --linked
+      - name: Inspect migration history after deploy
+        run: pnpm exec supabase migration list --linked
+      - name: Run security advisors
+        run: pnpm exec supabase db advisors --linked --type security --fail-on error
+      - name: Run performance advisors
+        run: pnpm exec supabase db advisors --linked --type performance --fail-on error

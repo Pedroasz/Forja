@@ -1,0 +1,46 @@
+name: Supabase validate
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/validate-supabase-migrations.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/supabase-validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Show pinned CLI version
+        run: pnpm run supabase:version
+      - name: Validate migration filenames and ordering
+        run: pnpm run supabase:validate:migrations
+      - name: Require Docker
+        run: docker info
+      - name: Start local Supabase and apply migrations
+        run: pnpm exec supabase start -x studio,imgproxy,functions,edge-runtime,analytics,vector
+      - name: Inspect local migration history
+        run: pnpm exec supabase migration list --local
+      - name: Lint local database
+        run: pnpm exec supabase db lint --local --fail-on error
+      - name: Run local database advisors
+        run: pnpm exec supabase db advisors --local --type all --fail-on error
+      - name: Stop local Supabase
+        if: always()
+        run: pnpm exec supabase stop --no-backup
