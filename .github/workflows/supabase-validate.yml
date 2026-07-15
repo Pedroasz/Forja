@@ -8,6 +8,7 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/supabase-validate.yml"
+      - ".github/workflows/supabase-baseline.yml"
 
 permissions:
   contents: read
