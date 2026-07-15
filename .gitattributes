@@ -1,0 +1,3 @@
+# Preserve the exact SQL recovered from the remote Supabase migration history.
+# This immutable CLI-generated snapshot is excluded from whitespace-error checks.
+supabase/migrations/20260715144255_forja_remote_baseline.sql -whitespace
