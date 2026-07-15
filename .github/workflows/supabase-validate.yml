@@ -32,6 +32,8 @@ jobs:
         run: pnpm run supabase:version
       - name: Validate migration filenames and ordering
         run: pnpm run supabase:validate:migrations
+      - name: Validate Supabase workflow credential isolation
+        run: pnpm run supabase:validate:workflows
       - name: Require Docker
         run: docker info
       - name: Start local Supabase and apply migrations
@@ -42,6 +44,23 @@ jobs:
         run: pnpm exec supabase db lint --local --fail-on error
       - name: Run local database advisors
         run: pnpm exec supabase db advisors --local --type all --fail-on error
+      - name: Generate and validate local public database types
+        shell: bash
+        env:
+          SUPABASE_DB_PASSWORD: senha-remota-falsa
+        run: |
+          set -euo pipefail
+          temp_types="$(mktemp)"
+          trap 'rm -f "$temp_types"' EXIT
+          env -u SUPABASE_ACCESS_TOKEN -u SUPABASE_DB_PASSWORD \
+            pnpm exec supabase gen types --local --lang typescript --schema public \
+            > "$temp_types"
+          test -s "$temp_types"
+          grep -Fq 'export type Database' "$temp_types"
+          if grep -Eiq 'sb_secret_[A-Za-z0-9_-]+|sbp_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' "$temp_types"; then
+            echo "Secret scan failed for generated database types."
+            exit 1
+          fi
       - name: Stop local Supabase
         if: always()
         run: pnpm exec supabase stop --no-backup

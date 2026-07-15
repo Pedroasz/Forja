@@ -22,16 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Validate target and required configuration
         shell: bash
         env:
           CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
           expected_ref="yncintjylzmvzcadjfqa"
@@ -210,10 +208,18 @@ jobs:
           fi
 
       - name: Link the confirmed production project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Confirm the registered remote baseline
         shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -226,6 +232,10 @@ jobs:
         run: pnpm exec supabase migration fetch --help
 
       - name: Recover the registered baseline migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: pnpm exec supabase migration fetch --linked --yes
 
       - name: Validate the generated baseline migration
@@ -298,6 +308,9 @@ jobs:
         shell: bash
         env:
           BASELINE_VERSION: ${{ steps.migration.outputs.version }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
           pnpm exec supabase --output-format json migration list --linked \
@@ -307,15 +320,26 @@ jobs:
 
       - name: Require an empty production dry-run
         shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
           pnpm exec supabase db push --linked --dry-run 2>&1 \
             | tee artifacts/db-push-dry-run.txt
           grep -Eiq '(Remote database is up to date|No migrations to push|already up to date)' \
             artifacts/db-push-dry-run.txt || {
-              echo "Dry-run did not confirm an up-to-date remote database."
-              exit 1
-            }
+            echo "Dry-run did not confirm an up-to-date remote database."
+            exit 1
+          }
+
+      - name: Verify remote credentials are absent from local validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "${SUPABASE_ACCESS_TOKEN:-}"
+          test -z "${SUPABASE_DB_PASSWORD:-}"
 
       - name: Start the minimal local Supabase stack
         run: >-
@@ -335,7 +359,18 @@ jobs:
         run: pnpm exec supabase db advisors --local --type performance --fail-on error
 
       - name: Generate public database types from the validated local database
-        run: pnpm exec supabase gen types --local --lang typescript --schema public > supabase/database.types.ts
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u SUPABASE_ACCESS_TOKEN -u SUPABASE_DB_PASSWORD \
+            pnpm exec supabase gen types --local --lang typescript --schema public \
+            > supabase/database.types.ts
+          test -s supabase/database.types.ts
+          grep -Fq 'export type Database' supabase/database.types.ts
+          if grep -Eiq 'sb_secret_[A-Za-z0-9_-]+|sbp_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' supabase/database.types.ts; then
+            echo "Secret scan failed for generated database types."
+            exit 1
+          fi
 
       - name: Stop and remove local Supabase containers
         if: always()
@@ -413,6 +448,7 @@ jobs:
       - name: Open the baseline pull request as draft
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           BASELINE_BRANCH: ${{ steps.branch.outputs.name }}
           BASELINE_NAME: ${{ steps.migration.outputs.name }}
           BASELINE_VERSION: ${{ steps.migration.outputs.version }}
