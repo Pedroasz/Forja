@@ -29,6 +29,19 @@
 11. Não excluir versões históricas.
 12. Informar imediatamente erros ou conflitos; não ocultar falhas de sincronização.
 
+## Supabase CLI e migrations
+
+- `supabase/migrations/` é a fonte oficial do esquema do banco. Scripts SQL fora dessa pasta são históricos e nunca devem ser executados automaticamente.
+- Toda alteração futura de banco deve começar pela inspeção do histórico e por `supabase migration new <nome>`, seguida da edição da migration gerada. Nunca invente manualmente o timestamp do arquivo.
+- Antes de qualquer alteração, execute `supabase --help` e a ajuda do subcomando para validar a sintaxe da versão instalada.
+- Antes do deploy, valide o SQL, execute testes locais quando Docker estiver disponível, rode advisors de segurança e desempenho e execute `db push --dry-run`.
+- O `db push` real só pode ocorrer pelo workflow de produção, após merge na `main` e depois de o dry-run passar.
+- Nunca execute `db reset --linked`.
+- Nunca use `service_role` no frontend. Todas as tabelas expostas devem ter RLS apropriada.
+- Policies não podem usar apenas `TO authenticated` sem validar propriedade ou autorização; policies de UPDATE devem possuir `USING` e `WITH CHECK`.
+- Depois da adoção das migrations, evite alterações remotas manuais pelo Table Editor ou SQL Editor.
+- Nunca registre secrets, senhas, tokens, chaves ou connection strings em logs, arquivos ou commits.
+
 ## Uso das ferramentas do Google Drive
 
 - Use primeiro a integração Google Drive já conectada.
