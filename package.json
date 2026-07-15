@@ -1,0 +1,19 @@
+{
+  "name": "forja",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "supabase": "supabase",
+    "supabase:version": "supabase --version",
+    "supabase:status": "supabase status",
+    "supabase:link": "supabase link --project-ref yncintjylzmvzcadjfqa",
+    "supabase:migrations": "supabase migration list --linked",
+    "supabase:types": "supabase gen types --linked --lang typescript --schema public > supabase/database.types.ts",
+    "supabase:lint": "supabase db lint --local --fail-on error",
+    "supabase:push:dry": "supabase db push --linked --dry-run",
+    "supabase:validate:migrations": "node scripts/validate-supabase-migrations.mjs"
+  },
+  "devDependencies": {
+    "supabase": "2.109.1"
+  }
+}
