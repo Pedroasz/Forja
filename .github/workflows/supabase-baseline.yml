@@ -85,8 +85,8 @@ jobs:
           pnpm exec supabase --help >/dev/null
           pnpm exec supabase link --help >/dev/null
           pnpm exec supabase migration list --help >/dev/null
+          pnpm exec supabase migration fetch --help >/dev/null
           pnpm exec supabase db dump --help >/dev/null
-          pnpm exec supabase db pull --help >/dev/null
           pnpm exec supabase db push --help >/dev/null
           pnpm exec supabase start --help >/dev/null
           pnpm exec supabase stop --help >/dev/null
@@ -102,7 +102,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          branch="agent/supabase-remote-baseline-${GITHUB_RUN_ID}"
+          branch="agent/supabase-remote-baseline-resume-${GITHUB_RUN_ID}"
 
           set +e
           git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1
@@ -133,7 +133,7 @@ jobs:
           cat > "$RUNNER_TEMP/check-migration-history.mjs" <<'NODE'
           import { readFileSync } from 'node:fs';
 
-          const [file, mode, expected = ''] = process.argv.slice(2);
+          const [file, mode, expectedVersion = '', expectedName = ''] = process.argv.slice(2);
           const raw = readFileSync(file, 'utf8').trim();
           let document;
 
@@ -144,70 +144,53 @@ jobs:
           }
 
           const versionPattern = /^\d{14}$/;
-          const rows = [];
+          if (!Array.isArray(document?.migrations)) {
+            throw new Error('Supabase migration list JSON does not contain a migrations array.');
+          }
+          if (!versionPattern.test(expectedVersion) || expectedName !== 'forja_remote_baseline') {
+            throw new Error('Invalid migration-history validation request.');
+          }
 
-          const normalize = (value) => {
-            if (value === null || value === undefined) return '';
-            const text = String(value).trim();
-            return versionPattern.test(text) ? text : '';
+          const migrations = document.migrations;
+          if (migrations.length !== 1) {
+            throw new Error('Expected exactly one migration in the remote baseline history.');
+          }
+
+          const migration = migrations[0];
+          const value = (key) => {
+            const candidate = migration?.[key];
+            return candidate === null || candidate === undefined ? '' : String(candidate).trim();
           };
+          const remote = value('remote') || value('version');
+          const local = value('local');
+          const name = value('name') || value('remote_name');
 
-          const visit = (value) => {
-            if (Array.isArray(value)) {
-              if (value.length >= 2) {
-                const local = normalize(value[0]);
-                const remote = normalize(value[1]);
-                if (local || remote) rows.push({ local, remote });
-              }
-              value.forEach(visit);
-              return;
+          if (remote !== expectedVersion) {
+            throw new Error('The registered remote migration version is not the expected baseline.');
+          }
+          if (name && name !== expectedName) {
+            throw new Error('The registered remote migration name is not forja_remote_baseline.');
+          }
+
+          if (mode === 'registered') {
+            if (local) {
+              throw new Error('The recovery checkout must not contain a local migration before migration fetch.');
             }
-
-            if (!value || typeof value !== 'object') return;
-
-            const entries = Object.entries(value);
-            const localEntry = entries.find(([key]) => /^local(?:_version)?$/i.test(key));
-            const remoteEntry = entries.find(([key]) => /^remote(?:_version)?$/i.test(key));
-            if (localEntry || remoteEntry) {
-              rows.push({
-                local: normalize(localEntry?.[1]),
-                remote: normalize(remoteEntry?.[1]),
-              });
-            }
-            entries.forEach(([, child]) => visit(child));
-          };
-
-          visit(document);
-          const versions = [...raw.matchAll(/(?<!\d)\d{14}(?!\d)/g)].map((match) => match[0]);
-
-          if (mode === 'empty') {
-            if (versions.length !== 0) {
-              throw new Error(`Remote migration history is not empty (${[...new Set(versions)].join(', ')}).`);
-            }
-            console.log('Structured migration history is empty.');
+            console.log(`Confirmed the single registered remote baseline at ${expectedVersion}.`);
             process.exit(0);
           }
 
-          if (mode !== 'aligned' || !versionPattern.test(expected)) {
-            throw new Error('Invalid migration-history validation request.');
-          }
-          if (versions.some((version) => version !== expected)) {
-            throw new Error('Migration history contains a version other than the generated baseline.');
-          }
-          if (!rows.some(({ local, remote }) => local === expected && remote === expected)) {
-            throw new Error('Structured migration history does not show the baseline on both local and remote sides.');
-          }
-          if (rows.some(({ local, remote }) => local !== remote || local !== expected)) {
-            throw new Error('Local and remote migration histories are not exactly aligned.');
+          if (mode !== 'aligned' || local !== expectedVersion || remote !== expectedVersion) {
+            throw new Error('Local and remote migration histories are not exactly aligned at the expected baseline.');
           }
 
-          console.log(`Local and remote migration histories are aligned at ${expected}.`);
+          console.log(`Local and remote migration histories are aligned at ${expectedVersion}.`);
           NODE
 
       - name: Link the confirmed production project
         run: pnpm exec supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
-      - name: Confirm remote migration history is empty
+      - name: Confirm the registered remote baseline
         shell: bash
         run: |
           set -euo pipefail
@@ -215,39 +198,13 @@ jobs:
           pnpm exec supabase --output-format json migration list --linked \
             | tee artifacts/migration-list-before.json
           node "$RUNNER_TEMP/check-migration-history.mjs" \
-            artifacts/migration-list-before.json empty
+            artifacts/migration-list-before.json registered 20260715144255 forja_remote_baseline
 
-      - name: Back up the public schema without data or roles
-        shell: bash
-        run: |
-          set -euo pipefail
-          backup="artifacts/pre-baseline-public-schema.sql"
-          pnpm exec supabase db dump --linked --schema public --file "$backup"
-          test -s "$backup" || {
-            echo "The pre-baseline schema backup is empty."
-            exit 1
-          }
-          if grep -Eiq '^[[:space:]]*COPY[[:space:]].*FROM[[:space:]]+stdin' "$backup"; then
-            echo "The schema backup unexpectedly contains copied table data."
-            exit 1
-          fi
-          if grep -Eiq '^[[:space:]]*(CREATE|ALTER)[[:space:]]+ROLE([[:space:]]|;)' "$backup"; then
-            echo "The schema backup unexpectedly contains role definitions."
-            exit 1
-          fi
+      - name: Confirm migration fetch syntax
+        run: pnpm exec supabase migration fetch --help
 
-      - name: Upload private pre-baseline schema backup
-        uses: actions/upload-artifact@v4
-        with:
-          name: pre-baseline-public-schema-${{ github.run_id }}
-          path: artifacts/pre-baseline-public-schema.sql
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Capture the remote public schema baseline
-        run: >-
-          pnpm exec supabase db pull forja_remote_baseline
-          --linked --schema public --yes
+      - name: Recover the registered baseline migration
+        run: pnpm exec supabase migration fetch --linked --yes
 
       - name: Validate the generated baseline migration
         id: migration
@@ -260,12 +217,14 @@ jobs:
             exit 1
           }
 
+          expected_version="20260715144255"
+          expected_name="${expected_version}_forja_remote_baseline.sql"
           migration_name="${migrations[0]}"
-          [[ "$migration_name" =~ ^([0-9]{14})_forja_remote_baseline\.sql$ ]] || {
-            echo "The generated migration does not have the expected CLI-generated name."
+          test "$migration_name" = "$expected_name" || {
+            echo "The recovered migration does not match the registered baseline name."
             exit 1
           }
-          migration_version="${BASH_REMATCH[1]}"
+          migration_version="$expected_version"
           migration_path="supabase/migrations/$migration_name"
 
           test -s "$migration_path" || {
@@ -292,10 +251,21 @@ jobs:
             echo "Copied table records found in the generated baseline."
             exit 1
           fi
-          if grep -Eiq '(service_role|sb_secret_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})' "$migration_path"; then
-            echo "A forbidden role, credential, token, or connection string was found in the baseline."
-            exit 1
-          fi
+          reject_sensitive_content() {
+            local pattern="$1"
+            local category="$2"
+            if grep -Eiq "$pattern" "$migration_path"; then
+              echo "Secret scan failed: $category detected."
+              exit 1
+            fi
+          }
+
+          reject_sensitive_content 'sb_secret_[A-Za-z0-9_-]+' 'Supabase secret key'
+          reject_sensitive_content 'sbp_[A-Za-z0-9_-]+' 'Supabase personal token'
+          reject_sensitive_content 'gh[pousr]_[A-Za-z0-9_]+' 'GitHub personal token'
+          reject_sensitive_content 'SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)' 'Supabase credential environment variable'
+          reject_sensitive_content 'postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@' 'database connection string with password'
+          reject_sensitive_content 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' 'JWT'
 
           pnpm run supabase:validate:migrations
           echo "name=$migration_name" >> "$GITHUB_OUTPUT"
@@ -360,11 +330,21 @@ jobs:
             echo "Generated database types are missing or empty."
             exit 1
           }
-          if grep -Eiq '(service_role|sb_secret_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})' \
-            "$BASELINE_PATH" supabase/database.types.ts; then
-            echo "Secret scan failed for the generated baseline files."
-            exit 1
-          fi
+          reject_sensitive_content() {
+            local pattern="$1"
+            local category="$2"
+            if grep -Eiq "$pattern" "$BASELINE_PATH" supabase/database.types.ts; then
+              echo "Secret scan failed: $category detected."
+              exit 1
+            fi
+          }
+
+          reject_sensitive_content 'sb_secret_[A-Za-z0-9_-]+' 'Supabase secret key'
+          reject_sensitive_content 'sbp_[A-Za-z0-9_-]+' 'Supabase personal token'
+          reject_sensitive_content 'gh[pousr]_[A-Za-z0-9_]+' 'GitHub personal token'
+          reject_sensitive_content 'SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)' 'Supabase credential environment variable'
+          reject_sensitive_content 'postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@' 'database connection string with password'
+          reject_sensitive_content 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' 'JWT'
 
           rm -rf artifacts
           rm .github/workflows/supabase-baseline.yml
@@ -405,7 +385,7 @@ jobs:
             exit 1
           }
 
-          git commit -m "chore(supabase): capture remote schema baseline"
+          git commit -m "chore(supabase): recover remote schema baseline"
           git push --set-upstream origin "$BASELINE_BRANCH"
 
       - name: Open the baseline pull request as draft
@@ -418,19 +398,23 @@ jobs:
           set -euo pipefail
           pr_body="$RUNNER_TEMP/baseline-pr.md"
           cat > "$pr_body" <<EOF
-          ## Baseline capturado
+          ## Baseline recuperado
 
           - Migration: \`$BASELINE_NAME\`
           - Timestamp: \`$BASELINE_VERSION\`
           - Schema capturado: \`public\`
           - Dados capturados: nenhum
-          - Histórico antes: vazio
+          - Primeira execução: registrou o baseline antes de falhar
+          - Falha anterior: falso positivo para o identificador SQL \`service_role\`
+          - Histórico antes da recuperação: uma migration remota registrada
           - Histórico depois: local e remoto alinhados em \`$BASELINE_VERSION\`
-          - Baseline marcado como aplicado pelo \`db pull --yes\`
+          - Recuperação: \`migration fetch --linked\`
+          - \`db pull\` adicional executado: não
+          - \`migration repair\` executado: não
           - \`db push --linked --dry-run\`: banco remoto sem migration pendente
           - Reconstrução local, migration list, lint e advisors: aprovados
-          - Backup de schema: artifact privado \`pre-baseline-public-schema-${GITHUB_RUN_ID}\` desta execução
           - \`db push\` real executado: não
+          - Dados incluídos: nenhum
           - Workflow temporário: removido por este próprio PR
 
           Execução de auditoria: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
@@ -441,5 +425,5 @@ jobs:
             --base main \
             --head "$BASELINE_BRANCH" \
             --draft \
-            --title "chore: capture Supabase remote baseline" \
+            --title "chore: recover Supabase remote baseline" \
             --body-file "$pr_body"
