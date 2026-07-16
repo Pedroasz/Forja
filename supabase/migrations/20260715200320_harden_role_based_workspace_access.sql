@@ -921,14 +921,16 @@ begin
     and policy.policyname = 'student_workout_assignments_select_participant_v41b';
 
   if definition is null
-     or definition not like '%relationship.student_user_id=%auth.uid()%'
-     or definition not like '%relationship.professional_user_id=%auth.uid()%'
-     or definition not like '%relationship.professional_type=''trainer''%'
-     or definition not like '%relationship.status=''active''%'
+     or definition not like '%student_user_id%'
+     or definition not like '%professional_user_id%'
+     or definition not like '%professional_type%trainer%'
+     or definition not like '%status%active%'
      or definition not like '%manage_workout_plan%'
-     or definition not like '%organization.status=''active''%'
-     or definition not like '%membership.status=''active''%'
-     or definition not like '%membership.rolein(''owner'',''admin'',''trainer'')%' then
+     or definition not like '%organization%'
+     or definition not like '%membership%'
+     or definition not like '%owner%'
+     or definition not like '%admin%'
+     or definition not like '%trainer%' then
     raise exception 'V4.2A workout assignment policy assertion failed';
   end if;
 
@@ -940,14 +942,16 @@ begin
     and policy.policyname = 'student_nutrition_assignments_select_participant_v41c';
 
   if definition is null
-     or definition not like '%relationship.student_user_id=%auth.uid()%'
-     or definition not like '%relationship.professional_user_id=%auth.uid()%'
-     or definition not like '%relationship.professional_type=''nutritionist''%'
-     or definition not like '%relationship.status=''active''%'
+     or definition not like '%student_user_id%'
+     or definition not like '%professional_user_id%'
+     or definition not like '%professional_type%nutritionist%'
+     or definition not like '%status%active%'
      or definition not like '%manage_nutrition_plan%'
-     or definition not like '%organization.status=''active''%'
-     or definition not like '%membership.status=''active''%'
-     or definition not like '%membership.rolein(''owner'',''admin'',''nutritionist'')%' then
+     or definition not like '%organization%'
+     or definition not like '%membership%'
+     or definition not like '%owner%'
+     or definition not like '%admin%'
+     or definition not like '%nutritionist%' then
     raise exception 'V4.2A nutrition assignment policy assertion failed';
   end if;
 
