@@ -1,0 +1,46 @@
+name: Forja validate
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'scripts/**'
+      - 'docs/ROLE_BASED_WORKSPACES.md'
+      - '.github/workflows/forja-validate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  role-workspaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate package manifest
+        run: node -e "JSON.parse(require('node:fs').readFileSync('package.json','utf8'))"
+      - name: Validate role-based workspaces
+        run: pnpm run test:role-workspaces
+      - name: Check diff whitespace
+        run: git diff --check "origin/${{ github.base_ref }}...HEAD"
+      - name: Keep baseline and generated types unchanged
+        run: git diff --quiet "origin/${{ github.base_ref }}" -- supabase/migrations/20260715144255_forja_remote_baseline.sql supabase/database.types.ts
+      - name: Scan frontend and workflow files for secrets or merge markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! rg -n -i 'service_role|SUPABASE_SERVICE_ROLE_KEY|sk_live_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|ghp_[A-Za-z0-9]+|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' index.html .github/workflows
+          ! rg -n '^(<<<<<<<|=======|>>>>>>>)' index.html package.json scripts docs .github/workflows
