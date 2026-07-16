@@ -77,9 +77,11 @@ Um treinador nunca bloqueia a dieta e um nutricionista nunca bloqueia o treino. 
 
 ## Offline e armazenamento local
 
-Workspaces, caches de assignments e dados pessoais usam chaves associadas ao usuário autenticado. O modo offline sem sessão usa um namespace próprio. Para preservar dados de versões anteriores sem criar vazamento entre contas, as chaves globais antigas são copiadas uma única vez pelo primeiro dono verificável: a sessão já persistida no bootstrap ou o usuário que escolhe explicitamente o modo offline. Um marcador impede reivindicação posterior por outra conta; as chaves originais permanecem intactas para rollback e nunca voltam a ser copiadas após o reset do dono.
+Workspaces, caches de assignments e dados pessoais usam chaves associadas ao usuário autenticado. O modo offline sem sessão usa um namespace próprio. Para preservar dados de versões anteriores sem criar vazamento entre contas, as chaves globais antigas são copiadas uma única vez pelo primeiro dono verificável: uma sessão persistida no bootstrap, um login explícito ou a escolha explícita do modo offline. Um marcador válido impede reivindicação posterior por outra conta; marcador corrompido falha fechado e não copia nenhum dado.
 
-Assignments ativos presentes no cache mantêm a prescrição protegida. A ausência de assignment em um cache resolvido não impede o usuário independente de continuar editando seu plano pessoal offline. A fila de sincronização segue o mesmo namespace do usuário para não reenviar dados de outra sessão.
+Assignments são evidência de autorização, não apenas cache. Para uma sessão autenticada, somente uma resposta RPC bem-sucedida torna a ausência de assignment confiável; reset, cache, offline ou erro de rede mantêm a edição estrutural bloqueada. Usuário offline sem sessão continua podendo usar seu espaço local independente. A fila de sincronização segue o mesmo namespace do usuário para não reenviar dados de outra sessão.
+
+O comando **Apagar dados locais deste espaço** remove somente os dados e registros locais do dono atual, incluindo caches, rascunho de onboarding e snapshot de dieta. Ele nunca apaga dados remotos do Supabase nem namespaces de outro usuário. Se os dados globais legados pertencerem ao dono atual, são removidos e o marcador é mantido como tombstone para impedir uma nova reivindicação cruzada.
 
 ## Supabase, RLS e ACLs
 
@@ -88,7 +90,7 @@ A V4.2A não cria tabelas. A migration aditiva de hardening:
 - restaura revogações de tabela e função que não foram preservadas no baseline capturado;
 - mantém leitura autenticada e execução apenas das RPCs públicas necessárias;
 - impede novos grants amplos por default privilege;
-- restringe a leitura profissional de assignments de treino a relacionamento ativo, tipo correto e scope correspondente;
+- restringe a leitura profissional de assignments de treino e nutrição a relacionamento ativo, tipo correto, scope correspondente, organização ativa e membership compatível;
 - exige membership e organização ativas nas atribuições organizacionais de treino e nutrição, inclusive quando o template é pessoal;
 - exige organização e membership profissionais ativas no entitlement de acompanhamento e na leitura/eligibilidade de prescrições organizacionais;
 - inclui o status real da organização no contexto de acesso, impedindo workspace gestor para organizações suspensas ou arquivadas.
