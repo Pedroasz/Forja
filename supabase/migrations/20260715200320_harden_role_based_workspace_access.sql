@@ -212,6 +212,44 @@ using (
   )
 );
 
+drop policy if exists student_nutrition_assignments_select_participant_v41c
+  on public.student_nutrition_assignments;
+
+create policy student_nutrition_assignments_select_participant_v41c
+on public.student_nutrition_assignments
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.professional_student_relationships relationship
+    where relationship.id = student_nutrition_assignments.relationship_id
+      and (
+        relationship.student_user_id = (select auth.uid())
+        or (
+          relationship.professional_user_id = (select auth.uid())
+          and relationship.professional_type = 'nutritionist'
+          and relationship.status = 'active'
+          and relationship.scopes @> '{"manage_nutrition_plan": true}'::jsonb
+          and (
+            relationship.organization_id is null
+            or exists (
+              select 1
+              from public.organizations organization
+              join public.organization_members membership
+                on membership.organization_id = organization.id
+               and membership.user_id = relationship.professional_user_id
+               and membership.status = 'active'
+               and membership.role in ('owner', 'admin', 'nutritionist')
+              where organization.id = relationship.organization_id
+                and organization.status = 'active'
+            )
+          )
+        )
+      )
+  )
+);
+
 -- The access context carries organization state so the frontend can fail closed
 -- instead of deriving a manager workspace from membership state alone.
 create or replace function public.get_current_access_context()
@@ -817,6 +855,36 @@ begin
       'public.get_my_professional_monitoring_entitlement_v41d(uuid,text,text[])',
       'EXECUTE'
     )
+    or pg_catalog.has_function_privilege(
+      'authenticated',
+      'public.get_my_professional_monitoring_entitlement_v41d(uuid,text,text[])',
+      'EXECUTE'
+    )
+    or pg_catalog.has_function_privilege(
+      'anon',
+      'public.assign_workout_template_to_student(uuid,uuid,date)',
+      'EXECUTE'
+    )
+    or pg_catalog.has_function_privilege(
+      'anon',
+      'public.assign_nutrition_template_to_student(uuid,uuid,date,date)',
+      'EXECUTE'
+    )
+    or pg_catalog.has_function_privilege(
+      'anon',
+      'public.get_current_access_context()',
+      'EXECUTE'
+    )
+    or pg_catalog.has_function_privilege(
+      'anon',
+      'public.list_my_assigned_workout_plans()',
+      'EXECUTE'
+    )
+    or pg_catalog.has_function_privilege(
+      'anon',
+      'public.list_my_assigned_nutrition_plans(date)',
+      'EXECUTE'
+    )
     or not pg_catalog.has_function_privilege(
       'authenticated',
       'public.assign_workout_template_to_student(uuid,uuid,date)',
@@ -862,6 +930,50 @@ begin
      or definition not like '%membership.status=''active''%'
      or definition not like '%membership.rolein(''owner'',''admin'',''trainer'')%' then
     raise exception 'V4.2A workout assignment policy assertion failed';
+  end if;
+
+  select pg_catalog.regexp_replace(pg_catalog.lower(policy.qual), '[[:space:]]+', '', 'g')
+  into definition
+  from pg_catalog.pg_policies policy
+  where policy.schemaname = 'public'
+    and policy.tablename = 'student_nutrition_assignments'
+    and policy.policyname = 'student_nutrition_assignments_select_participant_v41c';
+
+  if definition is null
+     or definition not like '%relationship.student_user_id=%auth.uid()%'
+     or definition not like '%relationship.professional_user_id=%auth.uid()%'
+     or definition not like '%relationship.professional_type=''nutritionist''%'
+     or definition not like '%relationship.status=''active''%'
+     or definition not like '%manage_nutrition_plan%'
+     or definition not like '%organization.status=''active''%'
+     or definition not like '%membership.status=''active''%'
+     or definition not like '%membership.rolein(''owner'',''admin'',''nutritionist'')%' then
+    raise exception 'V4.2A nutrition assignment policy assertion failed';
+  end if;
+
+  if exists (
+    select 1
+    from unnest(array[
+      'public.get_my_professional_monitoring_entitlement_v41d(uuid,text,text[])',
+      'public.assign_workout_template_to_student(uuid,uuid,date)',
+      'public.assign_nutrition_template_to_student(uuid,uuid,date,date)',
+      'public.get_current_access_context()',
+      'public.list_my_assigned_workout_plans()',
+      'public.list_my_assigned_nutrition_plans(date)'
+    ]) as expected(signature)
+    left join pg_catalog.pg_proc routine
+      on routine.oid = pg_catalog.to_regprocedure(expected.signature)
+    where routine.oid is null
+      or (
+        not routine.prosecdef
+        or not exists (
+          select 1
+          from unnest(coalesce(routine.proconfig, array[]::text[])) as config(setting)
+          where pg_catalog.replace(config.setting, '"', '') = 'search_path='
+        )
+      )
+  ) then
+    raise exception 'V4.2A function security assertion failed';
   end if;
 
   select pg_catalog.regexp_replace(
