@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 import vm from 'node:vm';
 
@@ -67,6 +67,26 @@ const {
   resolveWorkspaceRouteV42A, WorkspaceService, getPrescriptionProtectionV42A,
   PermissionService, isCurrentAssignedWorkoutPrescriptionV42A
 } = serviceContext.__v42a;
+
+const ownerStorage = new Map();
+const storageSource = extract(index, 'const PROFILE_KEY =', 'const DEFAULT_PROFILE');
+const storageContext = {
+  console,
+  currentSession: null,
+  localStorage: {
+    getItem: key => ownerStorage.has(key) ? ownerStorage.get(key) : null,
+    setItem: (key, value) => ownerStorage.set(key, String(value)),
+    removeItem: key => ownerStorage.delete(key)
+  },
+  getAssignedWorkoutCacheKey: userId => `assigned-workout:${userId}`,
+  getNutritionPlanCacheKeyV41C: userId => `assigned-nutrition:${userId}`,
+  getNotificationCacheKeyV41C: userId => `notifications:${userId}`,
+  getOnboardingDraftKey: userId => `onboarding:${userId}`,
+  WorkspaceService: { getStorageKey: userId => `workspace:${userId}` }
+};
+vm.createContext(storageContext);
+new vm.Script(`${storageSource}\n;globalThis.__storageV42A={PROFILE_KEY,MEALS_KEY,LEGACY_DIET_DATE_SNAPSHOT_KEY_V42A,LEGACY_STORAGE_CLAIM_MARKER_V42A,resolveUserScopedStorageKeyV42A,prepareLegacyStorageClaimV42A,requestExplicitLegacyStorageClaimV42A,clearExplicitLegacyStorageClaimIntentV42A,consumeExplicitLegacyStorageClaimV42A,claimLegacyStorageForOwnerV42A,clearLocalDataForOwnerV42A,readLegacyStorageClaimMarkerV42A};`, { filename: 'index.html#v42a-storage' }).runInContext(storageContext);
+const storageApi = storageContext.__storageV42A;
 
 const emptyAccess = () => ({
   platformRoles: [], memberships: [], professionalRelationships: [],
@@ -282,13 +302,84 @@ check('26 atribuicao futura fica protegida na virada offline', () => {
   assert.match(migration, /'canManageWorkoutPlan'[\s\S]*'canStart'[\s\S]*assignment\.effective_from <= current_date/);
 });
 
-check('27 migracao local e reset respeitam o dono', () => {
-  assert.match(index, /LEGACY_STORAGE_CLAIM_MARKER_V42A='forja_legacy_storage_claim_v42a'/);
-  assert.match(index, /if\(previousRaw\)[\s\S]*previous\?\.owner===owner/);
-  assert.match(index, /legacyValue!==null&&localStorage\.getItem\(scopedKey\)===null/);
-  assert.match(index, /USER_SCOPED_STORAGE_BASE_KEYS_V42A\.forEach\(key => localStorage\.removeItem\(resolveUserScopedStorageKeyV42A\(key\)\)\)/);
-  assert.match(index, /previousStorageKey=lastAuthenticatedUserId\?resolveUserScopedStorageKeyV42A\(ACTIVE_WORKOUT_SESSION_KEY,lastAuthenticatedUserId\):`\$\{ACTIVE_WORKOUT_SESSION_KEY\}:offline`/);
-  assert.match(index, /localStorage\.setItem\(resolveUserScopedStorageKeyV42A\(LS\.execucoes\), JSON\.stringify\(previousExecutions\)\)/);
+check('27 login explicito reivindica legado uma unica vez', () => {
+  ownerStorage.clear(); storageContext.currentSession = null;
+  ownerStorage.set(storageApi.PROFILE_KEY, JSON.stringify({ nome: 'Legado' }));
+  storageApi.requestExplicitLegacyStorageClaimV42A();
+  assert.equal(storageApi.consumeExplicitLegacyStorageClaimV42A('user-a'), true);
+  assert.equal(storageApi.claimLegacyStorageForOwnerV42A('user-a').claimed, true);
+  assert.ok(ownerStorage.has(storageApi.resolveUserScopedStorageKeyV42A(storageApi.PROFILE_KEY, 'user-a')));
+  storageApi.requestExplicitLegacyStorageClaimV42A();
+  assert.equal(storageApi.consumeExplicitLegacyStorageClaimV42A('user-b'), false);
+  assert.equal(storageApi.claimLegacyStorageForOwnerV42A('user-b').copied, 0);
+  assert.equal(storageApi.prepareLegacyStorageClaimV42A('user-a', 'restored_session'), false);
+  assert.equal(JSON.parse(ownerStorage.get(storageApi.LEGACY_STORAGE_CLAIM_MARKER_V42A)).owner, 'user:user-a');
+  assert.match(index, /requestExplicitLegacyStorageClaimV42A\(\)[\s\S]*signInWithPassword[\s\S]*consumeExplicitLegacyStorageClaimV42A\(data\?\.session\?\.user\?\.id\)[\s\S]*showAuthenticatedApp/);
+  assert.match(index, /if \(currentSession\?\.user\?\.id\) prepareLegacyStorageClaimV42A\(currentSession\.user\.id,'restored_session'\)/);
+  assert.match(index, /event === 'SIGNED_IN'\) consumeExplicitLegacyStorageClaimV42A\(currentSession\?\.user\?\.id\)/);
+  assert.equal((index.match(/event === 'SIGNED_IN'\) consumeExplicitLegacyStorageClaimV42A/g) || []).length, 1);
+  assert.doesNotMatch(index, /event === 'TOKEN_REFRESHED'\) consumeExplicitLegacyStorageClaimV42A/);
+});
+
+check('28 marker legado corrompido falha fechado', () => {
+  ownerStorage.clear(); storageContext.currentSession = null;
+  ownerStorage.set(storageApi.PROFILE_KEY, JSON.stringify({ nome: 'Nao copiar' }));
+  ownerStorage.set(storageApi.LEGACY_STORAGE_CLAIM_MARKER_V42A, '{corrompido');
+  storageApi.requestExplicitLegacyStorageClaimV42A();
+  assert.equal(storageApi.consumeExplicitLegacyStorageClaimV42A('user-a'), false);
+  assert.equal(storageApi.claimLegacyStorageForOwnerV42A('user-a').claimed, false);
+  assert.equal(ownerStorage.has(storageApi.resolveUserScopedStorageKeyV42A(storageApi.PROFILE_KEY, 'user-a')), false);
+});
+
+check('29 limpeza local respeita owner e tombstone', () => {
+  ownerStorage.clear(); storageContext.currentSession = null;
+  const aProfile = storageApi.resolveUserScopedStorageKeyV42A(storageApi.PROFILE_KEY, 'user-a');
+  const bProfile = storageApi.resolveUserScopedStorageKeyV42A(storageApi.PROFILE_KEY, 'user-b');
+  ownerStorage.set(aProfile, 'a'); ownerStorage.set(bProfile, 'b');
+  ownerStorage.set(storageApi.PROFILE_KEY, 'legacy-a');
+  ownerStorage.set(storageApi.LEGACY_STORAGE_CLAIM_MARKER_V42A, JSON.stringify({ owner: 'user:user-a', status: 'claimed' }));
+  ownerStorage.set('assigned-workout:user-a', 'a'); ownerStorage.set('assigned-workout:user-b', 'b');
+  const report = storageApi.clearLocalDataForOwnerV42A('user-a');
+  assert.equal(ownerStorage.has(aProfile), false);
+  assert.equal(ownerStorage.get(bProfile), 'b');
+  assert.equal(ownerStorage.has(storageApi.PROFILE_KEY), false);
+  assert.equal(ownerStorage.get('assigned-workout:user-b'), 'b');
+  assert.equal(report.markerUpdated, true);
+  assert.equal(JSON.parse(ownerStorage.get(storageApi.LEGACY_STORAGE_CLAIM_MARKER_V42A)).status, 'cleared');
+});
+
+check('30 reset de assignments permanece fail-closed', () => {
+  const role = snapshot({ modes: ['student'] });
+  const resetProtection = getPrescriptionProtectionV42A({ authenticated: true, assignedWorkoutState: { loaded: false, authoritative: false, items: [], error: 'assignment_state_reset' }, assignedNutritionState: { loaded: false, authoritative: false, items: [], error: 'assignment_state_reset' } });
+  assert.equal(resetProtection.workout.uncertain && resetProtection.nutrition.uncertain, true);
+  assert.equal(caps(role, 'student', resetProtection).canEditWorkoutPrescription, false);
+  assert.equal(caps(role, 'student', resetProtection).canEditNutritionPrescription, false);
+  const confirmedEmpty = getPrescriptionProtectionV42A({ authenticated: true, assignedWorkoutState: { loaded: true, authoritative: true, items: [], error: null }, assignedNutritionState: { loaded: true, authoritative: true, items: [], error: null } });
+  assert.equal(confirmedEmpty.workout.uncertain || confirmedEmpty.nutrition.uncertain, false);
+  assert.match(index, /clearLocalDataForOwnerV42A\(userId\)[\s\S]*assignment_state_reset[\s\S]*Promise\.allSettled\(\[loadAssignedWorkoutPlans\(\),loadAssignedNutritionPlansV41C\(\)\]\)/);
+});
+
+check('31 modo offline mantém edição pessoal sem liberar prescrição', () => {
+  const offlineProtection = getPrescriptionProtectionV42A({ authenticated: false, assignedWorkoutState: { loaded: false, authoritative: false, items: [], error: null }, assignedNutritionState: { loaded: false, authoritative: false, items: [], error: null } });
+  assert.equal(PermissionService.canEditPersonalPrescription('workout', { authenticated: false, protection: offlineProtection }), true);
+  assert.equal(PermissionService.canEditPersonalPrescription('nutrition', { authenticated: false, protection: offlineProtection }), true);
+  const prescribed = getPrescriptionProtectionV42A({ authenticated: false, assignedWorkoutState: { loaded: true, authoritative: false, items: [{ assignmentId: 'a', relationshipId: 'r', status: 'active', relationshipStatus: 'active', professionalType: 'trainer', canManageWorkoutPlan: true }], error: null }, assignedNutritionState: { loaded: false, authoritative: false, items: [], error: null } });
+  assert.equal(PermissionService.canEditPersonalPrescription('workout', { authenticated: false, protection: prescribed }), false);
+});
+
+check('32 policy nutricional e assertion catalogar sao completas', () => {
+  assert.match(migration, /drop policy if exists student_nutrition_assignments_select_participant_v41c[\s\S]*create policy student_nutrition_assignments_select_participant_v41c[\s\S]*relationship\.student_user_id[\s\S]*relationship\.professional_user_id[\s\S]*relationship\.professional_type = 'nutritionist'[\s\S]*manage_nutrition_plan[\s\S]*organization\.status = 'active'[\s\S]*membership\.status = 'active'[\s\S]*membership\.role in \('owner', 'admin', 'nutritionist'\)/);
+  assert.match(migration, /V4\.2A nutrition assignment policy assertion failed/);
+});
+
+check('33 allowlist, temporarios e finais de linha', () => {
+  const allowed = new Set(['index.html', 'package.json', 'docs/ROLE_BASED_WORKSPACES.md', 'scripts/test-role-based-workspaces.mjs', 'supabase/migrations/20260715200320_harden_role_based_workspace_access.sql', '.github/workflows/forja-validate.yml']);
+  const changed = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean).map(line => line.slice(3));
+  assert.equal(changed.every(path => allowed.has(path)), true);
+  assert.equal(existsSync(resolve(root, 'supabase/v41e1_verify.before-false-negative-fix.sql')), false);
+  assert.equal(existsSync(resolve(root, 'supabase/v41e1_verify.before-search-path-catalog-fix.sql')), false);
+  [indexPath, resolve(root, 'package.json'), resolve(root, 'docs/ROLE_BASED_WORKSPACES.md'), resolve(root, 'scripts/test-role-based-workspaces.mjs'), migrationPath].forEach(path => assert.equal(/\r\n/.test(readFileSync(path, 'utf8')), false));
+  execFileSync('git', ['diff', '--check'], { cwd: root, stdio: 'pipe' });
 });
 
 check('scripts JavaScript inline possuem sintaxe valida', () => {
