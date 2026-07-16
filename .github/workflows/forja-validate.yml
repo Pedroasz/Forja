@@ -7,6 +7,7 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'scripts/**'
+      - 'supabase/**'
       - 'docs/ROLE_BASED_WORKSPACES.md'
       - '.github/workflows/forja-validate.yml'
 
