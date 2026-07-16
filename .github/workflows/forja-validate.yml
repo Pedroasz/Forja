@@ -45,3 +45,129 @@ jobs:
           set -euo pipefail
           ! rg -n -i 'service_role|SUPABASE_SERVICE_ROLE_KEY|sk_live_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|ghp_[A-Za-z0-9]+|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' index.html .github/workflows
           ! rg -n '^(<<<<<<<|=======|>>>>>>>)' index.html package.json scripts docs .github/workflows
+
+  actor-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Show pinned CLI version
+        run: pnpm run supabase:version
+      - name: Validate migration filenames and ordering
+        run: pnpm run supabase:validate:migrations
+      - name: Require Docker
+        run: docker info
+      - name: Start local Supabase and apply migrations
+        run: pnpm exec supabase start -x studio,imgproxy,functions,edge-runtime,analytics,vector
+      - name: Run actor-level RLS tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          actor_test="$(mktemp --suffix=.sql)"
+          trap 'rm -f "$actor_test"' EXIT
+          cat > "$actor_test" <<'SQL'
+          begin;
+
+          select plan(14);
+
+          set local session_replication_role = replica;
+
+          insert into public.organizations (id, name, slug, organization_type, owner_user_id, status)
+          values
+            ('00000000-0000-0000-0000-000000000401', 'Forja Alpha', 'forja-alpha-ci', 'academy', '00000000-0000-0000-0000-000000000101', 'active'),
+            ('00000000-0000-0000-0000-000000000402', 'Forja Beta', 'forja-beta-ci', 'academy', '00000000-0000-0000-0000-000000000301', 'active'),
+            ('00000000-0000-0000-0000-000000000403', 'Forja Suspended', 'forja-suspended-ci', 'academy', '00000000-0000-0000-0000-000000000101', 'suspended');
+
+          insert into public.organization_members (organization_id, user_id, role, status)
+          values
+            ('00000000-0000-0000-0000-000000000401', '00000000-0000-0000-0000-000000000101', 'trainer', 'active'),
+            ('00000000-0000-0000-0000-000000000401', '00000000-0000-0000-0000-000000000102', 'nutritionist', 'active'),
+            ('00000000-0000-0000-0000-000000000401', '00000000-0000-0000-0000-000000000103', 'trainer', 'suspended'),
+            ('00000000-0000-0000-0000-000000000402', '00000000-0000-0000-0000-000000000301', 'trainer', 'active'),
+            ('00000000-0000-0000-0000-000000000403', '00000000-0000-0000-0000-000000000101', 'trainer', 'active');
+
+          insert into public.professional_student_relationships
+            (id, professional_user_id, student_user_id, professional_type, organization_id, status, scopes)
+          values
+            ('00000000-0000-0000-0000-000000000501', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000201', 'trainer', '00000000-0000-0000-0000-000000000401', 'active', '{"manage_workout_plan":true,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true}'),
+            ('00000000-0000-0000-0000-000000000502', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000000201', 'nutritionist', '00000000-0000-0000-0000-000000000401', 'active', '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":true,"view_nutrition_logs":true,"view_evolution":true}'),
+            ('00000000-0000-0000-0000-000000000503', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000202', 'trainer', null, 'revoked', '{"manage_workout_plan":true,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true}'),
+            ('00000000-0000-0000-0000-000000000504', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000203', 'trainer', null, 'active', '{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true}'),
+            ('00000000-0000-0000-0000-000000000505', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000204', 'trainer', '00000000-0000-0000-0000-000000000403', 'active', '{"manage_workout_plan":true,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true}'),
+            ('00000000-0000-0000-0000-000000000506', '00000000-0000-0000-0000-000000000103', '00000000-0000-0000-0000-000000000205', 'trainer', '00000000-0000-0000-0000-000000000401', 'active', '{"manage_workout_plan":true,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true}');
+
+          insert into public.student_workout_assignments
+            (id, relationship_id, assignment_version, title_snapshot, plan_data_snapshot)
+          select
+            gen_random_uuid(), relationship_id, 1, 'Workout fixture',
+            '{"schemaVersion":1,"splitType":"A","days":[{"code":"A","name":"Workout A","exercises":[]}]}'::jsonb
+          from unnest(array[
+            '00000000-0000-0000-0000-000000000501'::uuid,
+            '00000000-0000-0000-0000-000000000503'::uuid,
+            '00000000-0000-0000-0000-000000000504'::uuid,
+            '00000000-0000-0000-0000-000000000505'::uuid,
+            '00000000-0000-0000-0000-000000000506'::uuid
+          ]) as fixture(relationship_id);
+
+          insert into public.student_nutrition_assignments
+            (id, relationship_id, assignment_version, title_snapshot, plan_data_snapshot)
+          values (
+            gen_random_uuid(),
+            '00000000-0000-0000-0000-000000000502',
+            1,
+            'Nutrition fixture',
+            '{"schemaVersion":1,"title":"Nutrition fixture","meals":[{"code":"M1","name":"Meal","items":[{"name":"Food","quantity":1,"unit":"g","sortOrder":0}]}]}'::jsonb
+          );
+
+          set local session_replication_role = origin;
+
+          set local role authenticated;
+          select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000101', true);
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000501'), 1::bigint, 'trainer reads authorized workout assignment');
+          select is((select count(*) from public.student_nutrition_assignments where relationship_id = '00000000-0000-0000-0000-000000000502'), 0::bigint, 'trainer cannot read nutritionist assignment');
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000503'), 0::bigint, 'revoked relationship denies workout assignment');
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000504'), 0::bigint, 'missing workout scope denies assignment');
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000505'), 0::bigint, 'suspended organization denies assignment');
+          select throws_ok($$insert into public.student_workout_assignments (relationship_id, assignment_version, title_snapshot, plan_data_snapshot) values ('00000000-0000-0000-0000-000000000501', 2, 'Blocked write', '{"schemaVersion":1,"splitType":"A","days":[{"code":"A","name":"A","exercises":[]}]}'::jsonb)$$, '42501', null, 'authenticated actor cannot write workout assignments directly');
+
+          reset role;
+          set local role authenticated;
+          select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000102', true);
+          select is((select count(*) from public.student_nutrition_assignments where relationship_id = '00000000-0000-0000-0000-000000000502'), 1::bigint, 'nutritionist reads authorized nutrition assignment');
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000501'), 0::bigint, 'nutritionist cannot read trainer assignment');
+          select throws_ok($$insert into public.student_nutrition_assignments (relationship_id, assignment_version, title_snapshot, plan_data_snapshot) values ('00000000-0000-0000-0000-000000000502', 2, 'Blocked write', '{"schemaVersion":1,"title":"Blocked","meals":[{"code":"M1","name":"Meal","items":[{"name":"Food","quantity":1,"unit":"g","sortOrder":0}]}]}'::jsonb)$$, '42501', null, 'authenticated actor cannot write nutrition assignments directly');
+
+          reset role;
+          set local role authenticated;
+          select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000201', true);
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000501'), 1::bigint, 'student reads own workout assignment');
+          select is((select count(*) from public.student_nutrition_assignments where relationship_id = '00000000-0000-0000-0000-000000000502'), 1::bigint, 'student reads own nutrition assignment');
+
+          reset role;
+          set local role authenticated;
+          select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000301', true);
+          select is((select count(*) from public.student_workout_assignments), 0::bigint, 'member of another organization cannot read workout assignments');
+          select is((select count(*) from public.student_nutrition_assignments), 0::bigint, 'member of another organization cannot read nutrition assignments');
+
+          reset role;
+          set local role authenticated;
+          select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000103', true);
+          select is((select count(*) from public.student_workout_assignments where relationship_id = '00000000-0000-0000-0000-000000000506'), 0::bigint, 'suspended membership denies assignment');
+
+          reset role;
+          select * from finish();
+          rollback;
+          SQL
+          pnpm exec supabase test db --local "$actor_test"
+      - name: Stop local Supabase
+        if: always()
+        run: pnpm exec supabase stop --no-backup
