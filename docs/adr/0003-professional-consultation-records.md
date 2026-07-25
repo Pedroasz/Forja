@@ -1,6 +1,6 @@
 # ADR 0003: Professional consultation records
 
-- Status: Proposed for V4.3A.2
+- Status: Accepted V4.3 v1 guardrails; implementation pending
 - Date: 2026-07-25
 - Decision owners: Pedro / FORJA
 - Related specification: [V4.3A.1 consultation module design](../superpowers/specs/2026-07-25-v4.3a1-consultation-module-design.md)
@@ -33,9 +33,13 @@ Adopt a **relational consultation core with canonical immutable versioned snapsh
 The security domain is the consultation author plus stable subject:
 
 - the active professional-client relationship authorizes creation and ongoing draft work;
+- `manage_consultations` and `view_shared_consultation_history` default to false;
+- consultation authorization requires an explicit audited action;
+- only the client may grant or revoke shared-history access for one exact professional relationship and accepted privacy-text version;
 - the author owns and exclusively edits the record;
 - organization is context/provenance only;
 - organization owner/admin status does not grant consultation content;
+- organization owner/admin metadata is limited to schedule, status, attendance and responsible professional;
 - other professionals read only finalized common projections or exact item shares;
 - the client reads only immutable publication manifests explicitly created for that client.
 
@@ -70,31 +74,43 @@ Sensitive mutations use narrowly scoped authenticated RPCs:
 
 Browser roles receive no direct insert/update/delete grant on consultation content.
 
-The only post-revocation mutation exception is the approved ownership-only retention cleanup for a system-cancelled, never-finalized/unpublished draft. It uses a one-purpose cleanup lease and may only hard-discard content into the independent tombstone; it cannot edit, restart, finalize, add an addendum, publish or attach.
+Relationship revocation invalidates the lease and technically cancels every `scheduled`, `in_progress` or `paused` draft. Reactivation never reopens it. The only post-revocation mutation exception is the approved ownership-only cleanup for a system-cancelled, never-finalized/unpublished draft. It uses a one-purpose cleanup lease and may only hard-discard content into the independent minimal tombstone; it cannot edit, restart, finalize, add an addendum, publish or attach. V1 has no automatic time-based retention.
 
 ### Draft concurrency
 
 Use a database-backed expiring editing lease plus optimistic `draft_revision`, not PostgreSQL advisory locks and not browser last-write-wins.
 
-The lease supports explicit takeover and invalidates the prior session. Sensitive drafts remain online-first and are not added to the current `localStorage`/`SyncQueue`.
+The lease supports explicit audited takeover and invalidates the prior session. Autosave debounce is 1.2 seconds, heartbeat is every 20 seconds and lease expiry is 60 seconds without an accepted heartbeat. Conflicts never silently overwrite data. Sensitive drafts remain online-first and are not added to `localStorage`, IndexedDB or the current offline queue.
 
 ### Calculation model
 
 Use a curated immutable formula/protocol registry. Every result stores method ID/version, sources, raw inputs/units, physiological reference branch, eligibility, output, limitations and override reason.
 
-Gender identity is separate from any source-required physiological parameter. Historical results are never silently recalculated.
+Gender identity is separate from any source-required physiological parameter. The UI label is **“Referência fisiológica exigida pelo método”** with `referência masculina`, `referência feminina` and `não informar`. It appears only for a method that requires it, remains private and calculation-scoped, is never inferred from name, appearance or gender identity, and declining it makes only that formula ineligible. Historical results are never silently recalculated.
+
+The approved initial categories are BMI, waist-to-hip ratio, waist-to-height ratio, resting metabolism estimate, total energy expenditure estimate, population hydration reference, skinfold/body-density protocols, estimated body-fat percentage, fat mass, fat-free mass, manual bioimpedance observations and reassessment comparison. Exact coefficients and algorithm versions remain subject to primary-source formula review and synthetic tests; no result is a diagnosis.
 
 Raw calculation and device-observation evidence is never a client or cross-professional DTO. Immutable safe projections apply an unconditional denylist for physiological/device branch and selection provenance, private raw inputs/conditions, internal eligibility/exclusions, override reason and internal IDs/hashes. No publish/share flag may bypass it. Manual BIA uses a separate selected-metric safe projection.
 
 ### Attachment model
 
-Use a private Storage bucket with relational authorization metadata and exact per-attachment publication/share records. Generate short-lived access only after database authorization. Never use public URLs or object overwrite for finalized evidence.
+Use a private Storage bucket with relational authorization metadata and exact per-attachment publication/share records. Allow JPEG, PNG and WebP up to 10 MB each and PDF up to 15 MB, with at most 20 attachments per consultation. Validate size, extension, detected MIME, file signature and checksum; quarantine files until validation. Generate signed access for no more than five minutes only after database authorization. Never use public URLs or object overwrite for finalized evidence; replacement creates a new version. Production attachment publication remains blocked until an approved malware-scanning strategy exists.
 
 Professional attachment sharing uses a dedicated exact-recipient attachment-share relation. It is never inferred from organization role, a whole consultation or client publication.
 
 ### Reminders and attendance
 
-Support internal FORJA reminders and linked-client attendance confirm/decline as schedule metadata separate from consultation lifecycle and publication acknowledgement. Store schedule revision + instant + IANA zone + original offset. A response must target the current revision; rescheduling retires the old current response, rebuilds undelivered reminders atomically and preserves history. Production scheduler activation remains a separate deployment approval.
+Support internal FORJA reminders 24 hours and 1 hour before the appointment and linked-client attendance confirm/decline as schedule metadata separate from consultation lifecycle and publication acknowledgement. Store schedule revision + instant + IANA zone + original offset. A response must target the current revision; rescheduling retires the old current response, rebuilds undelivered reminders atomically and preserves history. Cancellation, consultation start or no-show cancels pending reminders. Client refusal does not automatically cancel the consultation. Production scheduler activation remains a separate checkpoint and deployment approval.
+
+### Sharing and client publication
+
+The approved common projection is limited to authorized goals, routine, activity, sleep, hydration, basic weight history, measurements, evolution and general declared physical limitations. Medications, clinical conditions, detailed allergies, detailed food history, formula physiology parameters, internal notes, attachments, photos, raw bioimpedance data and profession-specific sections remain private unless explicitly shared.
+
+Each consultation belongs to its author. Only the author may edit, finalize, publish, cancel or add an addendum. Other professionals receive authorized immutable projections only.
+
+Finalization does not publish automatically. Publication is an explicit field/attachment-selective operation with a confirmation screen. Every version is immutable; replaced versions remain in client history. Withdrawal hides a version from the client but preserves internal audit, acknowledgement and comments.
+
+Client acknowledgement uses **“Confirmar recebimento”** and means receipt only, not approval, agreement or signature. A publication accepts at most five permanent, non-editable comments of at most 1,000 characters each. Corrections require a new comment; v1 has no threaded chat.
 
 ## Why this decision
 
@@ -191,25 +207,17 @@ The current relationship metadata may be visible to organization admins, but con
 4. No client publication or cross-professional content read until actor-matrix tests pass.
 5. No attachment upload until private Storage policies and validation tests pass.
 6. Do not change the current Diet module as a side effect.
+7. Before remote migration or real-data use, require privacy/LGPD review, complete RLS and multi-actor authorization tests, formula review, retention policy, attachment-security approval, explicit migration approval and explicit deployment approval.
 
-## Approval gates
+## Remaining gates
 
-Before A.2A/A.2B:
+The product and security guardrails recorded above are approved. The remaining gates are narrower:
 
-- common-field allowlist and consent/disclosure;
-- client-owned grant/revoke path for common-history consent and disclosure version;
-- `manage_consultations` default/activation for existing and new relationships;
-- relationship scope defaults and revocation behavior;
-- draft discard/retention;
-- organization-admin no-content rule.
+- Before A.2B: identify who may activate `manage_consultations` and define the exact audited activation workflow.
+- Before A.2E: approve exact algorithms, primary-source versions, coefficients, populations, exclusions and recommendation order. The calculation families and physiological-reference UI contract are already approved.
+- Before A.2G: define the exact attendance-response cutoff. Production scheduling jobs remain a separate checkpoint.
+- Before production/real data: complete privacy/LGPD and retention/export/deletion review; v1 has no automatic time-based retention.
+- Before production attachment publication: approve malware scanning, retention and final report/PDF composition, watermark/footer and renderer evidence.
+- Before any remote migration or deployment: obtain separate explicit approvals after all required local matrices and reviews pass.
 
-Before A.2E:
-
-- initial formula allowlist, priority and physiological parameter wording;
-- Brazilian applicability of energy and body-composition methods.
-
-Before A.2G/A.2H:
-
-- publication withdrawal, comments and acknowledgement semantics;
-- internal reminder lead times, attendance wording and production scheduler;
-- attachment types, limits, scanning, signed-URL lifetime and retention.
+A.2A is product-guardrail ready for local TDD after this design is reviewed and merged. It is not authorization to implement, migrate remotely, use real data or deploy.
