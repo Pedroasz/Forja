@@ -42,6 +42,241 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_addenda: {
+        Row: {
+          author_user_id: string
+          canonical_bytes: string
+          canonical_payload: Json
+          canonicalization_version: string
+          consultation_id: string
+          created_at: string
+          final_snapshot_id: string
+          id: string
+          payload_sha256: string
+          reason: string
+          schema_version: number
+        }
+        Insert: {
+          author_user_id: string
+          canonical_bytes: string
+          canonical_payload: Json
+          canonicalization_version?: string
+          consultation_id: string
+          created_at?: string
+          final_snapshot_id: string
+          id?: string
+          payload_sha256: string
+          reason: string
+          schema_version: number
+        }
+        Update: {
+          author_user_id?: string
+          canonical_bytes?: string
+          canonical_payload?: Json
+          canonicalization_version?: string
+          consultation_id?: string
+          created_at?: string
+          final_snapshot_id?: string
+          id?: string
+          payload_sha256?: string
+          reason?: string
+          schema_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_addenda_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_addenda_final_snapshot_id_fkey"
+            columns: ["final_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_final_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_discard_tombstones: {
+        Row: {
+          author_user_id: string
+          discarded_at: string
+          discarded_by_user_id: string
+          discarded_consultation_id: string
+          id: string
+          reason_category: string
+          relationship_id: string
+          subject_id: string
+        }
+        Insert: {
+          author_user_id: string
+          discarded_at?: string
+          discarded_by_user_id: string
+          discarded_consultation_id: string
+          id?: string
+          reason_category: string
+          relationship_id: string
+          subject_id: string
+        }
+        Update: {
+          author_user_id?: string
+          discarded_at?: string
+          discarded_by_user_id?: string
+          discarded_consultation_id?: string
+          id?: string
+          reason_category?: string
+          relationship_id?: string
+          subject_id?: string
+        }
+        Relationships: []
+      }
+      consultation_events: {
+        Row: {
+          actor_user_id: string | null
+          consultation_id: string
+          event_type: string
+          id: string
+          occurred_at: string
+          reason_category: string | null
+          relationship_id: string | null
+          subject_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          consultation_id: string
+          event_type: string
+          id?: string
+          occurred_at?: string
+          reason_category?: string | null
+          relationship_id?: string | null
+          subject_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          consultation_id?: string
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          reason_category?: string | null
+          relationship_id?: string | null
+          subject_id?: string
+        }
+        Relationships: []
+      }
+      consultation_final_snapshots: {
+        Row: {
+          canonical_bytes: string
+          canonical_payload: Json
+          canonicalization_version: string
+          consultation_id: string
+          created_at: string
+          finalized_by_user_id: string
+          id: string
+          payload_sha256: string
+          schema_version: number
+        }
+        Insert: {
+          canonical_bytes: string
+          canonical_payload: Json
+          canonicalization_version?: string
+          consultation_id: string
+          created_at?: string
+          finalized_by_user_id: string
+          id?: string
+          payload_sha256: string
+          schema_version: number
+        }
+        Update: {
+          canonical_bytes?: string
+          canonical_payload?: Json
+          canonicalization_version?: string
+          consultation_id?: string
+          created_at?: string
+          finalized_by_user_id?: string
+          id?: string
+          payload_sha256?: string
+          schema_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_final_snapshots_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: true
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_items: {
+        Row: {
+          consultation_id: string
+          created_at: string
+          id: string
+          item_key: string
+          item_kind: string
+          schema_version: number
+          updated_at: string
+          value_payload: Json
+        }
+        Insert: {
+          consultation_id: string
+          created_at?: string
+          id?: string
+          item_key: string
+          item_kind: string
+          schema_version?: number
+          updated_at?: string
+          value_payload: Json
+        }
+        Update: {
+          consultation_id?: string
+          created_at?: string
+          id?: string
+          item_key?: string
+          item_kind?: string
+          schema_version?: number
+          updated_at?: string
+          value_payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_items_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_subjects: {
+        Row: {
+          account_user_id: string
+          created_at: string
+          created_by_user_id: string
+          id: string
+          subject_kind: string
+          updated_at: string
+        }
+        Insert: {
+          account_user_id: string
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          subject_kind?: string
+          updated_at?: string
+        }
+        Update: {
+          account_user_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          subject_kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       evolution: {
         Row: {
           body_fat: number | null
@@ -262,6 +497,113 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      professional_consultations: {
+        Row: {
+          archived_at: string | null
+          author_user_id: string
+          cancelled_at: string | null
+          consultation_kind: string
+          created_at: string
+          draft_revision: number
+          finalized_at: string | null
+          id: string
+          no_show_at: string | null
+          organization_id: string | null
+          paused_at: string | null
+          predecessor_consultation_id: string | null
+          professional_type: string
+          relationship_id: string
+          schedule_revision: number
+          scheduled_start_at: string | null
+          scheduled_time_zone: string | null
+          scheduled_utc_offset_minutes: number | null
+          schema_version: number
+          started_at: string | null
+          status: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          author_user_id: string
+          cancelled_at?: string | null
+          consultation_kind: string
+          created_at?: string
+          draft_revision?: number
+          finalized_at?: string | null
+          id?: string
+          no_show_at?: string | null
+          organization_id?: string | null
+          paused_at?: string | null
+          predecessor_consultation_id?: string | null
+          professional_type: string
+          relationship_id: string
+          schedule_revision?: number
+          scheduled_start_at?: string | null
+          scheduled_time_zone?: string | null
+          scheduled_utc_offset_minutes?: number | null
+          schema_version?: number
+          started_at?: string | null
+          status?: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          author_user_id?: string
+          cancelled_at?: string | null
+          consultation_kind?: string
+          created_at?: string
+          draft_revision?: number
+          finalized_at?: string | null
+          id?: string
+          no_show_at?: string | null
+          organization_id?: string | null
+          paused_at?: string | null
+          predecessor_consultation_id?: string | null
+          professional_type?: string
+          relationship_id?: string
+          schedule_revision?: number
+          scheduled_start_at?: string | null
+          scheduled_time_zone?: string | null
+          scheduled_utc_offset_minutes?: number | null
+          schema_version?: number
+          started_at?: string | null
+          status?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_consultations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_consultations_predecessor_id_fkey"
+            columns: ["predecessor_consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_consultations_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "professional_student_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_consultations_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       professional_nutrition_templates: {
         Row: {
@@ -1180,6 +1522,10 @@ export type Database = {
       preview_trainer_invitation: {
         Args: { invite_code: string }
         Returns: Json
+      }
+      resolve_account_consultation_subject_v43: {
+        Args: { target_relationship_id: string }
+        Returns: string
       }
       revoke_my_student_nutrition_assignment: {
         Args: { target_assignment_id: string }
