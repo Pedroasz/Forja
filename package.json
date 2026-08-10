@@ -15,6 +15,7 @@
     "supabase:validate:migrations": "node scripts/validate-supabase-migrations.mjs",
     "test:role-workspaces": "node scripts/test-role-based-workspaces.mjs",
     "test:consultation-schema": "node scripts/test-consultation-schema.mjs",
+    "test:consultation-authorization": "node scripts/test-consultation-authorization.mjs",
     "test:consultation-db": "supabase test db --local supabase/tests/v43a2_consultation_core_test.sql"
   },
   "devDependencies": {

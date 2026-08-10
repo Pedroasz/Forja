@@ -68,6 +68,26 @@ jobs:
               | head -n 200 || true
             exit 1
           fi
+      - name: Run V4.3A.2B authorization source contract
+        id: consultation_authorization_source
+        continue-on-error: true
+        run: node scripts/test-consultation-authorization.mjs
+      - name: Run focused V4.3A.2B authorization pgTAP
+        id: consultation_authorization_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_rls_test.sql
+      - name: Run complete pgTAP suite
+        id: complete_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db
+      - name: Enforce database test results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.consultation_authorization_source.outcome }}" = "success"
+          test "${{ steps.consultation_authorization_pgtap.outcome }}" = "success"
+          test "${{ steps.complete_pgtap.outcome }}" = "success"
       - name: Stop local Supabase
         if: always()
         run: pnpm exec supabase stop --no-backup
