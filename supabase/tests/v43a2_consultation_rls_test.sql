@@ -1024,14 +1024,13 @@ select is(
   'common.goal',
   'common projection returns only an approved common item'
 );
-select unlike(
+select ok(
   pg_temp.safe_json_v43a2($sql$
     select public.list_shared_consultation_history_v43(
       '44100000-0000-0000-0000-000000000002',
       50
     )
-  $sql$)::text,
-  '%trainer.private_note%',
+  $sql$)::text not like '%trainer.private_note%',
   'common projection excludes profession-private content'
 );
 reset role;
