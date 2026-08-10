@@ -250,7 +250,7 @@ values
     '43000000-0000-0000-0000-000000000002',
     'trainer',
     'active',
-    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false}'
+    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false,"manage_consultations":false,"view_shared_consultation_history":false}'
   ),
   (
     '43100000-0000-0000-0000-000000000002',
@@ -258,7 +258,7 @@ values
     '43000000-0000-0000-0000-000000000003',
     'trainer',
     'active',
-    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false}'
+    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false,"manage_consultations":false,"view_shared_consultation_history":false}'
   ),
   (
     '43100000-0000-0000-0000-000000000003',
@@ -266,7 +266,7 @@ values
     '43000000-0000-0000-0000-000000000005',
     'nutritionist',
     'active',
-    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false}'
+    '{"manage_workout_plan":false,"view_workout_executions":false,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":false,"manage_consultations":false,"view_shared_consultation_history":false}'
   );
 alter table public.professional_student_relationships enable trigger user;
 
