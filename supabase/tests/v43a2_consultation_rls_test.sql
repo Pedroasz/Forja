@@ -46,6 +46,14 @@ exception when others then
 end;
 $function$;
 
+-- Actor-matrix assertions change into browser roles inside this transaction.
+-- Keep the exception-capturing helpers callable after those SET ROLE changes;
+-- the helpers remain invoker-security so the SQL under test still executes with
+-- the selected browser role and its real grants.
+grant execute on function pg_temp.safe_exec_v43a2(text) to authenticated, anon;
+grant execute on function pg_temp.safe_count_v43a2(text) to authenticated, anon;
+grant execute on function pg_temp.safe_json_v43a2(text) to authenticated, anon;
+
 -- Schema, ACL and immutable-history contract.
 select has_table(
   'public',
