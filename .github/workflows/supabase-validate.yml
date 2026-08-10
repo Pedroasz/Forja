@@ -42,32 +42,55 @@ jobs:
       - name: Run local database advisors
         run: pnpm exec supabase db advisors --local --type all --fail-on error
       - name: Generate and validate local public database types
+        id: database_types_match
+        continue-on-error: true
         shell: bash
         env:
           SUPABASE_DB_PASSWORD: senha-remota-falsa
         run: |
           set -euo pipefail
-          temp_types="$(mktemp)"
-          trap 'rm -f "$temp_types"' EXIT
+          generated_types="$(mktemp)"
+          trap 'rm -f "$generated_types"' EXIT
           env -u SUPABASE_ACCESS_TOKEN -u SUPABASE_DB_PASSWORD \
             pnpm exec supabase gen types --local --lang typescript --schema public \
-            > "$temp_types"
-          sed -i -e '$ { /^$/ d; }' "$temp_types"
-          test -s "$temp_types"
-          grep -Fq 'export type Database' "$temp_types"
-          if grep -Eiq 'sb_secret_[A-Za-z0-9_-]+|sbp_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' "$temp_types" supabase/database.types.ts; then
+            > "$generated_types"
+          sed -i -e '$ { /^$/ d; }' "$generated_types"
+          test -s "$generated_types"
+          grep -Fq 'export type Database' "$generated_types"
+          if grep -Eiq 'sb_secret_[A-Za-z0-9_-]+|sbp_[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|SUPABASE_(ACCESS_TOKEN|DB_PASSWORD)|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' "$generated_types" supabase/database.types.ts; then
             echo "Secret scan failed for generated or committed database types."
             exit 1
           fi
-          if ! cmp -s "$temp_types" supabase/database.types.ts; then
+          if ! cmp -s "$generated_types" supabase/database.types.ts; then
             echo "Committed database types do not match the local Supabase schema."
             diff -u \
               --label supabase/database.types.ts \
               --label generated-local-database.types.ts \
-              supabase/database.types.ts "$temp_types" \
+              supabase/database.types.ts "$generated_types" \
               | head -n 200 || true
             exit 1
           fi
+      - name: Run V4.3A.2B authorization source contract
+        id: consultation_authorization_source
+        continue-on-error: true
+        run: node scripts/test-consultation-authorization.mjs
+      - name: Run focused V4.3A.2B authorization pgTAP
+        id: consultation_authorization_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_rls_test.sql
+      - name: Run complete pgTAP suite
+        id: complete_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db
+      - name: Enforce database test results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.database_types_match.outcome }}" = "success"
+          test "${{ steps.consultation_authorization_source.outcome }}" = "success"
+          test "${{ steps.consultation_authorization_pgtap.outcome }}" = "success"
+          test "${{ steps.complete_pgtap.outcome }}" = "success"
       - name: Stop local Supabase
         if: always()
         run: pnpm exec supabase stop --no-backup
