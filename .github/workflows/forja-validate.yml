@@ -37,8 +37,8 @@ jobs:
         run: pnpm run test:role-workspaces
       - name: Check diff whitespace
         run: git diff --check "origin/${{ github.base_ref }}...HEAD"
-      - name: Keep baseline and generated types unchanged
-        run: git diff --quiet "origin/${{ github.base_ref }}" -- supabase/migrations/20260715144255_forja_remote_baseline.sql supabase/database.types.ts
+      - name: Keep historical baseline unchanged
+        run: git diff --quiet "origin/${{ github.base_ref }}" -- supabase/migrations/20260715144255_forja_remote_baseline.sql
       - name: Scan frontend and workflow files for secrets or merge markers
         shell: bash
         run: |

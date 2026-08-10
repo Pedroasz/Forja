@@ -373,7 +373,7 @@ check('32 policy nutricional e assertion catalogar sao completas', () => {
 });
 
 check('33 allowlist, temporarios e finais de linha', () => {
-  const allowed = new Set(['index.html', 'package.json', 'docs/ROLE_BASED_WORKSPACES.md', 'scripts/test-role-based-workspaces.mjs', 'supabase/migrations/20260715200320_harden_role_based_workspace_access.sql', '.github/workflows/forja-validate.yml']);
+  const allowed = new Set(['index.html', 'package.json', 'docs/ROLE_BASED_WORKSPACES.md', 'scripts/test-role-based-workspaces.mjs', 'supabase/migrations/20260715200320_harden_role_based_workspace_access.sql', '.github/workflows/forja-validate.yml', '.github/workflows/supabase-validate.yml']);
   const changed = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean).map(line => line.slice(3));
   assert.equal(changed.every(path => allowed.has(path)), true);
   assert.equal(existsSync(resolve(root, 'supabase/v41e1_verify.before-false-negative-fix.sql')), false);
@@ -410,8 +410,8 @@ check('scanner de segredos e conflitos', () => {
   assert.doesNotMatch(`${index}\n${migration}`, /^(?:<{7}|={7}|>{7})/m);
 });
 
-check('baseline e tipos permanecem intactos', () => {
-  execFileSync('git', ['diff', '--quiet', 'origin/main', '--', 'supabase/migrations/20260715144255_forja_remote_baseline.sql', 'supabase/database.types.ts'], { cwd: root, stdio: 'pipe' });
+check('baseline remoto permanece intacto', () => {
+  execFileSync('git', ['diff', '--quiet', 'origin/main', '--', 'supabase/migrations/20260715144255_forja_remote_baseline.sql'], { cwd: root, stdio: 'pipe' });
 });
 
 check('migration possui nome, transacao e guards esperados', () => {

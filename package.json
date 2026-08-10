@@ -9,10 +9,13 @@
     "supabase:link": "supabase link --project-ref yncintjylzmvzcadjfqa",
     "supabase:migrations": "supabase migration list --linked",
     "supabase:types": "supabase gen types --linked --lang typescript --schema public > supabase/database.types.ts",
+    "supabase:types:local": "supabase gen types --local --lang typescript --schema public > supabase/database.types.ts",
     "supabase:lint": "supabase db lint --local --fail-on error",
     "supabase:push:dry": "supabase db push --linked --dry-run",
     "supabase:validate:migrations": "node scripts/validate-supabase-migrations.mjs",
-    "test:role-workspaces": "node scripts/test-role-based-workspaces.mjs"
+    "test:role-workspaces": "node scripts/test-role-based-workspaces.mjs",
+    "test:consultation-schema": "node scripts/test-consultation-schema.mjs",
+    "test:consultation-db": "supabase test db --local supabase/tests/v43a2_consultation_core_test.sql"
   },
   "devDependencies": {
     "supabase": "2.109.1"
