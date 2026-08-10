@@ -50,10 +50,8 @@ check('CI executes focused and complete local database suites', () => {
     /supabase test db --local supabase\/tests\/v43a2_consultation_rls_test\.sql/
   );
   assert.match(workflow, /pnpm exec supabase test db(?:\s|$)/m);
-  assert.match(workflow, /uses:\s*actions\/upload-artifact@v4/);
-  assert.match(workflow, /path:\s*\.artifacts\/database-types\/database\.types\.ts/);
-  assert.match(workflow, /retention-days:\s*1/);
   assert.match(workflow, /Secret scan failed for generated or committed database types/);
+  assert.doesNotMatch(workflow, /actions\/upload-artifact/);
   assert.doesNotMatch(workflow, /supabase\s+(?:link|db push)|--linked/i);
 });
 

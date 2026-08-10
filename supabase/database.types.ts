@@ -99,6 +99,150 @@ export type Database = {
           },
         ]
       }
+      consultation_authorization_events: {
+        Row: {
+          actor_user_id: string | null
+          authorization_text_version: string | null
+          client_user_id: string
+          event_sequence: number
+          event_type: string
+          id: string
+          occurred_at: string
+          professional_user_id: string
+          relationship_id: string
+          request_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          authorization_text_version?: string | null
+          client_user_id: string
+          event_sequence?: never
+          event_type: string
+          id?: string
+          occurred_at?: string
+          professional_user_id: string
+          relationship_id: string
+          request_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          authorization_text_version?: string | null
+          client_user_id?: string
+          event_sequence?: never
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          professional_user_id?: string
+          relationship_id?: string
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_authorization_events_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "professional_student_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_authorization_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_authorization_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_authorization_requests: {
+        Row: {
+          authorization_purpose: string | null
+          authorization_text_version: string
+          client_user_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by_user_id: string | null
+          id: string
+          invalidated_at: string | null
+          professional_user_id: string
+          relationship_id: string
+          requested_at: string
+          status: string
+        }
+        Insert: {
+          authorization_purpose?: string | null
+          authorization_text_version: string
+          client_user_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by_user_id?: string | null
+          id?: string
+          invalidated_at?: string | null
+          professional_user_id: string
+          relationship_id: string
+          requested_at?: string
+          status?: string
+        }
+        Update: {
+          authorization_purpose?: string | null
+          authorization_text_version?: string
+          client_user_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by_user_id?: string | null
+          id?: string
+          invalidated_at?: string | null
+          professional_user_id?: string
+          relationship_id?: string
+          requested_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_authorization_requests_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "professional_student_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_authorization_requests_version_fkey"
+            columns: ["authorization_purpose", "authorization_text_version"]
+            isOneToOne: false
+            referencedRelation: "consultation_authorization_text_versions"
+            referencedColumns: ["purpose", "version_identifier"]
+          },
+        ]
+      }
+      consultation_authorization_text_versions: {
+        Row: {
+          created_at: string
+          effective_at: string
+          id: string
+          purpose: string
+          retired_at: string | null
+          status: string
+          version_identifier: string
+        }
+        Insert: {
+          created_at?: string
+          effective_at: string
+          id?: string
+          purpose: string
+          retired_at?: string | null
+          status?: string
+          version_identifier: string
+        }
+        Update: {
+          created_at?: string
+          effective_at?: string
+          id?: string
+          purpose?: string
+          retired_at?: string | null
+          status?: string
+          version_identifier?: string
+        }
+        Relationships: []
+      }
       consultation_discard_tombstones: {
         Row: {
           author_user_id: string
@@ -247,6 +391,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "professional_consultations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_sharing_consents: {
+        Row: {
+          actor_user_id: string | null
+          client_user_id: string
+          disclosure_purpose: string | null
+          disclosure_text_version: string
+          event_sequence: number
+          event_type: string
+          granted: boolean
+          id: string
+          occurred_at: string
+          professional_user_id: string
+          relationship_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          client_user_id: string
+          disclosure_purpose?: string | null
+          disclosure_text_version: string
+          event_sequence?: never
+          event_type: string
+          granted: boolean
+          id?: string
+          occurred_at?: string
+          professional_user_id: string
+          relationship_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          client_user_id?: string
+          disclosure_purpose?: string | null
+          disclosure_text_version?: string
+          event_sequence?: never
+          event_type?: string
+          granted?: boolean
+          id?: string
+          occurred_at?: string
+          professional_user_id?: string
+          relationship_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_sharing_consents_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "professional_student_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_sharing_consents_version_fkey"
+            columns: ["disclosure_purpose", "disclosure_text_version"]
+            isOneToOne: false
+            referencedRelation: "consultation_authorization_text_versions"
+            referencedColumns: ["purpose", "version_identifier"]
           },
         ]
       }
@@ -1365,6 +1566,15 @@ export type Database = {
         }
         Returns: string
       }
+      decide_my_consultation_authorization_v43: {
+        Args: {
+          target_authorization_text_version: string
+          target_decision: string
+          target_relationship_id: string
+          target_request_id: string
+        }
+        Returns: boolean
+      }
       default_professional_relationship_scopes_v41e1: {
         Args: { target_professional_type: string }
         Returns: Json
@@ -1378,6 +1588,10 @@ export type Database = {
       get_my_account_modes: { Args: never; Returns: string[] }
       get_my_account_registration_context: { Args: never; Returns: Json }
       get_my_commercial_account_context: { Args: never; Returns: Json }
+      get_my_consultation_v43: {
+        Args: { target_consultation_id: string }
+        Returns: Json
+      }
       get_my_professional_client_capacity: { Args: never; Returns: Json }
       get_my_professional_monitoring_entitlement_v41d: {
         Args: {
@@ -1431,6 +1645,10 @@ export type Database = {
         Returns: Json
       }
       list_my_assigned_workout_plans: { Args: never; Returns: Json }
+      list_my_manageable_consultation_subjects_v43: {
+        Args: { target_after_relationship_id?: string; target_limit?: number }
+        Returns: Json
+      }
       list_my_manageable_nutrition_students: { Args: never; Returns: Json }
       list_my_manageable_workout_students: { Args: never; Returns: Json }
       list_my_notifications: {
@@ -1494,6 +1712,10 @@ export type Database = {
         }[]
       }
       list_my_workout_templates: { Args: never; Returns: Json }
+      list_shared_consultation_history_v43: {
+        Args: { target_limit?: number; target_relationship_id: string }
+        Returns: Json
+      }
       mark_all_my_notifications_read: { Args: never; Returns: number }
       mark_my_notification_read: {
         Args: { target_notification_id: string }
@@ -1523,9 +1745,23 @@ export type Database = {
         Args: { invite_code: string }
         Returns: Json
       }
+      request_my_consultation_authorization_v43: {
+        Args: {
+          target_authorization_text_version: string
+          target_relationship_id: string
+        }
+        Returns: string
+      }
       resolve_account_consultation_subject_v43: {
         Args: { target_relationship_id: string }
         Returns: string
+      }
+      revoke_my_consultation_authorization_v43: {
+        Args: {
+          target_authorization_text_version: string
+          target_relationship_id: string
+        }
+        Returns: boolean
       }
       revoke_my_student_nutrition_assignment: {
         Args: { target_assignment_id: string }
@@ -1542,6 +1778,14 @@ export type Database = {
       set_my_personal_use_enabled: {
         Args: { target_enabled: boolean }
         Returns: Json
+      }
+      set_my_shared_consultation_history_consent_v43: {
+        Args: {
+          target_disclosure_text_version: string
+          target_granted: boolean
+          target_relationship_id: string
+        }
+        Returns: boolean
       }
       update_my_nutrition_template: {
         Args: {
