@@ -481,6 +481,18 @@ as $$
   ), false);
 $$;
 
+create or replace function private.is_approved_shared_consultation_item_v43(
+  target_item_key text
+)
+returns boolean
+language sql
+immutable
+security definer
+set search_path = ''
+as $$
+  select target_item_key in ('common.goal');
+$$;
+
 create or replace function private.reject_immutable_consultation_authorization_history_v43()
 returns trigger
 language plpgsql
@@ -1224,7 +1236,9 @@ begin
         on source_organization.id = source_relationship.organization_id
       where subject.account_user_id = client_user_id
         and consultation.status = 'finalized'
-        and snapshot_item.item ->> 'itemKey' like 'common.%'
+        and private.is_approved_shared_consultation_item_v43(
+          snapshot_item.item ->> 'itemKey'
+        )
         and (
           source_relationship.organization_id is null
           or (

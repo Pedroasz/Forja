@@ -149,7 +149,8 @@ check('every public A.2B RPC is a locked-down definer', () => {
 check('internal predicates are centralized and unavailable to browser roles', () => {
   for (const helper of [
     'assert_consultation_relationship_entitlement_v43',
-    'has_current_shared_consultation_history_consent_v43'
+    'has_current_shared_consultation_history_consent_v43',
+    'is_approved_shared_consultation_item_v43'
   ]) {
     assert.match(migration, new RegExp(`function\\s+private\\.${helper}`, 'i'));
   }
@@ -212,14 +213,19 @@ check('relationship deactivation clears authorization without touching A.2C', ()
   );
 });
 
-check('shared history is conjunctive, current-versioned, and common-only', () => {
+check('shared history is conjunctive, current-versioned, and approved-only', () => {
   const projection = migration.match(
     /create\s+(?:or\s+replace\s+)?function\s+public\.list_shared_consultation_history_v43\([\s\S]*?\$\$;/i
+  )?.[0] || '';
+  const itemAllowlist = migration.match(
+    /create\s+(?:or\s+replace\s+)?function\s+private\.is_approved_shared_consultation_item_v43\([\s\S]*?\$\$;/i
   )?.[0] || '';
   assert.match(projection, /view_shared_consultation_history/i);
   assert.match(projection, /has_current_shared_consultation_history_consent_v43/i);
   assert.match(projection, /consultation_final_snapshots/i);
-  assert.match(projection, /common\./i);
+  assert.match(projection, /is_approved_shared_consultation_item_v43/i);
+  assert.doesNotMatch(projection, /like\s+'common\.%'/i);
+  assert.match(itemAllowlist, /target_item_key\s+in\s*\(\s*'common\.goal'\s*\)/i);
   assert.doesNotMatch(projection, /trainer_private|nutritionist_private|author_private/i);
 });
 
