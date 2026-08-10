@@ -85,27 +85,39 @@ check('authorization state uses dedicated request and append-only history', () =
     assert.match(migration, new RegExp(`create\\s+table\\s+public\\.${table}`, 'i'));
   }
   assert.match(migration, /reject_immutable_consultation_authorization_history_v43/i);
+  const eventTable = migration.match(
+    /create\s+table\s+public\.consultation_authorization_events\s*\([\s\S]*?\n\);/i
+  )?.[0] || '';
   assert.doesNotMatch(
-    migration,
-    /create\s+table\s+public\.consultation_authorization_events[\s\S]*?\n\);[\s\S]*?\b(?:payload|content|body|details|comment|filename)\b/i
+    eventTable,
+    /\b(?:payload|content|body|details|comment|filename)\b/i
   );
 });
 
 check('public authorization RPC signatures contain no caller identity', () => {
   const signatures = [
-    ['request_my_consultation_authorization_v43', 'uuid\\s*,\\s*text'],
-    ['decide_my_consultation_authorization_v43', 'uuid\\s*,\\s*uuid\\s*,\\s*text\\s*,\\s*text'],
-    ['revoke_my_consultation_authorization_v43', 'uuid\\s*,\\s*text'],
-    ['set_my_shared_consultation_history_consent_v43', 'uuid\\s*,\\s*text\\s*,\\s*boolean'],
-    ['list_my_manageable_consultation_subjects_v43', 'integer\\s*,\\s*uuid'],
-    ['get_my_consultation_v43', 'uuid'],
-    ['list_shared_consultation_history_v43', 'uuid\\s*,\\s*integer']
+    ['request_my_consultation_authorization_v43', ['uuid', 'text']],
+    ['decide_my_consultation_authorization_v43', ['uuid', 'uuid', 'text', 'text']],
+    ['revoke_my_consultation_authorization_v43', ['uuid', 'text']],
+    ['set_my_shared_consultation_history_consent_v43', ['uuid', 'text', 'boolean']],
+    ['list_my_manageable_consultation_subjects_v43', ['integer', 'uuid']],
+    ['get_my_consultation_v43', ['uuid']],
+    ['list_shared_consultation_history_v43', ['uuid', 'integer']]
   ];
-  for (const [name, args] of signatures) {
-    assert.match(
-      migration,
-      new RegExp(`function\\s+public\\.${name}\\s*\\(\\s*[^)]*${args}[^)]*\\)`, 'i')
+  for (const [name, expectedTypes] of signatures) {
+    const signature = migration.match(
+      new RegExp(`function\\s+public\\.${name}\\s*\\(([^)]*)\\)`, 'i')
+    )?.[1];
+    assert.ok(signature, `${name} signature is absent`);
+    const actualTypes = signature.split(',').map(argument =>
+      argument
+        .trim()
+        .split(/\s+default\s+/i)[0]
+        .trim()
+        .split(/\s+/)
+        .at(-1)
     );
+    assert.deepEqual(actualTypes, expectedTypes, `${name} argument types changed`);
   }
   assert.doesNotMatch(
     migration,

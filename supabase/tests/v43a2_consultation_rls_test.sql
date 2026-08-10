@@ -501,9 +501,13 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000001', true);
 select lives_ok(
-  $$select public.request_my_consultation_authorization_v43(
-    '44100000-0000-0000-0000-000000000001',
-    'consultation-auth-v1'
+  $$select set_config(
+    'forja.test.trainer_request_id',
+    public.request_my_consultation_authorization_v43(
+      '44100000-0000-0000-0000-000000000001',
+      'consultation-auth-v1'
+    )::text,
+    true
   )$$,
   'trainer may request access for the exact active relationship'
 );
@@ -549,9 +553,13 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000002', true);
 select lives_ok(
-  $$select public.request_my_consultation_authorization_v43(
-    '44100000-0000-0000-0000-000000000002',
-    'consultation-auth-v1'
+  $$select set_config(
+    'forja.test.nutrition_request_id',
+    public.request_my_consultation_authorization_v43(
+      '44100000-0000-0000-0000-000000000002',
+      'consultation-auth-v1'
+    )::text,
+    true
   )$$,
   'nutritionist may request access for the exact active relationship'
 );
@@ -680,7 +688,7 @@ select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000001
 select throws_ok(
   $$select public.decide_my_consultation_authorization_v43(
     '44100000-0000-0000-0000-000000000001',
-    (select request.id from public.consultation_authorization_requests request where request.relationship_id = '44100000-0000-0000-0000-000000000001' and request.status = 'pending'),
+    current_setting('forja.test.trainer_request_id')::uuid,
     'accept',
     'consultation-auth-v1'
   )$$,
@@ -695,7 +703,7 @@ select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000102
 select throws_ok(
   $$select public.decide_my_consultation_authorization_v43(
     '44100000-0000-0000-0000-000000000001',
-    (select request.id from public.consultation_authorization_requests request where request.relationship_id = '44100000-0000-0000-0000-000000000001' and request.status = 'pending'),
+    current_setting('forja.test.trainer_request_id')::uuid,
     'accept',
     'consultation-auth-v1'
   )$$,
@@ -710,7 +718,7 @@ select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000101
 select lives_ok(
   $$select public.decide_my_consultation_authorization_v43(
     '44100000-0000-0000-0000-000000000001',
-    (select request.id from public.consultation_authorization_requests request where request.relationship_id = '44100000-0000-0000-0000-000000000001' and request.status = 'pending'),
+    current_setting('forja.test.trainer_request_id')::uuid,
     'accept',
     'consultation-auth-v1'
   )$$,
@@ -719,7 +727,7 @@ select lives_ok(
 select lives_ok(
   $$select public.decide_my_consultation_authorization_v43(
     '44100000-0000-0000-0000-000000000002',
-    (select request.id from public.consultation_authorization_requests request where request.relationship_id = '44100000-0000-0000-0000-000000000002' and request.status = 'pending'),
+    current_setting('forja.test.nutrition_request_id')::uuid,
     'decline',
     'consultation-auth-v1'
   )$$,
@@ -1209,9 +1217,13 @@ select throws_ok(
   'reactivated author needs a brand-new request and client acceptance'
 );
 select lives_ok(
-  $$select public.request_my_consultation_authorization_v43(
-    '44100000-0000-0000-0000-000000000001',
-    'consultation-auth-v1'
+  $$select set_config(
+    'forja.test.trainer_request_id',
+    public.request_my_consultation_authorization_v43(
+      '44100000-0000-0000-0000-000000000001',
+      'consultation-auth-v1'
+    )::text,
+    true
   )$$,
   'reactivated professional creates a fresh request'
 );
@@ -1222,7 +1234,7 @@ select set_config('request.jwt.claim.sub', '44000000-0000-0000-0000-000000000101
 select lives_ok(
   $$select public.decide_my_consultation_authorization_v43(
     '44100000-0000-0000-0000-000000000001',
-    (select request.id from public.consultation_authorization_requests request where request.relationship_id = '44100000-0000-0000-0000-000000000001' and request.status = 'pending' order by request.requested_at desc limit 1),
+    current_setting('forja.test.trainer_request_id')::uuid,
     'accept',
     'consultation-auth-v1'
   )$$,
