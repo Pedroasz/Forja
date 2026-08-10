@@ -828,7 +828,7 @@ values (
   '44300000-0000-0000-0000-000000000001',
   '44000000-0000-0000-0000-000000000001',
   1,
-  '{"items":[{"itemKey":"common.goal","value":{"value":"synthetic common goal"}},{"itemKey":"trainer.private_note","value":{"value":"synthetic private note"}}]}'
+  '{"items":[{"itemKey":"common.goal","value":{"value":"synthetic common goal"}},{"itemKey":"common.medications","value":{"value":"synthetic sensitive medication"}},{"itemKey":"trainer.private_note","value":{"value":"synthetic private note"}}]}'
 );
 
 -- Author-only bounded content read.
@@ -1020,7 +1020,7 @@ select is(
     $sql$)
   ),
   1,
-  'recipient with scope and current consent reads one common finalized item'
+  'recipient projection excludes unapproved common.* items and returns only approved common.goal'
 );
 select is(
   pg_temp.safe_json_v43a2($sql$
