@@ -591,6 +591,22 @@ reset role;
 select is((select count(*) from public.consultation_edit_leases where consultation_id in ('46300000-0000-0000-0000-000000000030','46300000-0000-0000-0000-000000000031','46300000-0000-0000-0000-000000000032')),0::bigint,'denied acquisition creates no lease');
 select is((select count(*) from public.consultation_events where consultation_id in ('46300000-0000-0000-0000-000000000030','46300000-0000-0000-0000-000000000031','46300000-0000-0000-0000-000000000032')),0::bigint,'denied acquisition creates no misleading audit event');
 
+-- Revoking only the A.2B manage_consultations scope must not impersonate relationship revocation.
+-- Relationship 002 is isolated from the remaining author-001 lifecycle fixtures.
+insert into public.professional_consultations
+  (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
+select '46300000-0000-0000-0000-000000000070',id,'46000000-0000-0000-0000-000000000002','46100000-0000-0000-0000-000000000002','trainer','initial','scheduled'
+from public.consultation_subjects where account_user_id='46000000-0000-0000-0000-000000000101';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000002',true);
+insert into a2c_results(result_key,consultation_id,payload)
+values ('lease-070','46300000-0000-0000-0000-000000000070',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000070','scope revocation','edit'));
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000101',true);
+select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000002','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and is_active order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
+reset role;
+select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000070'),'scheduled','scope-only revocation does not system-cancel a consultation while relationship remains active');
+select is((select invalidation_reason from public.consultation_edit_leases where consultation_id='46300000-0000-0000-0000-000000000070'),'authorization_revoked','scope-only revocation invalidates its lease with a distinct bounded reason');
+
 -- Relationship revocation atomically blocks authorization, invalidates leases and cancels active drafts.
 insert into public.professional_consultations
   (id,subject_id,author_user_id,relationship_id,professional_type,organization_id,consultation_kind,status)
@@ -704,21 +720,6 @@ reset role;
 drop trigger reject_snapshot_for_atomic_test on public.consultation_final_snapshots;
 select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000060'),'in_progress','failed finalization leaves lifecycle unchanged');
 select is((select count(*) from public.consultation_final_snapshots where consultation_id='46300000-0000-0000-0000-000000000060'),0::bigint,'failed finalization leaves no partial snapshot');
-
--- Revoking only the A.2B manage_consultations scope must not impersonate relationship revocation.
-insert into public.professional_consultations
-  (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
-select '46300000-0000-0000-0000-000000000070',id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial','scheduled'
-from public.consultation_subjects where account_user_id='46000000-0000-0000-0000-000000000101';
-set local role authenticated;
-select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
-insert into a2c_results(result_key,consultation_id,payload)
-values ('lease-070','46300000-0000-0000-0000-000000000070',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000070','scope revocation','edit'));
-select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000101',true);
-select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000001','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and is_active order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
-reset role;
-select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000070'),'scheduled','scope-only revocation does not system-cancel a consultation while relationship remains active');
-select is((select invalidation_reason from public.consultation_edit_leases where consultation_id='46300000-0000-0000-0000-000000000070'),'authorization_revoked','scope-only revocation invalidates its lease with a distinct bounded reason');
 
 -- Stable error vocabulary is bounded and content-free. These values must never contain tokens or field values.
 select ok(
