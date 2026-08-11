@@ -377,7 +377,7 @@ select is(
 );
 select is(
   (select count(*) from public.consultation_events where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000017','46300000-0000-0000-0000-000000000018','46300000-0000-0000-0000-000000000019') and event_type in ('lease_acquired','lease_takeover')),
-  2::bigint,
+  0::bigint,
   'failed takeover paths emit no misleading takeover event'
 );
 

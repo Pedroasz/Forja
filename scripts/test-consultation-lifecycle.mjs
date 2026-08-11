@@ -578,7 +578,7 @@ select pg_catalog.pg_sleep(2);`, applicationName),
     consultations: 1, status: 'scheduled', revision: 0, items: 0,
     receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
   }, 'organization race committed a post-suspension save');
-  console.log('9/9 separate-session race scenarios passed with observed lock contention.');
+  console.log('9/9 contended race scenarios plus 1/1 independent non-blocking scenario passed.');
 
   } finally {
   const fixtureIds = fixtures.length
