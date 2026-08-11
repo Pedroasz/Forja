@@ -277,16 +277,6 @@ function assertResultOk(result, label) {
   assert.equal(result.code, 0, `${label} failed: ${result.stderr || result.stdout}`);
 }
 
-async function exactlyOneCommits(name, first, second, acceptedFailurePattern) {
-  const results = await Promise.all([first(), second()]);
-  const successes = results.filter(result => result.code === 0);
-  assert.equal(successes.length, 1, `${name}: expected one commit, got ${successes.length}; ${JSON.stringify(results)}`);
-  const failure = results.find(result => result.code !== 0);
-  assert.match(`${failure.stderr}\n${failure.stdout}`, acceptedFailurePattern, `${name}: unexpected losing outcome`);
-  console.log(`PASS ${name}`);
-  return results;
-}
-
 async function waitForSessionState(container, applicationName, expectedState) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const state = await psql(container, `select coalesce((
@@ -369,6 +359,7 @@ commit;`;
   assertResultOk(await psql(container, setup), 'race fixture setup');
 
   const fixtures = [];
+  try {
   for (let index = 0; index < relationships.length; index += 1) {
     const create = await psql(container, actorSql(author,
       `select public.create_my_consultation_v43('${relationships[index]}', 'initial', null, null, null, null);`
@@ -383,20 +374,15 @@ commit;`;
     fixtures.push({ consultationId, relationshipId: relationships[index], ...lease });
   }
 
-  const saveSql = (fixture, correlationId, value) => actorSql(author,
-    `select public.autosave_my_consultation_v43('${fixture.consultationId}', '${fixture.leaseToken}', ${fixture.leaseVersion}, 0, '${correlationId}', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"${value}"}}]'::jsonb);`
-  );
-
-  const holdRelationshipThen = (fixture, statement, applicationName) => actorSql(author, `
-select 1 from public.professional_student_relationships where id='${fixture.relationshipId}' for update;
-select pg_catalog.pg_sleep(2);
-${statement}`, applicationName);
+  const performThenHold = (statement, applicationName) => actorSql(author, `
+${statement}
+select pg_catalog.pg_sleep(2);`, applicationName);
 
   // editor A vs editor B save race
   await contendedExactlyOne(
     container,
     'editor A vs editor B save race',
-    applicationName => holdRelationshipThen(fixtures[0],
+    applicationName => performThenHold(
       `select public.autosave_my_consultation_v43('${fixtures[0].consultationId}', '${fixtures[0].leaseToken}', ${fixtures[0].leaseVersion}, 0, '45200000-0000-0000-0000-000000000001', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"A"}}]'::jsonb);`,
       applicationName),
     applicationName => actorSql(author,
@@ -413,7 +399,7 @@ ${statement}`, applicationName);
   await contendedExactlyOne(
     container,
     'save vs explicit takeover',
-    applicationName => holdRelationshipThen(fixtures[1],
+    applicationName => performThenHold(
       `select public.takeover_my_consultation_lease_v43('${fixtures[1].consultationId}', 'takeover', 'edit', 0);`,
       applicationName),
     applicationName => actorSql(author,
@@ -430,7 +416,7 @@ ${statement}`, applicationName);
   await contendedExactlyOne(
     container,
     'save vs discard',
-    applicationName => holdRelationshipThen(fixtures[2],
+    applicationName => performThenHold(
       `select public.discard_my_consultation_v43('${fixtures[2].consultationId}', '${fixtures[2].leaseToken}', ${fixtures[2].leaseVersion}, 0, 'author_discard');`,
       applicationName),
     applicationName => actorSql(author,
@@ -447,7 +433,7 @@ ${statement}`, applicationName);
   await contendedExactlyOne(
     container,
     'heartbeat vs takeover',
-    applicationName => holdRelationshipThen(fixtures[3],
+    applicationName => performThenHold(
       `select public.takeover_my_consultation_lease_v43('${fixtures[3].consultationId}', 'takeover', 'edit', 0);`,
       applicationName),
     applicationName => actorSql(author,
@@ -487,7 +473,7 @@ select pg_catalog.pg_sleep(2);`, applicationName),
   await contendedExactlyOne(
     container,
     'finalization vs save',
-    applicationName => holdRelationshipThen(fixtures[5],
+    applicationName => performThenHold(
       `select public.finalize_my_consultation_v43('${fixtures[5].consultationId}', '${fixtures[5].leaseToken}', ${fixtures[5].leaseVersion}, 0);`,
       applicationName),
     applicationName => actorSql(author,
@@ -553,15 +539,19 @@ select pg_catalog.pg_sleep(2);`, applicationName),
   }, 'organization race committed a post-suspension save');
   console.log('9/9 separate-session race scenarios passed with observed lock contention.');
 
+  } finally {
+  const fixtureIds = fixtures.length
+    ? fixtures.map(fixture => `'${fixture.consultationId}'`).join(',')
+    : 'null';
   const cleanup = `begin;
 set local session_replication_role = replica;
 delete from public.consultation_save_receipts where author_user_id = '${author}';
-delete from public.consultation_final_snapshots where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
-delete from public.consultation_edit_leases where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
-delete from public.consultation_items where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
-delete from public.consultation_discard_tombstones where discarded_consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
-delete from public.consultation_events where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
-delete from public.professional_consultations where id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
+delete from public.consultation_final_snapshots where consultation_id in (${fixtureIds});
+delete from public.consultation_edit_leases where consultation_id in (${fixtureIds});
+delete from public.consultation_items where consultation_id in (${fixtureIds});
+delete from public.consultation_discard_tombstones where discarded_consultation_id in (${fixtureIds});
+delete from public.consultation_events where consultation_id in (${fixtureIds});
+delete from public.professional_consultations where id in (${fixtureIds});
 delete from public.consultation_subjects where account_user_id in (${clients.map(id => `'${id}'`).join(',')});
 delete from public.professional_student_relationships where id in (${relationships.map(id => `'${id}'`).join(',')});
 delete from public.user_identity_details where user_id in (${clients.map(id => `'${id}'`).join(',')});
@@ -573,6 +563,7 @@ delete from public.account_plan_catalog where code = '${plan}' and account_type 
 delete from auth.users where id in ('${author}', ${clients.map(id => `'${id}'`).join(',')});
 commit;`;
   assertResultOk(await psql(container, cleanup), 'race fixture cleanup');
+  }
 }
 
 if (process.argv.includes('--database-races')) {
