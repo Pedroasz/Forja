@@ -399,7 +399,9 @@ select lives_ok(format(
 ), 'in_progress -> paused is allowed and invalidates its lease');
 insert into a2c_results(result_key,consultation_id,payload)
 values ('resume-004','46300000-0000-0000-0000-000000000004',public.resume_my_consultation_v43('46300000-0000-0000-0000-000000000004','resume device',0));
+reset role;
 select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000004'),'in_progress','paused -> in_progress is allowed with a fresh lease');
+set local role authenticated;
 select lives_ok(format(
   $$select public.finalize_my_consultation_v43('46300000-0000-0000-0000-000000000005','%s',%s,0)$$,
   (select payload->>'leaseToken' from a2c_results where result_key='lease-005'),
@@ -464,7 +466,7 @@ select 'save-020','46300000-0000-0000-0000-000000000020',public.autosave_my_cons
   0,'46400000-0000-0000-0000-000000000001',
   '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"first"}}]'::jsonb
 );
-select is((select draft_revision from public.professional_consultations where id='46300000-0000-0000-0000-000000000020'),1::bigint,'correct revision saves exactly once and increments draft_revision');
+select is((select (payload->>'draftRevision')::bigint from a2c_results where result_key='save-020'),1::bigint,'correct revision saves exactly once and increments draft_revision');
 select is(
   (public.autosave_my_consultation_v43(
     '46300000-0000-0000-0000-000000000020',
