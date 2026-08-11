@@ -654,7 +654,7 @@ values
   ('cleanup-040','46300000-0000-0000-0000-000000000040',public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000040','cleanup device A',0)),
   ('cleanup-041-old','46300000-0000-0000-0000-000000000041',public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000041','cleanup device old',0));
 select throws_ok($$select public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000040','silent second cleanup editor',0)$$,'55000','consultation_stale_lease','second cleanup editor cannot silently replace an active cleanup lease');
-select throws_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000040','wrong-token',%s,0)$$,(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-040')),'55000','consultation_stale_lease','revoked cleanup denies wrong token');
+select throws_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000040','0000000000000000000000000000000000000000000000000000000000000000',%s,0)$$,(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-040')),'55000','consultation_stale_lease','revoked cleanup denies a well-formed wrong token');
 reset role;
 update public.consultation_edit_leases set heartbeat_at=now()-interval '61 seconds',expires_at=now()-interval '1 second' where consultation_id='46300000-0000-0000-0000-000000000041';
 set local role authenticated;

@@ -29,7 +29,7 @@ create table public.consultation_edit_leases (
   constraint consultation_edit_leases_version_check
     check (lease_version >= 1 and takeover_count >= 0),
   constraint consultation_edit_leases_purpose_check
-    check (purpose in ('edit', 'discard')),
+    check (purpose in ('edit', 'discard', 'cleanup')),
   constraint consultation_edit_leases_device_label_check
     check (
       char_length(device_label) between 1 and 80
@@ -136,6 +136,93 @@ as $$
     ),
     'sha256'
   );
+$$;
+
+create or replace function private.consultation_jsonb_depth_v43(
+  target_value jsonb
+)
+returns integer
+language plpgsql
+immutable
+strict
+security definer
+set search_path = ''
+as $$
+declare
+  child_depth integer;
+begin
+  if pg_catalog.jsonb_typeof(target_value) = 'object' then
+    select coalesce(max(private.consultation_jsonb_depth_v43(entry.value)), 0)
+    into child_depth
+    from pg_catalog.jsonb_each(target_value) entry;
+    return child_depth + 1;
+  end if;
+
+  if pg_catalog.jsonb_typeof(target_value) = 'array' then
+    select coalesce(max(private.consultation_jsonb_depth_v43(entry.value)), 0)
+    into child_depth
+    from pg_catalog.jsonb_array_elements(target_value) entry(value);
+    return child_depth + 1;
+  end if;
+
+  return 0;
+end;
+$$;
+
+create or replace function private.lock_consultation_authority_rows_v43(
+  target_relationship public.professional_student_relationships
+)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  account_record public.user_commercial_accounts;
+begin
+  -- Deterministic authority order after the relationship lock and before the
+  -- consultation lock: commercial account -> plan -> account mode -> subject
+  -- identity -> organization -> membership.
+  select account.*
+  into account_record
+  from public.user_commercial_accounts account
+  where account.user_id = target_relationship.professional_user_id
+  for update;
+
+  if found and account_record.plan_code is not null then
+    perform 1
+    from public.account_plan_catalog plan
+    where plan.code = account_record.plan_code
+      and plan.account_type = account_record.primary_account_type
+    for update;
+  end if;
+
+  perform 1
+  from public.user_account_modes account_mode
+  where account_mode.user_id = target_relationship.professional_user_id
+  order by account_mode.id
+  for update;
+
+  perform 1
+  from public.user_identity_details identity
+  where identity.user_id = target_relationship.student_user_id
+  for update;
+
+  if target_relationship.organization_id is not null then
+    perform 1
+    from public.organizations organization
+    where organization.id = target_relationship.organization_id
+    for update;
+
+    perform 1
+    from public.organization_members membership
+    where membership.organization_id = target_relationship.organization_id
+      and membership.user_id = target_relationship.professional_user_id
+    order by membership.id
+    for update;
+  end if;
+end;
 $$;
 
 create or replace function private.assert_consultation_relationship_subject_binding_v43()
@@ -300,6 +387,8 @@ begin
   where relationship.id = discovered_relationship_id
   for update;
 
+  perform private.lock_consultation_authority_rows_v43(relationship_record);
+
   select consultation.*
   into consultation_record
   from public.professional_consultations consultation
@@ -358,7 +447,8 @@ $$;
 create or replace function private.assert_consultation_lease_v43(
   target_consultation_id uuid,
   target_raw_token text,
-  target_lease_version bigint
+  target_lease_version bigint,
+  target_expected_purpose text default null
 )
 returns public.consultation_edit_leases
 language plpgsql
@@ -383,13 +473,22 @@ begin
     raise exception 'consultation_lease_taken_over' using errcode = '55000';
   end if;
 
+  if target_raw_token is null
+     or target_raw_token !~ '^[0-9a-fA-F]{64}$' then
+    raise exception 'consultation_validation_failed' using errcode = '22023';
+  end if;
+
   if target_lease_version <> lease_record.lease_version
-     or target_raw_token is null
      or lease_record.token_verifier <> private.consultation_lease_verifier_v43(
        target_consultation_id,
        target_lease_version,
        target_raw_token
      ) then
+    raise exception 'consultation_stale_lease' using errcode = '55000';
+  end if;
+
+  if target_expected_purpose is not null
+     and lease_record.purpose <> target_expected_purpose then
     raise exception 'consultation_stale_lease' using errcode = '55000';
   end if;
 
@@ -429,12 +528,13 @@ declare
   raw_token text;
   issued_at timestamp with time zone := pg_catalog.statement_timestamp();
 begin
-  if target_purpose not in ('edit', 'discard') then
+  if target_purpose not in ('edit', 'discard', 'cleanup') then
     raise exception 'consultation_validation_failed' using errcode = '22023';
   end if;
 
-  if target_consultation.status not in ('scheduled', 'in_progress', 'paused')
-     or (target_consultation.status = 'paused' and target_purpose <> 'discard') then
+  if (target_purpose = 'edit' and target_consultation.status not in ('scheduled', 'in_progress'))
+     or (target_purpose = 'discard' and target_consultation.status <> 'paused')
+     or (target_purpose = 'cleanup' and target_consultation.status <> 'cancelled') then
     raise exception 'consultation_invalid_lifecycle_state' using errcode = '55000';
   end if;
 
@@ -557,6 +657,8 @@ begin
   if not found or relationship_record.professional_user_id <> caller_user_id then
     raise exception 'consultation_unauthorized' using errcode = '42501';
   end if;
+
+  perform private.lock_consultation_authority_rows_v43(relationship_record);
 
   perform private.assert_consultation_relationship_entitlement_v43(
     relationship_record.id,
@@ -730,7 +832,8 @@ begin
   lease_record := private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    null
   );
 
   update public.consultation_edit_leases lease
@@ -832,7 +935,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    'edit'
   );
 
   if consultation_record.status <> 'scheduled' then
@@ -893,7 +997,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    'edit'
   );
 
   if consultation_record.status not in ('scheduled', 'in_progress') then
@@ -922,7 +1027,8 @@ begin
   if target_correlation_id is null
      or target_patch is null
      or pg_catalog.jsonb_typeof(target_patch) <> 'array'
-     or pg_catalog.jsonb_array_length(target_patch) > 100 then
+     or pg_catalog.jsonb_array_length(target_patch) > 100
+     or pg_catalog.pg_column_size(target_patch) > 65536 then
     raise exception 'consultation_validation_failed' using errcode = '22023';
   end if;
 
@@ -939,7 +1045,9 @@ begin
        or patch_item_key !~ '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
        or patch_item_kind not in ('text','number','boolean','date','selection','structured')
        or not (patch_item ? 'value')
-       or pg_catalog.jsonb_typeof(patch_item -> 'value') <> 'object' then
+       or pg_catalog.jsonb_typeof(patch_item -> 'value') <> 'object'
+       or pg_catalog.pg_column_size(patch_item -> 'value') > 16384
+       or private.consultation_jsonb_depth_v43(patch_item -> 'value') > 16 then
       raise exception 'consultation_validation_failed' using errcode = '22023';
     end if;
 
@@ -960,6 +1068,15 @@ begin
     current_value := null;
     current_exists := false;
   end loop;
+
+  if exists (
+    select 1
+    from pg_catalog.jsonb_array_elements(target_patch) patch_entry(value)
+    group by patch_entry.value ->> 'itemKey'
+    having count(*) > 1
+  ) then
+    raise exception 'consultation_validation_failed' using errcode = '22023';
+  end if;
 
   for patch_item in
     select patch_entry.value
@@ -1040,7 +1157,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    'edit'
   );
 
   if consultation_record.status <> 'in_progress' then
@@ -1149,7 +1267,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    case when consultation_record.status = 'paused' then 'discard' else 'edit' end
   );
 
   if consultation_record.status not in ('scheduled', 'in_progress', 'paused') then
@@ -1265,7 +1384,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    'edit'
   );
   if consultation_record.draft_revision <> target_expected_draft_revision then
     raise exception 'consultation_stale_revision' using errcode = '55000';
@@ -1319,7 +1439,12 @@ begin
     raise exception 'consultation_stale_revision' using errcode = '55000';
   end if;
 
-  if consultation_record.status = 'finalized' then
+  if consultation_record.status = 'finalized'
+     or exists (
+       select 1
+       from public.consultation_final_snapshots snapshot
+       where snapshot.consultation_id = consultation_record.id
+     ) then
     perform private.allow_consultation_transition_v43(
       consultation_record.id,
       'archived'
@@ -1368,7 +1493,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    'edit'
   );
 
   if consultation_record.status <> 'in_progress' then
@@ -1455,7 +1581,8 @@ begin
   perform private.assert_consultation_lease_v43(
     target_consultation_id,
     target_lease_token,
-    target_lease_version
+    target_lease_version,
+    case when consultation_record.status = 'paused' then 'discard' else 'edit' end
   );
 
   if consultation_record.status not in ('scheduled', 'in_progress', 'paused')
@@ -1507,11 +1634,12 @@ begin
 end;
 $$;
 
-create or replace function public.cleanup_my_revoked_consultation_v43(
+create or replace function public.acquire_my_revoked_consultation_cleanup_lease_v43(
   target_consultation_id uuid,
+  target_device_label text,
   target_expected_draft_revision bigint
 )
-returns boolean
+returns jsonb
 language plpgsql
 security definer
 set search_path = ''
@@ -1519,6 +1647,7 @@ as $$
 declare
   caller_user_id uuid := auth.uid();
   discovered_relationship_id uuid;
+  relationship_record public.professional_student_relationships;
   consultation_record public.professional_consultations;
 begin
   if caller_user_id is null then
@@ -1530,7 +1659,8 @@ begin
   from public.professional_consultations consultation
   where consultation.id = target_consultation_id;
 
-  perform 1
+  select relationship.*
+  into relationship_record
   from public.professional_student_relationships relationship
   where relationship.id = discovered_relationship_id
   for update;
@@ -1539,13 +1669,19 @@ begin
   into consultation_record
   from public.professional_consultations consultation
   where consultation.id = target_consultation_id
+    and consultation.relationship_id = relationship_record.id
   for update;
 
-  if not found or consultation_record.author_user_id <> caller_user_id then
+  if not found
+     or consultation_record.author_user_id <> caller_user_id
+     or relationship_record.professional_user_id <> consultation_record.author_user_id then
     raise exception 'consultation_unauthorized' using errcode = '42501';
   end if;
   if consultation_record.status <> 'cancelled'
-     or consultation_record.draft_revision <> target_expected_draft_revision
+     or exists (
+       select 1 from public.consultation_final_snapshots snapshot
+       where snapshot.consultation_id = consultation_record.id
+     )
      or not exists (
        select 1 from public.consultation_events event
        where event.consultation_id = consultation_record.id
@@ -1553,6 +1689,85 @@ begin
      ) then
     raise exception 'consultation_invalid_lifecycle_state' using errcode = '55000';
   end if;
+  if consultation_record.draft_revision <> target_expected_draft_revision then
+    raise exception 'consultation_stale_revision' using errcode = '55000';
+  end if;
+
+  return private.issue_consultation_lease_v43(
+    consultation_record,
+    target_device_label,
+    'cleanup',
+    false
+  );
+end;
+$$;
+
+create or replace function public.cleanup_my_revoked_consultation_v43(
+  target_consultation_id uuid,
+  target_lease_token text,
+  target_lease_version bigint,
+  target_expected_draft_revision bigint
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller_user_id uuid := auth.uid();
+  discovered_relationship_id uuid;
+  relationship_record public.professional_student_relationships;
+  consultation_record public.professional_consultations;
+begin
+  if caller_user_id is null then
+    raise exception 'consultation_unauthorized' using errcode = '42501';
+  end if;
+
+  select consultation.relationship_id
+  into discovered_relationship_id
+  from public.professional_consultations consultation
+  where consultation.id = target_consultation_id;
+
+  select relationship.*
+  into relationship_record
+  from public.professional_student_relationships relationship
+  where relationship.id = discovered_relationship_id
+  for update;
+
+  select consultation.*
+  into consultation_record
+  from public.professional_consultations consultation
+  where consultation.id = target_consultation_id
+    and consultation.relationship_id = relationship_record.id
+  for update;
+
+  if not found
+     or consultation_record.author_user_id <> caller_user_id
+     or relationship_record.professional_user_id <> consultation_record.author_user_id then
+    raise exception 'consultation_unauthorized' using errcode = '42501';
+  end if;
+  if consultation_record.status <> 'cancelled'
+     or exists (
+       select 1 from public.consultation_final_snapshots snapshot
+       where snapshot.consultation_id = consultation_record.id
+     )
+     or not exists (
+       select 1 from public.consultation_events event
+       where event.consultation_id = consultation_record.id
+         and event.reason_category = 'relationship_revoked'
+     ) then
+    raise exception 'consultation_invalid_lifecycle_state' using errcode = '55000';
+  end if;
+  if consultation_record.draft_revision <> target_expected_draft_revision then
+    raise exception 'consultation_stale_revision' using errcode = '55000';
+  end if;
+
+  perform private.assert_consultation_lease_v43(
+    consultation_record.id,
+    target_lease_token,
+    target_lease_version,
+    'cleanup'
+  );
 
   insert into public.consultation_discard_tombstones (
     discarded_consultation_id,
@@ -1624,6 +1839,36 @@ begin
       consultation_record.relationship_id,
       'cancelled',
       'relationship_revoked'
+    );
+  end loop;
+end;
+$$;
+
+create or replace function private.invalidate_consultation_leases_for_revoked_authorization_v43(
+  target_relationship_id uuid
+)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  consultation_record public.professional_consultations;
+begin
+  -- The relationship row is already locked by the caller. Preserve the
+  -- relationship -> consultation -> lease order without changing lifecycle.
+  for consultation_record in
+    select consultation.*
+    from public.professional_consultations consultation
+    where consultation.relationship_id = target_relationship_id
+      and consultation.status in ('scheduled', 'in_progress', 'paused')
+    order by consultation.id
+    for update
+  loop
+    perform private.invalidate_consultation_lease_v43(
+      consultation_record.id,
+      'authorization_revoked'
     );
   end loop;
 end;
@@ -1792,9 +2037,8 @@ begin
     target_authorization_text_version
   );
 
-  perform private.invalidate_consultations_for_revoked_relationship_v43(
-    relationship_record.id,
-    caller_user_id
+  perform private.invalidate_consultation_leases_for_revoked_authorization_v43(
+    relationship_record.id
   );
 
   return true;
@@ -1836,7 +2080,8 @@ revoke all on function
   public.mark_my_consultation_no_show_v43(uuid, text, bigint, bigint),
   public.archive_my_consultation_v43(uuid, bigint),
   public.discard_my_consultation_v43(uuid, text, bigint, bigint, text),
-  public.cleanup_my_revoked_consultation_v43(uuid, bigint),
+  public.acquire_my_revoked_consultation_cleanup_lease_v43(uuid, text, bigint),
+  public.cleanup_my_revoked_consultation_v43(uuid, text, bigint, bigint),
   public.finalize_my_consultation_v43(uuid, text, bigint, bigint)
 from public, anon, authenticated;
 
@@ -1856,20 +2101,24 @@ grant execute on function
   public.mark_my_consultation_no_show_v43(uuid, text, bigint, bigint),
   public.archive_my_consultation_v43(uuid, bigint),
   public.discard_my_consultation_v43(uuid, text, bigint, bigint, text),
-  public.cleanup_my_revoked_consultation_v43(uuid, bigint),
+  public.acquire_my_revoked_consultation_cleanup_lease_v43(uuid, text, bigint),
+  public.cleanup_my_revoked_consultation_v43(uuid, text, bigint, bigint),
   public.finalize_my_consultation_v43(uuid, text, bigint, bigint)
 to authenticated;
 
 revoke all on function
   private.normalize_consultation_device_label_v43(text),
   private.consultation_lease_verifier_v43(uuid, bigint, text),
+  private.consultation_jsonb_depth_v43(jsonb),
+  private.lock_consultation_authority_rows_v43(public.professional_student_relationships),
   private.assert_consultation_relationship_subject_binding_v43(),
   private.allow_consultation_transition_v43(uuid, text),
   private.assert_locked_consultation_write_entitlement_v43(uuid, text),
-  private.assert_consultation_lease_v43(uuid, text, bigint),
+  private.assert_consultation_lease_v43(uuid, text, bigint, text),
   private.issue_consultation_lease_v43(public.professional_consultations, text, text, boolean),
   private.invalidate_consultation_lease_v43(uuid, text),
-  private.invalidate_consultations_for_revoked_relationship_v43(uuid, uuid)
+  private.invalidate_consultations_for_revoked_relationship_v43(uuid, uuid),
+  private.invalidate_consultation_leases_for_revoked_authorization_v43(uuid)
 from public, anon, authenticated;
 
 commit;
