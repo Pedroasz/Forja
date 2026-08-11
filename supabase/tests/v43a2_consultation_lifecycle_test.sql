@@ -249,9 +249,9 @@ cross join (values
   ('46300000-0000-0000-0000-000000000011'::uuid,'cancelled',null,null,null,0),
   ('46300000-0000-0000-0000-000000000012'::uuid,'no_show',now()-interval '1 day','UTC',0::smallint,1),
   ('46300000-0000-0000-0000-000000000013'::uuid,'archived',null,null,null,0),
-  ('46300000-0000-0000-0000-000000000014'::uuid,'scheduled',null,null,null,0),
-  ('46300000-0000-0000-0000-000000000015'::uuid,'scheduled',null,null,null,0),
-  ('46300000-0000-0000-0000-000000000016'::uuid,'scheduled',null,null,null,0)
+  ('46300000-0000-0000-0000-000000000017'::uuid,'scheduled',null,null,null,0),
+  ('46300000-0000-0000-0000-000000000018'::uuid,'scheduled',null,null,null,0),
+  ('46300000-0000-0000-0000-000000000019'::uuid,'scheduled',null,null,null,0)
 ) fixture(id,status,scheduled_start_at,zone,offset_minutes,schedule_revision)
 where subject.account_user_id = '46000000-0000-0000-0000-000000000101';
 
@@ -345,38 +345,38 @@ select throws_ok(
   '22023','consultation_validation_failed','generic takeover cannot mint the dedicated cleanup capability'
 );
 select throws_ok(
-  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000014','missing lease takeover','edit',0)$$,
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000017','missing lease takeover','edit',0)$$,
   '55000','consultation_stale_lease','takeover requires an existing active lease'
 );
 insert into a2c_results(result_key,consultation_id,payload)
 values
-  ('lease-015','46300000-0000-0000-0000-000000000015',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000015','expired takeover fixture','edit')),
-  ('lease-016','46300000-0000-0000-0000-000000000016',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000016','invalidated takeover fixture','edit'));
+  ('lease-018','46300000-0000-0000-0000-000000000018',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000018','expired takeover fixture','edit')),
+  ('lease-019','46300000-0000-0000-0000-000000000019',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000019','invalidated takeover fixture','edit'));
 reset role;
 update public.consultation_edit_leases
 set heartbeat_at=now()-interval '61 seconds', expires_at=now()-interval '1 second'
-where consultation_id='46300000-0000-0000-0000-000000000015';
+where consultation_id='46300000-0000-0000-0000-000000000018';
 update public.consultation_edit_leases
 set invalidated_at=now(), invalidation_reason='status_changed'
-where consultation_id='46300000-0000-0000-0000-000000000016';
+where consultation_id='46300000-0000-0000-0000-000000000019';
 set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 select throws_ok(
-  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000015','expired takeover','edit',0)$$,
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000018','expired takeover','edit',0)$$,
   '55000','consultation_expired_lease','takeover cannot replace an expired lease'
 );
 select throws_ok(
-  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000016','invalidated takeover','edit',0)$$,
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000019','invalidated takeover','edit',0)$$,
   '55000','consultation_stale_lease','takeover cannot replace an invalidated lease'
 );
 reset role;
 select is(
-  (select count(*) from public.consultation_edit_leases where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000014')),
+  (select count(*) from public.consultation_edit_leases where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000017')),
   0::bigint,
   'rejected generic cleanup and missing-lease takeover create no lease state'
 );
 select is(
-  (select count(*) from public.consultation_events where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000014','46300000-0000-0000-0000-000000000015','46300000-0000-0000-0000-000000000016') and event_type in ('lease_acquired','lease_takeover')),
+  (select count(*) from public.consultation_events where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000017','46300000-0000-0000-0000-000000000018','46300000-0000-0000-0000-000000000019') and event_type in ('lease_acquired','lease_takeover')),
   2::bigint,
   'failed takeover paths emit no misleading takeover event'
 );
