@@ -171,7 +171,7 @@ select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001'
 insert into a2c_results (result_key, consultation_id)
 select 'created', public.create_my_consultation_v43(
   '46100000-0000-0000-0000-000000000001','initial',null,
-  now() - interval '2 hours','UTC',0
+  now() - interval '2 hours','UTC',0::smallint
 );
 insert into a2c_results (result_key, consultation_id)
 select 'org-created', public.create_my_consultation_v43(
@@ -205,14 +205,14 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 select lives_ok(
   format(
-    $$select public.reschedule_my_consultation_v43('%s',1,now() + interval '1 day','UTC',0)$$,
+    $$select public.reschedule_my_consultation_v43('%s',1,now() + interval '1 day','UTC',0::smallint)$$,
     (select consultation_id from a2c_results where result_key='created')
   ),
   'reschedule succeeds at the current schedule revision'
 );
 select throws_ok(
   format(
-    $$select public.reschedule_my_consultation_v43('%s',1,now() + interval '2 days','UTC',0)$$,
+    $$select public.reschedule_my_consultation_v43('%s',1,now() + interval '2 days','UTC',0::smallint)$$,
     (select consultation_id from a2c_results where result_key='created')
   ),
   '55000','consultation_stale_revision','stale schedule revision is rejected'
