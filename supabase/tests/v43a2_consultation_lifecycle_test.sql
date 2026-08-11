@@ -445,8 +445,8 @@ reset role;
 -- Autosave optimistic concurrency, bounded patch and idempotency.
 insert into public.professional_consultations
   (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
-select fixture.id,id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial','scheduled'
-from public.consultation_subjects
+select fixture.id,subject.id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial','scheduled'
+from public.consultation_subjects subject
 cross join (values
   ('46300000-0000-0000-0000-000000000020'::uuid),
   ('46300000-0000-0000-0000-000000000021'::uuid)
@@ -589,8 +589,8 @@ select ok(exists(select 1 from public.consultation_discard_tombstones where disc
 -- Normal discard requires valid current token/version/revision and never deletes finalized history.
 insert into public.professional_consultations
   (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
-select fixture.id,id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial',fixture.status
-from public.consultation_subjects
+select fixture.id,subject.id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial',fixture.status
+from public.consultation_subjects subject
 cross join (values
   ('46300000-0000-0000-0000-000000000050'::uuid,'scheduled'::text),
   ('46300000-0000-0000-0000-000000000051'::uuid,'paused'::text)
