@@ -36,7 +36,8 @@ const rpcSignatures = [
   ['mark_my_consultation_no_show_v43', ['uuid', 'text', 'bigint', 'bigint']],
   ['archive_my_consultation_v43', ['uuid', 'bigint']],
   ['discard_my_consultation_v43', ['uuid', 'text', 'bigint', 'bigint', 'text']],
-  ['cleanup_my_revoked_consultation_v43', ['uuid', 'bigint']],
+  ['acquire_my_revoked_consultation_cleanup_lease_v43', ['uuid', 'text', 'bigint']],
+  ['cleanup_my_revoked_consultation_v43', ['uuid', 'text', 'bigint', 'bigint']],
   ['finalize_my_consultation_v43', ['uuid', 'text', 'bigint', 'bigint']]
 ];
 
@@ -164,7 +165,7 @@ function runStaticContract() {
     assert.doesNotMatch(finalize, /jsonb\s*::\s*text|canonical_payload\s*::\s*text/i);
   });
 
-  check('source and database tests cover lifecycle, revocation, discard and six races', () => {
+  check('source and database tests cover lifecycle, revocation, discard and nine lock-observed races', () => {
     assert.ok(pgTap.length > 20_000, 'focused lifecycle pgTAP suite is unexpectedly small');
     for (const contract of [
       'scheduled -> in_progress',
@@ -176,6 +177,11 @@ function runStaticContract() {
       'consultation_subjects.account_user_id',
       'takeover',
       'discard',
+      'a discard lease cannot cross capabilities into autosave',
+      'autosave rejects duplicate itemKey entries',
+      'finalized -> cancelled -> archived',
+      'scope-only revocation does not system-cancel',
+      'cleanup lease',
       'finalize'
     ]) assert.match(pgTap, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
     for (const race of [
@@ -184,8 +190,12 @@ function runStaticContract() {
       'save vs discard',
       'heartbeat vs takeover',
       'relationship revocation vs save',
-      'finalization vs save'
+      'finalization vs save',
+      'subscription deactivation vs save',
+      'organization membership suspension vs save',
+      'organization suspension vs save'
     ]) assert.match(readFileSync(import.meta.filename, 'utf8'), new RegExp(race, 'i'));
+    assert.match(readFileSync(import.meta.filename, 'utf8'), /wait_event_type\s*=\s*'Lock'/i);
   });
 
   check('CI triggers and focused/full pgTAP enforcement are exact', () => {
@@ -243,10 +253,22 @@ function psql(container, sql) {
   });
 }
 
-function actorSql(actorId, statement) {
+function actorSql(actorId, statement, applicationName = '') {
   return `begin;
+set local statement_timeout = '10s';
+set local lock_timeout = '5s';
+${applicationName ? `set local application_name = '${applicationName}';` : ''}
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '${actorId}', true);
+${statement}
+commit;`;
+}
+
+function rootSql(statement, applicationName) {
+  return `begin;
+set local statement_timeout = '10s';
+set local lock_timeout = '5s';
+set local application_name = '${applicationName}';
 ${statement}
 commit;`;
 }
@@ -265,13 +287,66 @@ async function exactlyOneCommits(name, first, second, acceptedFailurePattern) {
   return results;
 }
 
+async function waitForSessionState(container, applicationName, expectedState) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const state = await psql(container, `select coalesce((
+      select case
+        when wait_event = 'PgSleep' then 'sleep'
+        when wait_event_type = 'Lock' then 'lock'
+        else 'active'
+      end
+      from pg_catalog.pg_stat_activity
+      where application_name = '${applicationName}'
+      order by backend_start desc
+      limit 1
+    ), 'missing');`);
+    assertResultOk(state, `inspect ${applicationName}`);
+    if (state.stdout === expectedState) return;
+    await new Promise(resolvePromise => setTimeout(resolvePromise, 50));
+  }
+  assert.fail(`${applicationName} never reached ${expectedState}`);
+}
+
+async function contendedExactlyOne(container, name, firstSql, secondSql, acceptedFailurePattern) {
+  const raceId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
+  const firstApplication = `forja-a2c-${raceId}-first`;
+  const secondApplication = `forja-a2c-${raceId}-second`;
+  const firstPromise = psql(container, firstSql(firstApplication));
+  await waitForSessionState(container, firstApplication, 'sleep');
+  const secondPromise = psql(container, secondSql(secondApplication));
+  await waitForSessionState(container, secondApplication, 'lock');
+  const results = await Promise.all([firstPromise, secondPromise]);
+  const successes = results.filter(result => result.code === 0);
+  assert.equal(successes.length, 1, `${name}: expected one commit, got ${successes.length}; ${JSON.stringify(results)}`);
+  const failure = results.find(result => result.code !== 0);
+  assert.match(`${failure.stderr}\n${failure.stdout}`, acceptedFailurePattern, `${name}: unexpected losing outcome`);
+  console.log(`PASS ${name} (observed a real blocked lock waiter)`);
+  return results;
+}
+
+async function aggregateState(container, fixture) {
+  const result = await psql(container, `select pg_catalog.json_build_object(
+    'consultations',(select count(*) from public.professional_consultations where id='${fixture.consultationId}'),
+    'status',(select status from public.professional_consultations where id='${fixture.consultationId}'),
+    'revision',(select draft_revision from public.professional_consultations where id='${fixture.consultationId}'),
+    'items',(select count(*) from public.consultation_items where consultation_id='${fixture.consultationId}'),
+    'receipts',(select count(*) from public.consultation_save_receipts where consultation_id='${fixture.consultationId}'),
+    'activeLeases',(select count(*) from public.consultation_edit_leases where consultation_id='${fixture.consultationId}' and invalidated_at is null),
+    'snapshots',(select count(*) from public.consultation_final_snapshots where consultation_id='${fixture.consultationId}'),
+    'tombstones',(select count(*) from public.consultation_discard_tombstones where discarded_consultation_id='${fixture.consultationId}')
+  );`);
+  assertResultOk(result, `read aggregate ${fixture.consultationId}`);
+  return JSON.parse(result.stdout.split(/\r?\n/).filter(Boolean).at(-1));
+}
+
 async function runDatabaseRaces() {
   const container = process.env.FORJA_A2C_DB_CONTAINER;
   assert.ok(container, 'FORJA_A2C_DB_CONTAINER is required for --database-races');
   const author = '45000000-0000-0000-0000-000000000001';
-  const clients = Array.from({ length: 6 }, (_, index) => `45000000-0000-0000-0000-${String(101 + index).padStart(12, '0')}`);
-  const relationships = Array.from({ length: 6 }, (_, index) => `45100000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`);
+  const clients = Array.from({ length: 9 }, (_, index) => `45000000-0000-0000-0000-${String(101 + index).padStart(12, '0')}`);
+  const relationships = Array.from({ length: 9 }, (_, index) => `45100000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`);
   const plan = 'trainer_ci_v43a2c';
+  const organization = '45300000-0000-0000-0000-000000000001';
   const setup = `begin;
 insert into auth.users (id, aud, role, email, created_at, updated_at)
 values ('${author}', 'authenticated', 'authenticated', 'a2c-race-author@example.test', now(), now()),
@@ -283,9 +358,13 @@ values ('${author}', 'trainer', '${plan}', 'active', true);
 insert into public.user_account_modes (user_id, mode) values ('${author}', 'trainer');
 insert into public.user_identity_details (user_id, birth_date, age_status, age_verified_at)
 values ${clients.map(id => `('${id}', date '1990-01-01', 'adult', now())`).join(',\n')};
+insert into public.organizations (id, name, slug, organization_type, owner_user_id, status)
+values ('${organization}', 'A2C race organization', 'a2c-race-organization', 'academy', '${author}', 'active');
+insert into public.organization_members (organization_id, user_id, role, status)
+values ('${organization}', '${author}', 'trainer', 'active');
 insert into public.professional_student_relationships
-  (id, professional_user_id, student_user_id, professional_type, status, scopes)
-values ${relationships.map((id, index) => `('${id}', '${author}', '${clients[index]}', 'trainer', 'active', '{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true,"manage_consultations":true,"view_shared_consultation_history":false}')`).join(',\n')};
+  (id, professional_user_id, student_user_id, professional_type, organization_id, status, scopes)
+values ${relationships.map((id, index) => `('${id}', '${author}', '${clients[index]}', 'trainer', ${index >= 6 ? `'${organization}'` : 'null'}, 'active', '{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true,"manage_consultations":true,"view_shared_consultation_history":false}')`).join(',\n')};
 commit;`;
   assertResultOk(await psql(container, setup), 'race fixture setup');
 
@@ -308,44 +387,74 @@ commit;`;
     `select public.autosave_my_consultation_v43('${fixture.consultationId}', '${fixture.leaseToken}', ${fixture.leaseVersion}, 0, '${correlationId}', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"${value}"}}]'::jsonb);`
   );
 
+  const holdRelationshipThen = (fixture, statement, applicationName) => actorSql(author, `
+select 1 from public.professional_student_relationships where id='${fixture.relationshipId}' for update;
+select pg_catalog.pg_sleep(2);
+${statement}`, applicationName);
+
   // editor A vs editor B save race
-  await exactlyOneCommits(
+  await contendedExactlyOne(
+    container,
     'editor A vs editor B save race',
-    () => psql(container, saveSql(fixtures[0], '45200000-0000-0000-0000-000000000001', 'A')),
-    () => psql(container, saveSql(fixtures[0], '45200000-0000-0000-0000-000000000002', 'B')),
+    applicationName => holdRelationshipThen(fixtures[0],
+      `select public.autosave_my_consultation_v43('${fixtures[0].consultationId}', '${fixtures[0].leaseToken}', ${fixtures[0].leaseVersion}, 0, '45200000-0000-0000-0000-000000000001', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"A"}}]'::jsonb);`,
+      applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[0].consultationId}', '${fixtures[0].leaseToken}', ${fixtures[0].leaseVersion}, 0, '45200000-0000-0000-0000-000000000002', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"B"}}]'::jsonb);`,
+      applicationName),
     /consultation_stale_revision/i
   );
+  assert.deepEqual(await aggregateState(container, fixtures[0]), {
+    consultations: 1, status: 'scheduled', revision: 1, items: 1,
+    receipts: 1, activeLeases: 1, snapshots: 0, tombstones: 0
+  }, 'save race left a partial aggregate');
 
   // save vs explicit takeover
-  await exactlyOneCommits(
+  await contendedExactlyOne(
+    container,
     'save vs explicit takeover',
-    () => psql(container, saveSql(fixtures[1], '45200000-0000-0000-0000-000000000003', 'save')),
-    () => psql(container, actorSql(author,
-      `select public.takeover_my_consultation_lease_v43('${fixtures[1].consultationId}', 'takeover', 'edit', 0);`
-    )),
-    /consultation_(?:stale_revision|lease_taken_over)/i
+    applicationName => holdRelationshipThen(fixtures[1],
+      `select public.takeover_my_consultation_lease_v43('${fixtures[1].consultationId}', 'takeover', 'edit', 0);`,
+      applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[1].consultationId}', '${fixtures[1].leaseToken}', ${fixtures[1].leaseVersion}, 0, '45200000-0000-0000-0000-000000000003', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"save"}}]'::jsonb);`,
+      applicationName),
+    /consultation_lease_taken_over/i
   );
+  assert.deepEqual(await aggregateState(container, fixtures[1]), {
+    consultations: 1, status: 'scheduled', revision: 0, items: 0,
+    receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
+  }, 'takeover race left save content or a receipt');
 
   // save vs discard
-  await exactlyOneCommits(
+  await contendedExactlyOne(
+    container,
     'save vs discard',
-    () => psql(container, saveSql(fixtures[2], '45200000-0000-0000-0000-000000000004', 'save')),
-    () => psql(container, actorSql(author,
-      `select public.discard_my_consultation_v43('${fixtures[2].consultationId}', '${fixtures[2].leaseToken}', ${fixtures[2].leaseVersion}, 0, 'author_discard');`
-    )),
-    /consultation_(?:stale_revision|stale_lease|unauthorized)/i
+    applicationName => holdRelationshipThen(fixtures[2],
+      `select public.discard_my_consultation_v43('${fixtures[2].consultationId}', '${fixtures[2].leaseToken}', ${fixtures[2].leaseVersion}, 0, 'author_discard');`,
+      applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[2].consultationId}', '${fixtures[2].leaseToken}', ${fixtures[2].leaseVersion}, 0, '45200000-0000-0000-0000-000000000004', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"save"}}]'::jsonb);`,
+      applicationName),
+    /consultation_unauthorized/i
   );
+  assert.deepEqual(await aggregateState(container, fixtures[2]), {
+    consultations: 0, status: null, revision: null, items: 0,
+    receipts: 0, activeLeases: 0, snapshots: 0, tombstones: 1
+  }, 'discard race left partial consultation state');
 
   // heartbeat vs takeover
-  const heartbeatTakeover = await Promise.all([
-    psql(container, actorSql(author,
-      `select public.heartbeat_my_consultation_lease_v43('${fixtures[3].consultationId}', '${fixtures[3].leaseToken}', ${fixtures[3].leaseVersion});`
-    )),
-    psql(container, actorSql(author,
-      `select public.takeover_my_consultation_lease_v43('${fixtures[3].consultationId}', 'takeover', 'edit', 0);`
-    ))
-  ]);
-  assert.ok(heartbeatTakeover.some(result => result.code === 0), 'heartbeat vs takeover produced no valid serialized outcome');
+  await contendedExactlyOne(
+    container,
+    'heartbeat vs takeover',
+    applicationName => holdRelationshipThen(fixtures[3],
+      `select public.takeover_my_consultation_lease_v43('${fixtures[3].consultationId}', 'takeover', 'edit', 0);`,
+      applicationName),
+    applicationName => actorSql(author,
+      `select public.heartbeat_my_consultation_lease_v43('${fixtures[3].consultationId}', '${fixtures[3].leaseToken}', ${fixtures[3].leaseVersion});`,
+      applicationName),
+    /consultation_lease_taken_over/i
+  );
   const replay = await psql(container, actorSql(author,
     `select public.heartbeat_my_consultation_lease_v43('${fixtures[3].consultationId}', '${fixtures[3].leaseToken}', ${fixtures[3].leaseVersion});`
   ));
@@ -354,31 +463,95 @@ commit;`;
   console.log('PASS heartbeat vs takeover');
 
   // relationship revocation vs save
-  const revocationResults = await Promise.all([
-    psql(container, saveSql(fixtures[4], '45200000-0000-0000-0000-000000000005', 'save')),
-    psql(container, `update public.professional_student_relationships set status = 'revoked' where id = '${fixtures[4].relationshipId}';`)
-  ]);
-  assertResultOk(revocationResults[1], 'relationship revocation');
-  const revokedState = await psql(container,
-    `select status from public.professional_consultations where id = '${fixtures[4].consultationId}';`
+  await contendedExactlyOne(
+    container,
+    'relationship revocation vs save',
+    applicationName => rootSql(`
+update public.professional_student_relationships set status='revoked' where id='${fixtures[4].relationshipId}';
+select pg_catalog.pg_sleep(2);`, applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[4].consultationId}', '${fixtures[4].leaseToken}', ${fixtures[4].leaseVersion}, 0, '45200000-0000-0000-0000-000000000005', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"save"}}]'::jsonb);`,
+      applicationName),
+    /consultation_relationship_revoked/i
   );
-  assertResultOk(revokedState, 'read revoked race state');
-  assert.equal(revokedState.stdout, 'cancelled');
-  console.log('PASS relationship revocation vs save');
+  assert.deepEqual(await aggregateState(container, fixtures[4]), {
+    consultations: 1, status: 'cancelled', revision: 0, items: 0,
+    receipts: 0, activeLeases: 0, snapshots: 0, tombstones: 0
+  }, 'revocation race left content or an active lease');
 
   const started = await psql(container, actorSql(author,
     `select public.start_my_consultation_v43('${fixtures[5].consultationId}', '${fixtures[5].leaseToken}', ${fixtures[5].leaseVersion}, 0);`
   ));
   assertResultOk(started, 'prepare finalization race');
   // finalization vs save
-  await exactlyOneCommits(
+  await contendedExactlyOne(
+    container,
     'finalization vs save',
-    () => psql(container, saveSql(fixtures[5], '45200000-0000-0000-0000-000000000006', 'save')),
-    () => psql(container, actorSql(author,
-      `select public.finalize_my_consultation_v43('${fixtures[5].consultationId}', '${fixtures[5].leaseToken}', ${fixtures[5].leaseVersion}, 0);`
-    )),
-    /consultation_(?:stale_revision|stale_lease|invalid_lifecycle_state)/i
+    applicationName => holdRelationshipThen(fixtures[5],
+      `select public.finalize_my_consultation_v43('${fixtures[5].consultationId}', '${fixtures[5].leaseToken}', ${fixtures[5].leaseVersion}, 0);`,
+      applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[5].consultationId}', '${fixtures[5].leaseToken}', ${fixtures[5].leaseVersion}, 0, '45200000-0000-0000-0000-000000000006', '[{"itemKey":"common.goal","itemKind":"text","value":{"text":"save"}}]'::jsonb);`,
+      applicationName),
+    /consultation_(?:stale_lease|invalid_lifecycle_state)/i
   );
+  assert.deepEqual(await aggregateState(container, fixtures[5]), {
+    consultations: 1, status: 'finalized', revision: 0, items: 0,
+    receipts: 0, activeLeases: 0, snapshots: 1, tombstones: 0
+  }, 'finalization race left partial snapshot or save state');
+
+  // Subscription deactivation vs autosave. The writer must visibly wait on
+  // the mutable authority row, then reject after the deactivation commits.
+  await contendedExactlyOne(
+    container,
+    'subscription deactivation vs save',
+    applicationName => rootSql(`
+update public.user_commercial_accounts set subscription_status='inactive' where user_id='${author}';
+select pg_catalog.pg_sleep(2);`, applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[6].consultationId}', '${fixtures[6].leaseToken}', ${fixtures[6].leaseVersion}, 0, '45200000-0000-0000-0000-000000000007', '[]'::jsonb);`,
+      applicationName),
+    /consultation_professional_entitlement_inactive/i
+  );
+  assert.deepEqual(await aggregateState(container, fixtures[6]), {
+    consultations: 1, status: 'scheduled', revision: 0, items: 0,
+    receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
+  }, 'subscription race committed a post-revocation save');
+  assertResultOk(await psql(container, `update public.user_commercial_accounts set subscription_status='active' where user_id='${author}';`), 'restore subscription');
+
+  await contendedExactlyOne(
+    container,
+    'organization membership suspension vs save',
+    applicationName => rootSql(`
+update public.organization_members set status='suspended' where organization_id='${organization}' and user_id='${author}';
+select pg_catalog.pg_sleep(2);`, applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[7].consultationId}', '${fixtures[7].leaseToken}', ${fixtures[7].leaseVersion}, 0, '45200000-0000-0000-0000-000000000008', '[]'::jsonb);`,
+      applicationName),
+    /consultation_organization_entitlement_inactive/i
+  );
+  assert.deepEqual(await aggregateState(container, fixtures[7]), {
+    consultations: 1, status: 'scheduled', revision: 0, items: 0,
+    receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
+  }, 'membership race committed a post-suspension save');
+  assertResultOk(await psql(container, `update public.organization_members set status='active' where organization_id='${organization}' and user_id='${author}';`), 'restore membership');
+
+  await contendedExactlyOne(
+    container,
+    'organization suspension vs save',
+    applicationName => rootSql(`
+update public.organizations set status='suspended' where id='${organization}';
+select pg_catalog.pg_sleep(2);`, applicationName),
+    applicationName => actorSql(author,
+      `select public.autosave_my_consultation_v43('${fixtures[8].consultationId}', '${fixtures[8].leaseToken}', ${fixtures[8].leaseVersion}, 0, '45200000-0000-0000-0000-000000000009', '[]'::jsonb);`,
+      applicationName),
+    /consultation_organization_entitlement_inactive/i
+  );
+  assert.deepEqual(await aggregateState(container, fixtures[8]), {
+    consultations: 1, status: 'scheduled', revision: 0, items: 0,
+    receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
+  }, 'organization race committed a post-suspension save');
+  console.log('9/9 separate-session race scenarios passed with observed lock contention.');
 
   const cleanup = `begin;
 set local session_replication_role = replica;
@@ -386,18 +559,20 @@ delete from public.consultation_save_receipts where author_user_id = '${author}'
 delete from public.consultation_final_snapshots where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
 delete from public.consultation_edit_leases where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
 delete from public.consultation_items where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
+delete from public.consultation_discard_tombstones where discarded_consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
 delete from public.consultation_events where consultation_id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
 delete from public.professional_consultations where id in (${fixtures.map(f => `'${f.consultationId}'`).join(',')});
 delete from public.consultation_subjects where account_user_id in (${clients.map(id => `'${id}'`).join(',')});
 delete from public.professional_student_relationships where id in (${relationships.map(id => `'${id}'`).join(',')});
 delete from public.user_identity_details where user_id in (${clients.map(id => `'${id}'`).join(',')});
+delete from public.organization_members where organization_id = '${organization}';
+delete from public.organizations where id = '${organization}';
 delete from public.user_account_modes where user_id = '${author}';
 delete from public.user_commercial_accounts where user_id = '${author}';
 delete from public.account_plan_catalog where code = '${plan}' and account_type = 'trainer';
 delete from auth.users where id in ('${author}', ${clients.map(id => `'${id}'`).join(',')});
 commit;`;
   assertResultOk(await psql(container, cleanup), 'race fixture cleanup');
-  console.log('6/6 separate-session race scenarios passed.');
 }
 
 if (process.argv.includes('--database-races')) {

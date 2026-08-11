@@ -4,9 +4,11 @@ set local search_path = public, extensions;
 select no_plan();
 
 -- Lock-order contract for every writer: relationship -> consultation -> lease.
--- The separate-session matrix in scripts/test-consultation-lifecycle.mjs proves:
+-- The lock-observed separate-session matrix in scripts/test-consultation-lifecycle.mjs proves:
 -- editor A vs editor B save race; save vs explicit takeover; save vs discard;
 -- heartbeat vs takeover; relationship revocation vs save; finalization vs save.
+-- It also proves subscription deactivation, organization membership suspension,
+-- and organization suspension versus save while the writer is blocked on authority.
 
 select has_table('public', 'consultation_edit_leases', 'server-owned consultation leases exist');
 select has_table('public', 'consultation_save_receipts', 'content-free autosave idempotency receipts exist');
@@ -26,7 +28,8 @@ select has_function('public', 'cancel_my_finalized_consultation_v43', array['uui
 select has_function('public', 'mark_my_consultation_no_show_v43', array['uuid','text','bigint','bigint'], 'no-show uses database authority');
 select has_function('public', 'archive_my_consultation_v43', array['uuid','bigint'], 'archive is an explicit lifecycle action');
 select has_function('public', 'discard_my_consultation_v43', array['uuid','text','bigint','bigint','text'], 'normal discard is lease protected');
-select has_function('public', 'cleanup_my_revoked_consultation_v43', array['uuid','bigint'], 'revoked-link cleanup is single purpose');
+select has_function('public', 'acquire_my_revoked_consultation_cleanup_lease_v43', array['uuid','text','bigint'], 'revoked-link cleanup has a dedicated ownership-only lease path');
+select has_function('public', 'cleanup_my_revoked_consultation_v43', array['uuid','text','bigint','bigint'], 'revoked-link cleanup requires token, lease version and draft revision');
 select has_function('public', 'finalize_my_consultation_v43', array['uuid','text','bigint','bigint'], 'finalization is lease and revision protected');
 
 select is(
@@ -72,7 +75,7 @@ select ok(
         'start_my_consultation_v43','autosave_my_consultation_v43','pause_my_consultation_v43',
         'resume_my_consultation_v43','cancel_my_consultation_v43','cancel_my_finalized_consultation_v43',
         'mark_my_consultation_no_show_v43','archive_my_consultation_v43','discard_my_consultation_v43',
-        'cleanup_my_revoked_consultation_v43','finalize_my_consultation_v43'
+        'acquire_my_revoked_consultation_cleanup_lease_v43','cleanup_my_revoked_consultation_v43','finalize_my_consultation_v43'
       ])
       and (
         not procedure.prosecdef
@@ -300,7 +303,7 @@ select throws_ok(
 );
 select throws_ok(
   $$select public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000001','invalid purpose','publish')$$,
-  '22023','consultation_validation_failed','lease purpose remains bounded to edit or discard'
+  '22023','consultation_validation_failed','lease purpose remains bounded to edit, discard or dedicated cleanup'
 );
 insert into a2c_results(result_key,consultation_id,payload)
 select 'takeover', '46300000-0000-0000-0000-000000000001',
@@ -436,7 +439,8 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 select lives_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000009',0)$$,'finalized -> archived is allowed through bounded RPC');
 select lives_ok($$select public.cancel_my_finalized_consultation_v43('46300000-0000-0000-0000-000000000010','administrative_correction')$$,'finalized -> cancelled requires approved author reason');
-select lives_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000011',0)$$,'cancelled -> archived is allowed');
+select lives_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000010',0)$$,'finalized -> cancelled -> archived preserves immutable finalized provenance');
+select lives_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000011',0)$$,'never-finalized cancelled -> archived is allowed');
 select lives_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000012',0)$$,'no_show -> archived is allowed');
 select throws_ok($$select public.archive_my_consultation_v43('46300000-0000-0000-0000-000000000013',0)$$,'55000','consultation_invalid_lifecycle_state','archived -> anything is denied');
 select throws_ok($$select public.resume_my_consultation_v43('46300000-0000-0000-0000-000000000010','reopen',0)$$,'55000','consultation_invalid_lifecycle_state','finalized cannot return to in_progress or paused');
@@ -449,7 +453,10 @@ select fixture.id,subject.id,'46000000-0000-0000-0000-000000000001','46100000-00
 from public.consultation_subjects subject
 cross join (values
   ('46300000-0000-0000-0000-000000000020'::uuid),
-  ('46300000-0000-0000-0000-000000000021'::uuid)
+  ('46300000-0000-0000-0000-000000000021'::uuid),
+  ('46300000-0000-0000-0000-000000000022'::uuid),
+  ('46300000-0000-0000-0000-000000000023'::uuid),
+  ('46300000-0000-0000-0000-000000000024'::uuid)
 ) fixture(id)
 where account_user_id='46000000-0000-0000-0000-000000000101';
 set local role authenticated;
@@ -457,7 +464,22 @@ select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001'
 insert into a2c_results(result_key,consultation_id,payload)
 values
   ('lease-020','46300000-0000-0000-0000-000000000020',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000020','save A','edit')),
-  ('lease-021','46300000-0000-0000-0000-000000000021',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000021','save B','edit'));
+  ('lease-021','46300000-0000-0000-0000-000000000021',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000021','save B','edit')),
+  ('lease-023','46300000-0000-0000-0000-000000000023',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000023','purpose binding','edit')),
+  ('lease-024','46300000-0000-0000-0000-000000000024',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000024','bounded patch','edit'));
+select throws_ok(
+  $$select public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000022','discard on scheduled','discard')$$,
+  '55000','consultation_invalid_lifecycle_state','scheduled and in-progress consultations issue edit leases only'
+);
+reset role;
+update public.consultation_edit_leases set purpose='discard' where consultation_id='46300000-0000-0000-0000-000000000023';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000023','%s',%s,0,'46400000-0000-0000-0000-000000000010','[]'::jsonb)$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-023'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-023')
+),'55000','consultation_stale_lease','a discard lease cannot cross capabilities into autosave');
 insert into a2c_results(result_key,consultation_id,payload)
 select 'save-020','46300000-0000-0000-0000-000000000020',public.autosave_my_consultation_v43(
   '46300000-0000-0000-0000-000000000020',
@@ -485,6 +507,30 @@ select throws_ok(format(
   (select payload->>'leaseToken' from a2c_results where result_key='lease-020'),
   (select payload->>'leaseVersion' from a2c_results where result_key='lease-020')
 ),'55000','consultation_stale_revision','expectedOriginalValue mismatch rejects the whole patch');
+select throws_ok(format(
+  $$select public.heartbeat_my_consultation_lease_v43('46300000-0000-0000-0000-000000000024','not-a-64-hex-token',%s)$$,
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','raw lease token must be exactly 64 hexadecimal characters before hashing');
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000024','%s',%s,0,'46400000-0000-0000-0000-000000000011','[{"itemKey":"common.duplicate","itemKind":"text","value":{"text":"first"}},{"itemKey":"common.duplicate","itemKind":"text","value":{"text":"second"}}]'::jsonb)$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','autosave rejects duplicate itemKey entries instead of last-write-wins');
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000024','%s',%s,0,'46400000-0000-0000-0000-000000000012',jsonb_build_array(jsonb_build_object('itemKey','common.oversized','itemKind','text','value',jsonb_build_object('text',repeat('x',16385)))))$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','autosave rejects an individual value larger than 16384 bytes');
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000024','%s',%s,0,'46400000-0000-0000-0000-000000000013',(select jsonb_agg(jsonb_build_object('itemKey','common.total-'||n,'itemKind','text','value',jsonb_build_object('text',repeat('x',14000)))) from generate_series(1,5) n))$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','autosave rejects a total patch larger than 65536 bytes');
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000024','%s',%s,0,'46400000-0000-0000-0000-000000000014','[{"itemKey":"common.deep","itemKind":"structured","value":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":{"a":true}}}}}}}}}}}}}}}}}}]'::jsonb)$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','autosave rejects values nested deeper than 16 containers');
 reset role;
 select is((select value_payload from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.goal'),'{"text":"first"}'::jsonb,'stale save never overwrites current content');
 select is((select count(*) from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.second'),0::bigint,'conflict causes no partial mutation');
@@ -576,10 +622,27 @@ select throws_ok(format($$select public.heartbeat_my_consultation_lease_v43('463
 select throws_ok($$select public.resume_my_consultation_v43('46300000-0000-0000-0000-000000000042','reactivated',0)$$,'42501','consultation_relationship_revoked','reactivation cannot resume old cancelled draft');
 reset role;
 
--- Revoked-link cleanup is the only post-revocation capability and preserves a content-free tombstone.
+-- Revoked-link cleanup is the only post-revocation capability and requires its own exclusive lease.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
-select lives_ok($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000040',0)$$,'original author can cleanup already system-cancelled relationship_revoked draft');
+insert into a2c_results(result_key,consultation_id,payload)
+values
+  ('cleanup-040','46300000-0000-0000-0000-000000000040',public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000040','cleanup device A',0)),
+  ('cleanup-041-old','46300000-0000-0000-0000-000000000041',public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000041','cleanup device old',0));
+select throws_ok($$select public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000040','silent second cleanup editor',0)$$,'55000','consultation_stale_lease','second cleanup editor cannot silently replace an active cleanup lease');
+select throws_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000040','wrong-token',%s,0)$$,(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-040')),'55000','consultation_stale_lease','revoked cleanup denies wrong token');
+reset role;
+update public.consultation_edit_leases set heartbeat_at=now()-interval '61 seconds',expires_at=now()-interval '1 second' where consultation_id='46300000-0000-0000-0000-000000000041';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
+select throws_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000041','%s',%s,0)$$,(select payload->>'leaseToken' from a2c_results where result_key='cleanup-041-old'),(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-041-old')),'55000','consultation_expired_lease','expired cleanup lease cannot delete');
+insert into a2c_results(result_key,consultation_id,payload)
+values ('cleanup-041-new','46300000-0000-0000-0000-000000000041',public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000041','cleanup device new',0));
+select throws_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000041','%s',%s,0)$$,(select payload->>'leaseToken' from a2c_results where result_key='cleanup-041-old'),(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-041-old')),'55000','consultation_lease_taken_over','superseded cleanup token cannot delete');
+select lives_ok(format($$select public.cleanup_my_revoked_consultation_v43('46300000-0000-0000-0000-000000000040','%s',%s,0)$$,(select payload->>'leaseToken' from a2c_results where result_key='cleanup-040'),(select payload->>'leaseVersion' from a2c_results where result_key='cleanup-040')),'original author can cleanup already system-cancelled relationship_revoked draft with its current cleanup lease');
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000002',true);
+select throws_ok($$select public.acquire_my_revoked_consultation_cleanup_lease_v43('46300000-0000-0000-0000-000000000042','wrong author',0)$$,'42501','consultation_unauthorized','only the original author may acquire cleanup capability');
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 select throws_ok($$select public.start_my_consultation_v43('46300000-0000-0000-0000-000000000041','not-a-token',1,0)$$,'42501','consultation_relationship_revoked','cleanup capability cannot restart or edit');
 select throws_ok($$select public.finalize_my_consultation_v43('46300000-0000-0000-0000-000000000041','not-a-token',1,0)$$,'42501','consultation_relationship_revoked','cleanup capability cannot finalize');
 reset role;
@@ -641,6 +704,21 @@ reset role;
 drop trigger reject_snapshot_for_atomic_test on public.consultation_final_snapshots;
 select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000060'),'in_progress','failed finalization leaves lifecycle unchanged');
 select is((select count(*) from public.consultation_final_snapshots where consultation_id='46300000-0000-0000-0000-000000000060'),0::bigint,'failed finalization leaves no partial snapshot');
+
+-- Revoking only the A.2B manage_consultations scope must not impersonate relationship revocation.
+insert into public.professional_consultations
+  (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
+select '46300000-0000-0000-0000-000000000070',id,'46000000-0000-0000-0000-000000000001','46100000-0000-0000-0000-000000000001','trainer','initial','scheduled'
+from public.consultation_subjects where account_user_id='46000000-0000-0000-0000-000000000101';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
+insert into a2c_results(result_key,consultation_id,payload)
+values ('lease-070','46300000-0000-0000-0000-000000000070',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000070','scope revocation','edit'));
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000101',true);
+select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000001','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and is_active order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
+reset role;
+select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000070'),'scheduled','scope-only revocation does not system-cancel a consultation while relationship remains active');
+select is((select invalidation_reason from public.consultation_edit_leases where consultation_id='46300000-0000-0000-0000-000000000070'),'authorization_revoked','scope-only revocation invalidates its lease with a distinct bounded reason');
 
 -- Stable error vocabulary is bounded and content-free. These values must never contain tokens or field values.
 select ok(
