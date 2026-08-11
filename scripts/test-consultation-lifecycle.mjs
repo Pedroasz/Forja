@@ -201,7 +201,9 @@ function runStaticContract() {
       'consultation_lifecycle_races',
       'complete_pgtap'
     ]) assert.match(workflow, new RegExp(`steps\\.${id}\\.outcome`));
-    assert.doesNotMatch(workflow, /actions\/upload-artifact/);
+    assert.match(workflow, /actions\/upload-artifact@v4/);
+    assert.match(workflow, /path: \$\{\{ runner\.temp \}\}\/database\.types\.ts/);
+    assert.match(workflow, /retention-days: 1/);
   });
 
   check('package exposes focused lifecycle commands', () => {
@@ -217,7 +219,7 @@ function runStaticContract() {
     assert.doesNotMatch(migration, /pg_cron|cron\.|schedule\s*\(/i);
     assert.doesNotMatch(migration, /storage\.|attachment|publication/i);
     assert.doesNotMatch(workflow, /supabase\s+(?:link|db push)|--linked/i);
-    assert.doesNotMatch(workflow, /actions\/upload-artifact/);
+    assert.match(workflow, /V4\.3A\.2C TEMPORARY/);
   });
 
   for (const result of results) {
