@@ -881,8 +881,8 @@ declare
   consultation_record public.professional_consultations;
   receipt_record public.consultation_save_receipts;
   patch_item jsonb;
-  item_key text;
-  item_kind text;
+  patch_item_key text;
+  patch_item_kind text;
   current_value jsonb;
   current_exists boolean;
   next_revision bigint;
@@ -930,14 +930,14 @@ begin
     select patch_entry.value
     from pg_catalog.jsonb_array_elements(target_patch) patch_entry(value)
   loop
-    item_key := patch_item ->> 'itemKey';
-    item_kind := patch_item ->> 'itemKind';
+    patch_item_key := patch_item ->> 'itemKey';
+    patch_item_kind := patch_item ->> 'itemKind';
 
     if pg_catalog.jsonb_typeof(patch_item) <> 'object'
-       or item_key is null
-       or length(item_key) not between 1 and 160
-       or item_key !~ '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
-       or item_kind not in ('text','number','boolean','date','selection','structured')
+       or patch_item_key is null
+       or length(patch_item_key) not between 1 and 160
+       or patch_item_key !~ '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
+       or patch_item_kind not in ('text','number','boolean','date','selection','structured')
        or not (patch_item ? 'value')
        or pg_catalog.jsonb_typeof(patch_item -> 'value') <> 'object' then
       raise exception 'consultation_validation_failed' using errcode = '22023';
@@ -947,7 +947,7 @@ begin
     into current_value, current_exists
     from public.consultation_items item
     where item.consultation_id = consultation_record.id
-      and item.item_key = item_key;
+      and item.item_key = patch_item_key;
 
     if patch_item ? 'expectedOriginalValue'
        and (
@@ -1519,7 +1519,6 @@ as $$
 declare
   caller_user_id uuid := auth.uid();
   discovered_relationship_id uuid;
-  relationship_record public.professional_student_relationships;
   consultation_record public.professional_consultations;
 begin
   if caller_user_id is null then
@@ -1531,8 +1530,7 @@ begin
   from public.professional_consultations consultation
   where consultation.id = target_consultation_id;
 
-  select relationship.*
-  into relationship_record
+  perform 1
   from public.professional_student_relationships relationship
   where relationship.id = discovered_relationship_id
   for update;
