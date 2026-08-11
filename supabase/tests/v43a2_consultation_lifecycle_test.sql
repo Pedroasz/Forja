@@ -589,6 +589,16 @@ select throws_ok(format(
   (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
 ),'22023','consultation_validation_failed','autosave depth validation short-circuits adversarial nesting without unbounded recursion');
 reset role;
+select is(
+  (with recursive nested(depth,value) as (
+    select 0,'true'::jsonb
+    union all
+    select depth+1,jsonb_build_object('a',value) from nested where depth<500
+  )
+  select private.consultation_jsonb_depth_v43(value) from nested where depth=500),
+  17,
+  'depth helper saturates at the first rejected level instead of traversing attacker-controlled nesting'
+);
 select is((select value_payload from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.goal'),'{"text":"first"}'::jsonb,'stale save never overwrites current content');
 select is((select count(*) from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.second'),0::bigint,'conflict causes no partial mutation');
 
