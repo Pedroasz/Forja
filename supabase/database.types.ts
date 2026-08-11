@@ -1560,6 +1560,14 @@ export type Database = {
         }
         Returns: Json
       }
+      acquire_my_revoked_consultation_cleanup_lease_v43: {
+        Args: {
+          target_consultation_id: string
+          target_device_label: string
+          target_expected_draft_revision: number
+        }
+        Returns: Json
+      }
       archive_my_consultation_v43: {
         Args: {
           target_consultation_id: string
@@ -1651,6 +1659,8 @@ export type Database = {
         Args: {
           target_consultation_id: string
           target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
         }
         Returns: boolean
       }
