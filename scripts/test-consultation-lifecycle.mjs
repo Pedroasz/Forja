@@ -128,6 +128,23 @@ function runStaticContract() {
     assert.match(migration, /relationship\.professional_type\s*=\s*consultation\.professional_type/i);
     assert.match(migration, /relationship\.organization_id\s+is\s+not\s+distinct\s+from\s+consultation\.organization_id/i);
     assert.match(pgTap, /relationship\s*(?:->|â†’|vs)\s*consultation\s*(?:->|â†’|vs)\s*lease/i);
+    const authorityLocks = migration.match(/create\s+or\s+replace\s+function\s+private\.lock_consultation_authority_rows_v43\([\s\S]*?\n\$\$;/i)?.[0] || '';
+    assert.doesNotMatch(authorityLocks, /for\s+update/i, 'shared authority rows must not serialize unrelated writers');
+    assert.match(authorityLocks, /for\s+share/i);
+    const entitlement = migration.match(/create\s+or\s+replace\s+function\s+private\.assert_locked_consultation_write_entitlement_v43\([\s\S]*?\n\$\$;/i)?.[0] || '';
+    assert.match(entitlement, /professional_student_relationships[\s\S]*?for\s+share/i);
+    assert.match(entitlement, /professional_consultations[\s\S]*?for\s+update/i);
+  });
+
+  check('cleanup issuance and takeover semantics are capability bounded', () => {
+    const acquire = functionDefinition(migration, 'acquire_my_consultation_lease_v43');
+    const takeover = functionDefinition(migration, 'takeover_my_consultation_lease_v43');
+    assert.match(acquire, /target_purpose\s*=\s*'cleanup'[\s\S]*consultation_validation_failed/i);
+    assert.match(takeover, /target_purpose\s*=\s*'cleanup'[\s\S]*consultation_validation_failed/i);
+    const issuer = migration.match(/create\s+or\s+replace\s+function\s+private\.issue_consultation_lease_v43\([\s\S]*?\n\$\$;/i)?.[0] || '';
+    assert.match(issuer, /target_takeover[\s\S]*not\s+lease_found[\s\S]*consultation_stale_lease/i);
+    assert.match(issuer, /target_takeover[\s\S]*invalidated_at\s+is\s+not\s+null[\s\S]*consultation_stale_lease/i);
+    assert.match(issuer, /target_takeover[\s\S]*expires_at\s*<=\s*issued_at[\s\S]*consultation_expired_lease/i);
   });
 
   check('stable bounded errors and exact-original preconditions are contractual', () => {
@@ -165,7 +182,7 @@ function runStaticContract() {
     assert.doesNotMatch(finalize, /jsonb\s*::\s*text|canonical_payload\s*::\s*text/i);
   });
 
-  check('source and database tests cover lifecycle, revocation, discard and nine lock-observed races', () => {
+  check('source and database tests cover lifecycle, revocation, discard and bounded concurrency', () => {
     assert.ok(pgTap.length > 20_000, 'focused lifecycle pgTAP suite is unexpectedly small');
     for (const contract of [
       'scheduled -> in_progress',
@@ -193,7 +210,8 @@ function runStaticContract() {
       'finalization vs save',
       'subscription deactivation vs save',
       'organization membership suspension vs save',
-      'organization suspension vs save'
+      'organization suspension vs save',
+      'independent consultations on shared authority rows do not block'
     ]) assert.match(readFileSync(import.meta.filename, 'utf8'), new RegExp(race, 'i'));
     assert.match(readFileSync(import.meta.filename, 'utf8'), /wait_event_type\s*=\s*'Lock'/i);
   });
@@ -504,6 +522,29 @@ select pg_catalog.pg_sleep(2);`, applicationName),
     receipts: 0, activeLeases: 1, snapshots: 0, tombstones: 0
   }, 'subscription race committed a post-revocation save');
   assertResultOk(await psql(container, `update public.user_commercial_accounts set subscription_status='active' where user_id='${author}';`), 'restore subscription');
+
+  // Independent consultations may share account, plan, organization and
+  // membership authority rows. Their heartbeats must remain concurrent.
+  {
+    const firstApplication = 'forja-a2c-independent-first';
+    const firstPromise = psql(container, performThenHold(
+      `select public.heartbeat_my_consultation_lease_v43('${fixtures[7].consultationId}', '${fixtures[7].leaseToken}', ${fixtures[7].leaseVersion});`,
+      firstApplication));
+    await waitForSessionState(container, firstApplication, 'sleep');
+    const secondPromise = psql(container, actorSql(author,
+      `select public.heartbeat_my_consultation_lease_v43('${fixtures[8].consultationId}', '${fixtures[8].leaseToken}', ${fixtures[8].leaseVersion});`,
+      'forja-a2c-independent-second'));
+    const completion = await Promise.race([
+      secondPromise.then(result => ({ result })),
+      new Promise(resolvePromise => setTimeout(() => resolvePromise({ timedOut: true }), 1000))
+    ]);
+    const firstResult = await firstPromise;
+    const secondResult = await secondPromise;
+    assertResultOk(firstResult, 'first independent heartbeat');
+    assertResultOk(secondResult, 'second independent heartbeat');
+    assert.equal(completion.timedOut, undefined, 'independent consultations on shared authority rows do not block');
+    console.log('PASS independent consultations on shared authority rows do not block');
+  }
 
   await contendedExactlyOne(
     container,

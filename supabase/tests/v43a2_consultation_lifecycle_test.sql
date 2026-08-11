@@ -248,7 +248,10 @@ cross join (values
   ('46300000-0000-0000-0000-000000000010'::uuid,'finalized',null,null,null,0),
   ('46300000-0000-0000-0000-000000000011'::uuid,'cancelled',null,null,null,0),
   ('46300000-0000-0000-0000-000000000012'::uuid,'no_show',now()-interval '1 day','UTC',0::smallint,1),
-  ('46300000-0000-0000-0000-000000000013'::uuid,'archived',null,null,null,0)
+  ('46300000-0000-0000-0000-000000000013'::uuid,'archived',null,null,null,0),
+  ('46300000-0000-0000-0000-000000000014'::uuid,'scheduled',null,null,null,0),
+  ('46300000-0000-0000-0000-000000000015'::uuid,'scheduled',null,null,null,0),
+  ('46300000-0000-0000-0000-000000000016'::uuid,'scheduled',null,null,null,0)
 ) fixture(id,status,scheduled_start_at,zone,offset_minutes,schedule_revision)
 where subject.account_user_id = '46000000-0000-0000-0000-000000000101';
 
@@ -327,6 +330,55 @@ select is(
   (select count(*) from public.consultation_events where consultation_id='46300000-0000-0000-0000-000000000001' and event_type='lease_takeover'),
   1::bigint,
   'takeover is audited without token or content'
+);
+
+-- Generic lease APIs cannot mint cleanup capabilities, and takeover requires
+-- a currently active lease rather than acting as acquire/reacquire.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
+select throws_ok(
+  $$select public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000011','generic cleanup','cleanup')$$,
+  '22023','consultation_validation_failed','generic acquire cannot mint the dedicated cleanup capability'
+);
+select throws_ok(
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000011','generic cleanup takeover','cleanup',0)$$,
+  '22023','consultation_validation_failed','generic takeover cannot mint the dedicated cleanup capability'
+);
+select throws_ok(
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000014','missing lease takeover','edit',0)$$,
+  '55000','consultation_stale_lease','takeover requires an existing active lease'
+);
+insert into a2c_results(result_key,consultation_id,payload)
+values
+  ('lease-015','46300000-0000-0000-0000-000000000015',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000015','expired takeover fixture','edit')),
+  ('lease-016','46300000-0000-0000-0000-000000000016',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000016','invalidated takeover fixture','edit'));
+reset role;
+update public.consultation_edit_leases
+set heartbeat_at=now()-interval '61 seconds', expires_at=now()-interval '1 second'
+where consultation_id='46300000-0000-0000-0000-000000000015';
+update public.consultation_edit_leases
+set invalidated_at=now(), invalidation_reason='status_changed'
+where consultation_id='46300000-0000-0000-0000-000000000016';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
+select throws_ok(
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000015','expired takeover','edit',0)$$,
+  '55000','consultation_expired_lease','takeover cannot replace an expired lease'
+);
+select throws_ok(
+  $$select public.takeover_my_consultation_lease_v43('46300000-0000-0000-0000-000000000016','invalidated takeover','edit',0)$$,
+  '55000','consultation_stale_lease','takeover cannot replace an invalidated lease'
+);
+reset role;
+select is(
+  (select count(*) from public.consultation_edit_leases where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000014')),
+  0::bigint,
+  'rejected generic cleanup and missing-lease takeover create no lease state'
+);
+select is(
+  (select count(*) from public.consultation_events where consultation_id in ('46300000-0000-0000-0000-000000000011','46300000-0000-0000-0000-000000000014','46300000-0000-0000-0000-000000000015','46300000-0000-0000-0000-000000000016') and event_type in ('lease_acquired','lease_takeover')),
+  2::bigint,
+  'failed takeover paths emit no misleading takeover event'
 );
 
 -- Heartbeat uses database time and extends exactly the 60-second expiry contract.
@@ -531,6 +583,11 @@ select throws_ok(format(
   (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
   (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
 ),'22023','consultation_validation_failed','autosave rejects values nested deeper than 16 containers');
+select throws_ok(format(
+  $$select public.autosave_my_consultation_v43('46300000-0000-0000-0000-000000000024','%s',%s,0,'46400000-0000-0000-0000-000000000015',(with recursive nested(depth,value) as (select 0,'true'::jsonb union all select depth+1,jsonb_build_object('a',value) from nested where depth<500) select jsonb_build_array(jsonb_build_object('itemKey','common.adversarial-depth','itemKind','structured','value',value)) from nested where depth=500))$$,
+  (select payload->>'leaseToken' from a2c_results where result_key='lease-024'),
+  (select payload->>'leaseVersion' from a2c_results where result_key='lease-024')
+),'22023','consultation_validation_failed','autosave depth validation short-circuits adversarial nesting without unbounded recursion');
 reset role;
 select is((select value_payload from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.goal'),'{"text":"first"}'::jsonb,'stale save never overwrites current content');
 select is((select count(*) from public.consultation_items where consultation_id='46300000-0000-0000-0000-000000000020' and item_key='common.second'),0::bigint,'conflict causes no partial mutation');
