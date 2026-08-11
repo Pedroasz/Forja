@@ -597,6 +597,10 @@ insert into public.professional_consultations
   (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
 select '46300000-0000-0000-0000-000000000070',id,'46000000-0000-0000-0000-000000000002','46100000-0000-0000-0000-000000000002','trainer','initial','scheduled'
 from public.consultation_subjects where account_user_id='46000000-0000-0000-0000-000000000101';
+insert into public.consultation_authorization_text_versions
+  (id,purpose,version_identifier,status,effective_at)
+values
+  ('46500000-0000-0000-0000-000000000001','manage_consultations','a2c.scope-revocation.v1','effective',now());
 insert into a2c_results(result_key,payload)
 select 'manage-consultations-version',jsonb_build_object('versionIdentifier',version_identifier)
 from public.consultation_authorization_text_versions
