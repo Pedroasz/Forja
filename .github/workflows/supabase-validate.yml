@@ -5,6 +5,8 @@ on:
     paths:
       - "supabase/**"
       - "scripts/validate-supabase-migrations.mjs"
+      - "scripts/test-consultation-authorization.mjs"
+      - "scripts/test-consultation-lifecycle.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/supabase-validate.yml"
@@ -74,10 +76,28 @@ jobs:
         id: consultation_authorization_source
         continue-on-error: true
         run: node scripts/test-consultation-authorization.mjs
+      - name: Run V4.3A.2C lifecycle source contract
+        id: consultation_lifecycle_source
+        continue-on-error: true
+        run: node scripts/test-consultation-lifecycle.mjs
       - name: Run focused V4.3A.2B authorization pgTAP
         id: consultation_authorization_pgtap
         continue-on-error: true
         run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_rls_test.sql
+      - name: Run focused V4.3A.2C lifecycle pgTAP
+        id: consultation_lifecycle_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_lifecycle_test.sql
+      - name: Run V4.3A.2C separate-session race matrix
+        id: consultation_lifecycle_races
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          db_container="$(docker ps --filter 'name=supabase_db_' --format '{{.ID}}' | head -n 1)"
+          test -n "$db_container"
+          FORJA_A2C_DB_CONTAINER="$db_container" \
+            node scripts/test-consultation-lifecycle.mjs --database-races
       - name: Run complete pgTAP suite
         id: complete_pgtap
         continue-on-error: true
@@ -89,7 +109,10 @@ jobs:
           set -euo pipefail
           test "${{ steps.database_types_match.outcome }}" = "success"
           test "${{ steps.consultation_authorization_source.outcome }}" = "success"
+          test "${{ steps.consultation_lifecycle_source.outcome }}" = "success"
           test "${{ steps.consultation_authorization_pgtap.outcome }}" = "success"
+          test "${{ steps.consultation_lifecycle_pgtap.outcome }}" = "success"
+          test "${{ steps.consultation_lifecycle_races.outcome }}" = "success"
           test "${{ steps.complete_pgtap.outcome }}" = "success"
       - name: Stop local Supabase
         if: always()

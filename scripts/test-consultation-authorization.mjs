@@ -44,12 +44,25 @@ check('focused A.2B pgTAP actor matrix exists', () => {
 });
 
 check('CI executes focused and complete local database suites', () => {
-  assert.match(workflow, /node scripts\/test-consultation-authorization\.mjs/);
-  assert.match(
-    workflow,
-    /supabase test db --local supabase\/tests\/v43a2_consultation_rls_test\.sql/
+  const workflowLines = workflow.split(/\r?\n/).map(line => line.trim());
+  assert.ok(
+    workflowLines.includes('- "scripts/test-consultation-authorization.mjs"'),
+    'authorization source changes must trigger Supabase validation'
   );
-  assert.match(workflow, /pnpm exec supabase test db(?:\s|$)/m);
+  assert.ok(
+    workflowLines.includes('run: node scripts/test-consultation-authorization.mjs'),
+    'authorization source contract must execute in Supabase validation'
+  );
+  assert.equal(
+    workflowLines.filter(line => line === 'run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_rls_test.sql').length,
+    1,
+    'focused A.2B pgTAP command must be exact and unique'
+  );
+  assert.equal(
+    workflowLines.filter(line => line === 'run: pnpm exec supabase test db').length,
+    1,
+    'complete pgTAP command must be exact, argument-free and unique'
+  );
   assert.match(workflow, /Secret scan failed for generated or committed database types/);
   assert.doesNotMatch(workflow, /actions\/upload-artifact/);
   assert.doesNotMatch(workflow, /supabase\s+(?:link|db push)|--linked/i);

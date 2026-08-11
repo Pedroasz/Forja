@@ -373,7 +373,18 @@ check('32 policy nutricional e assertion catalogar sao completas', () => {
 });
 
 check('33 allowlist, temporarios e finais de linha', () => {
-  const allowed = new Set(['index.html', 'package.json', 'docs/ROLE_BASED_WORKSPACES.md', 'scripts/test-role-based-workspaces.mjs', 'supabase/migrations/20260715200320_harden_role_based_workspace_access.sql', '.github/workflows/forja-validate.yml', '.github/workflows/supabase-validate.yml']);
+  const allowed = new Set([
+    'index.html',
+    'package.json',
+    'docs/ROLE_BASED_WORKSPACES.md',
+    'scripts/test-role-based-workspaces.mjs',
+    'scripts/test-consultation-authorization.mjs',
+    'scripts/test-consultation-lifecycle.mjs',
+    'supabase/tests/v43a2_consultation_lifecycle_test.sql',
+    'supabase/migrations/20260715200320_harden_role_based_workspace_access.sql',
+    '.github/workflows/forja-validate.yml',
+    '.github/workflows/supabase-validate.yml'
+  ]);
   const changed = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean).map(line => line.slice(3));
   assert.equal(changed.every(path => allowed.has(path)), true);
   assert.equal(existsSync(resolve(root, 'supabase/v41e1_verify.before-false-negative-fix.sql')), false);
