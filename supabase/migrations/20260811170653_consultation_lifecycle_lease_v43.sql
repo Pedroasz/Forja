@@ -138,8 +138,9 @@ as $$
   );
 $$;
 
-create or replace function private.consultation_jsonb_depth_v43(
-  target_value jsonb
+create or replace function private.consultation_jsonb_depth_bounded_v43(
+  target_value jsonb,
+  current_depth integer
 )
 returns integer
 language plpgsql
@@ -151,22 +152,45 @@ as $$
 declare
   child_depth integer;
 begin
+  if current_depth >= 17 then
+    return 17;
+  end if;
+
   if pg_catalog.jsonb_typeof(target_value) = 'object' then
-    select coalesce(max(private.consultation_jsonb_depth_v43(entry.value)), 0)
+    select coalesce(
+      max(private.consultation_jsonb_depth_bounded_v43(entry.value, current_depth + 1)),
+      current_depth + 1
+    )
     into child_depth
     from pg_catalog.jsonb_each(target_value) entry;
-    return child_depth + 1;
+    return child_depth;
   end if;
 
   if pg_catalog.jsonb_typeof(target_value) = 'array' then
-    select coalesce(max(private.consultation_jsonb_depth_v43(entry.value)), 0)
+    select coalesce(
+      max(private.consultation_jsonb_depth_bounded_v43(entry.value, current_depth + 1)),
+      current_depth + 1
+    )
     into child_depth
     from pg_catalog.jsonb_array_elements(target_value) entry(value);
-    return child_depth + 1;
+    return child_depth;
   end if;
 
-  return 0;
+  return current_depth;
 end;
+$$;
+
+create or replace function private.consultation_jsonb_depth_v43(
+  target_value jsonb
+)
+returns integer
+language sql
+immutable
+strict
+security definer
+set search_path = ''
+as $$
+  select private.consultation_jsonb_depth_bounded_v43(target_value, 0);
 $$;
 
 create or replace function private.lock_consultation_authority_rows_v43(
@@ -181,46 +205,47 @@ as $$
 declare
   account_record public.user_commercial_accounts;
 begin
-  -- Deterministic authority order after the relationship lock and before the
-  -- consultation lock: commercial account -> plan -> account mode -> subject
-  -- identity -> organization -> membership.
+  -- Deterministic shared authority order after the relationship SHARE lock and
+  -- before the consultation UPDATE lock: commercial account -> plan -> account
+  -- mode -> subject identity -> organization -> membership. SHARE conflicts
+  -- with authority revocation updates without serializing independent writers.
   select account.*
   into account_record
   from public.user_commercial_accounts account
   where account.user_id = target_relationship.professional_user_id
-  for update;
+  for share;
 
   if found and account_record.plan_code is not null then
     perform 1
     from public.account_plan_catalog plan
     where plan.code = account_record.plan_code
       and plan.account_type = account_record.primary_account_type
-    for update;
+    for share;
   end if;
 
   perform 1
   from public.user_account_modes account_mode
   where account_mode.user_id = target_relationship.professional_user_id
   order by account_mode.id
-  for update;
+  for share;
 
   perform 1
   from public.user_identity_details identity
   where identity.user_id = target_relationship.student_user_id
-  for update;
+  for share;
 
   if target_relationship.organization_id is not null then
     perform 1
     from public.organizations organization
     where organization.id = target_relationship.organization_id
-    for update;
+    for share;
 
     perform 1
     from public.organization_members membership
     where membership.organization_id = target_relationship.organization_id
       and membership.user_id = target_relationship.professional_user_id
     order by membership.id
-    for update;
+    for share;
   end if;
 end;
 $$;
@@ -385,7 +410,7 @@ begin
   into relationship_record
   from public.professional_student_relationships relationship
   where relationship.id = discovered_relationship_id
-  for update;
+  for share;
 
   perform private.lock_consultation_authority_rows_v43(relationship_record);
 
@@ -524,6 +549,7 @@ as $$
 declare
   caller_user_id uuid := auth.uid();
   lease_record public.consultation_edit_leases;
+  lease_found boolean := false;
   next_version bigint;
   raw_token text;
   issued_at timestamp with time zone := pg_catalog.statement_timestamp();
@@ -544,7 +570,21 @@ begin
   where lease.consultation_id = target_consultation.id
   for update;
 
-  if found
+  lease_found := found;
+
+  if target_takeover and not lease_found then
+    raise exception 'consultation_stale_lease' using errcode = '55000';
+  end if;
+
+  if target_takeover and lease_record.invalidated_at is not null then
+    raise exception 'consultation_stale_lease' using errcode = '55000';
+  end if;
+
+  if target_takeover and lease_record.expires_at <= issued_at then
+    raise exception 'consultation_expired_lease' using errcode = '55000';
+  end if;
+
+  if lease_found
      and not target_takeover
      and lease_record.invalidated_at is null
      and lease_record.expires_at > issued_at then
@@ -799,6 +839,10 @@ as $$
 declare
   consultation_record public.professional_consultations;
 begin
+  if target_purpose = 'cleanup' then
+    raise exception 'consultation_validation_failed' using errcode = '22023';
+  end if;
+
   consultation_record := private.assert_locked_consultation_write_entitlement_v43(
     target_consultation_id
   );
@@ -865,6 +909,10 @@ declare
   consultation_record public.professional_consultations;
   lease_payload jsonb;
 begin
+  if target_purpose = 'cleanup' then
+    raise exception 'consultation_validation_failed' using errcode = '22023';
+  end if;
+
   consultation_record := private.assert_locked_consultation_write_entitlement_v43(
     target_consultation_id
   );
@@ -2109,6 +2157,7 @@ to authenticated;
 revoke all on function
   private.normalize_consultation_device_label_v43(text),
   private.consultation_lease_verifier_v43(uuid, bigint, text),
+  private.consultation_jsonb_depth_bounded_v43(jsonb, integer),
   private.consultation_jsonb_depth_v43(jsonb),
   private.lock_consultation_authority_rows_v43(public.professional_student_relationships),
   private.assert_consultation_relationship_subject_binding_v43(),
