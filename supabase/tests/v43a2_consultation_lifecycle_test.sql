@@ -214,9 +214,10 @@ select is(
 
 -- Seed exact-provenance lifecycle fixtures. The new binding trigger must accept these.
 insert into public.professional_consultations
-  (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status,scheduled_start_at,scheduled_time_zone,scheduled_utc_offset_minutes,schedule_revision)
+  (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status,scheduled_start_at,scheduled_time_zone,scheduled_utc_offset_minutes,schedule_revision,finalized_at)
 select fixture.id, subject.id, '46000000-0000-0000-0000-000000000001', '46100000-0000-0000-0000-000000000001', 'trainer', 'initial', fixture.status,
-       fixture.scheduled_start_at, fixture.zone, fixture.offset_minutes, fixture.schedule_revision
+       fixture.scheduled_start_at, fixture.zone, fixture.offset_minutes, fixture.schedule_revision,
+       case when fixture.status = 'finalized' then now() else null end
 from public.consultation_subjects subject
 cross join (values
   ('46300000-0000-0000-0000-000000000001'::uuid,'scheduled'::text,null::timestamptz,null::text,null::smallint,0),
@@ -288,6 +289,10 @@ select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001'
 select throws_ok(
   $$select public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000001','second editor','edit')$$,
   '55000','consultation_stale_lease','a second editor cannot silently acquire an active lease'
+);
+select throws_ok(
+  $$select public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000001','invalid purpose','publish')$$,
+  '22023','consultation_validation_failed','lease purpose remains bounded to edit or discard'
 );
 insert into a2c_results(result_key,consultation_id,payload)
 select 'takeover', '46300000-0000-0000-0000-000000000001',
