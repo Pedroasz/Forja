@@ -687,13 +687,13 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 insert into a2c_results(result_key,consultation_id,payload)
 values ('lease-050','46300000-0000-0000-0000-000000000050',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000050','discard active','edit'));
-select throws_ok($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000050','wrong-token',1,0,'author_discard')$$,'55000','consultation_stale_lease','discard denies stale token');
+select throws_ok($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000050','0000000000000000000000000000000000000000000000000000000000000000',1,0,'author_discard')$$,'55000','consultation_stale_lease','discard denies a well-formed stale token');
 select throws_ok(format($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000050','%s',%s,1,'author_discard')$$,(select payload->>'leaseToken' from a2c_results where result_key='lease-050'),(select payload->>'leaseVersion' from a2c_results where result_key='lease-050')),'55000','consultation_stale_revision','discard denies stale revision');
 select lives_ok(format($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000050','%s',%s,0,'author_discard')$$,(select payload->>'leaseToken' from a2c_results where result_key='lease-050'),(select payload->>'leaseVersion' from a2c_results where result_key='lease-050')),'normal discard deletes an unpublished never-finalized draft exactly once');
 insert into a2c_results(result_key,consultation_id,payload)
 values ('lease-051','46300000-0000-0000-0000-000000000051',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000051','paused discard','discard'));
 select lives_ok(format($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000051','%s',%s,0,'author_discard')$$,(select payload->>'leaseToken' from a2c_results where result_key='lease-051'),(select payload->>'leaseVersion' from a2c_results where result_key='lease-051')),'paused discard first acquires an exclusive discard-capable lease');
-select throws_ok($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000005','replayed',1,0,'author_discard')$$,'55000',null,'finalized consultation and replayed token cannot be discarded');
+select throws_ok($$select public.discard_my_consultation_v43('46300000-0000-0000-0000-000000000005','0000000000000000000000000000000000000000000000000000000000000000',1,0,'author_discard')$$,'55000',null,'finalized consultation and a well-formed replayed token cannot be discarded');
 reset role;
 select ok(exists(select 1 from public.consultation_final_snapshots where consultation_id='46300000-0000-0000-0000-000000000005'),'discard never deletes finalized history');
 
