@@ -259,18 +259,13 @@ values
 set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000001',true);
 insert into a2c_results(result_key,consultation_id,payload)
-select 'lease-' || right(consultation.id::text,3), consultation.id,
-       public.acquire_my_consultation_lease_v43(consultation.id,'  Device <script>\u0007 ' || repeat('x',100),'edit')
-from public.professional_consultations consultation
-where consultation.id = any(array[
-  '46300000-0000-0000-0000-000000000001'::uuid,
-  '46300000-0000-0000-0000-000000000002'::uuid,
-  '46300000-0000-0000-0000-000000000003'::uuid,
-  '46300000-0000-0000-0000-000000000004'::uuid,
-  '46300000-0000-0000-0000-000000000005'::uuid,
-  '46300000-0000-0000-0000-000000000006'::uuid
-])
-order by consultation.id;
+values
+  ('lease-001','46300000-0000-0000-0000-000000000001',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000001','  Device <script>\u0007 ' || repeat('x',100),'edit')),
+  ('lease-002','46300000-0000-0000-0000-000000000002',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000002','  Device <script>\u0007 ' || repeat('x',100),'edit')),
+  ('lease-003','46300000-0000-0000-0000-000000000003',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000003','  Device <script>\u0007 ' || repeat('x',100),'edit')),
+  ('lease-004','46300000-0000-0000-0000-000000000004',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000004','  Device <script>\u0007 ' || repeat('x',100),'edit')),
+  ('lease-005','46300000-0000-0000-0000-000000000005',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000005','  Device <script>\u0007 ' || repeat('x',100),'edit')),
+  ('lease-006','46300000-0000-0000-0000-000000000006',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000006','  Device <script>\u0007 ' || repeat('x',100),'edit'));
 reset role;
 
 select ok(
