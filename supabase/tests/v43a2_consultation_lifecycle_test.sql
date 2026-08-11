@@ -602,7 +602,7 @@ select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000002'
 insert into a2c_results(result_key,consultation_id,payload)
 values ('lease-070','46300000-0000-0000-0000-000000000070',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000070','scope revocation','edit'));
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000101',true);
-select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000002','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and is_active order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
+select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000002','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and status='effective' order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
 reset role;
 select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000070'),'scheduled','scope-only revocation does not system-cancel a consultation while relationship remains active');
 select is((select invalidation_reason from public.consultation_edit_leases where consultation_id='46300000-0000-0000-0000-000000000070'),'authorization_revoked','scope-only revocation invalidates its lease with a distinct bounded reason');
