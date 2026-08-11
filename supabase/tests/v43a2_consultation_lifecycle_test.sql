@@ -597,12 +597,16 @@ insert into public.professional_consultations
   (id,subject_id,author_user_id,relationship_id,professional_type,consultation_kind,status)
 select '46300000-0000-0000-0000-000000000070',id,'46000000-0000-0000-0000-000000000002','46100000-0000-0000-0000-000000000002','trainer','initial','scheduled'
 from public.consultation_subjects where account_user_id='46000000-0000-0000-0000-000000000101';
+insert into a2c_results(result_key,payload)
+select 'manage-consultations-version',jsonb_build_object('versionIdentifier',version_identifier)
+from public.consultation_authorization_text_versions
+where purpose='manage_consultations' and status='effective';
 set local role authenticated;
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000002',true);
 insert into a2c_results(result_key,consultation_id,payload)
 values ('lease-070','46300000-0000-0000-0000-000000000070',public.acquire_my_consultation_lease_v43('46300000-0000-0000-0000-000000000070','scope revocation','edit'));
 select set_config('request.jwt.claim.sub','46000000-0000-0000-0000-000000000101',true);
-select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000002','%s')$$,(select version_identifier from public.consultation_authorization_text_versions where purpose='manage_consultations' and status='effective' order by created_at desc limit 1)),'client can revoke only the A.2B consultation-management authorization');
+select lives_ok(format($$select public.revoke_my_consultation_authorization_v43('46100000-0000-0000-0000-000000000002','%s')$$,(select payload->>'versionIdentifier' from a2c_results where result_key='manage-consultations-version')),'client can revoke only the A.2B consultation-management authorization');
 reset role;
 select is((select status from public.professional_consultations where id='46300000-0000-0000-0000-000000000070'),'scheduled','scope-only revocation does not system-cancel a consultation while relationship remains active');
 select is((select invalidation_reason from public.consultation_edit_leases where consultation_id='46300000-0000-0000-0000-000000000070'),'authorization_revoked','scope-only revocation invalidates its lease with a distinct bounded reason');
