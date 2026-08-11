@@ -1801,7 +1801,7 @@ begin
 end;
 $$;
 
-create trigger assert_consultation_relationship_subject_binding_v43
+create trigger validate_consultation_relationship_subject_binding_v43
 before insert or update of subject_id, author_user_id, relationship_id,
   professional_type, organization_id
 on public.professional_consultations

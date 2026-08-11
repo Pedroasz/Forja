@@ -107,7 +107,7 @@ insert into public.user_commercial_accounts
 values
   ('46000000-0000-0000-0000-000000000001','trainer','trainer_ci_v43a2c','active',true),
   ('46000000-0000-0000-0000-000000000002','trainer','trainer_ci_v43a2c','active',true),
-  ('46000000-0000-0000-0000-000000000003','trainer','trainer_ci_v43a2c','past_due',true),
+  ('46000000-0000-0000-0000-000000000003','trainer','trainer_ci_v43a2c','active',true),
   ('46000000-0000-0000-0000-000000000005','trainer','trainer_ci_v43a2c','active',true),
   ('46000000-0000-0000-0000-000000000006','trainer','trainer_ci_v43a2c','active',true);
 
@@ -127,13 +127,13 @@ values
 insert into public.organizations (id, name, slug, organization_type, owner_user_id, status)
 values
   ('46200000-0000-0000-0000-000000000001','A2C Active','a2c-active','academy','46000000-0000-0000-0000-000000000004','active'),
-  ('46200000-0000-0000-0000-000000000002','A2C Suspended','a2c-suspended','academy','46000000-0000-0000-0000-000000000004','suspended');
+  ('46200000-0000-0000-0000-000000000002','A2C Suspended','a2c-suspended','academy','46000000-0000-0000-0000-000000000004','active');
 
 insert into public.organization_members (organization_id, user_id, role, status)
 values
   ('46200000-0000-0000-0000-000000000001','46000000-0000-0000-0000-000000000004','owner','active'),
   ('46200000-0000-0000-0000-000000000001','46000000-0000-0000-0000-000000000001','trainer','active'),
-  ('46200000-0000-0000-0000-000000000001','46000000-0000-0000-0000-000000000005','trainer','suspended'),
+  ('46200000-0000-0000-0000-000000000001','46000000-0000-0000-0000-000000000005','trainer','active'),
   ('46200000-0000-0000-0000-000000000002','46000000-0000-0000-0000-000000000006','trainer','active');
 
 insert into public.professional_student_relationships
@@ -145,6 +145,19 @@ values
   ('46100000-0000-0000-0000-000000000004','46000000-0000-0000-0000-000000000003','46000000-0000-0000-0000-000000000101','trainer',null,'active','{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true,"manage_consultations":true,"view_shared_consultation_history":false}'),
   ('46100000-0000-0000-0000-000000000005','46000000-0000-0000-0000-000000000005','46000000-0000-0000-0000-000000000101','trainer','46200000-0000-0000-0000-000000000001','active','{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true,"manage_consultations":true,"view_shared_consultation_history":false}'),
   ('46100000-0000-0000-0000-000000000006','46000000-0000-0000-0000-000000000006','46000000-0000-0000-0000-000000000101','trainer','46200000-0000-0000-0000-000000000002','active','{"manage_workout_plan":false,"view_workout_executions":true,"manage_nutrition_plan":false,"view_nutrition_logs":false,"view_evolution":true,"manage_consultations":true,"view_shared_consultation_history":false}');
+
+-- Establish invalid entitlement states only after the relationship-capacity
+-- invariant has accepted the otherwise-valid fixtures.
+update public.user_commercial_accounts
+set subscription_status = 'past_due'
+where user_id = '46000000-0000-0000-0000-000000000003';
+update public.organization_members
+set status = 'suspended'
+where organization_id = '46200000-0000-0000-0000-000000000001'
+  and user_id = '46000000-0000-0000-0000-000000000005';
+update public.organizations
+set status = 'suspended'
+where id = '46200000-0000-0000-0000-000000000002';
 
 create temporary table a2c_results (
   result_key text primary key,
