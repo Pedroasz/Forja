@@ -16,7 +16,9 @@
     "test:role-workspaces": "node scripts/test-role-based-workspaces.mjs",
     "test:consultation-schema": "node scripts/test-consultation-schema.mjs",
     "test:consultation-authorization": "node scripts/test-consultation-authorization.mjs",
-    "test:consultation-db": "supabase test db --local supabase/tests/v43a2_consultation_core_test.sql"
+    "test:consultation-lifecycle": "node scripts/test-consultation-lifecycle.mjs",
+    "test:consultation-db": "supabase test db --local supabase/tests/v43a2_consultation_core_test.sql",
+    "test:consultation-lifecycle-db": "supabase test db --local supabase/tests/v43a2_consultation_lifecycle_test.sql"
   },
   "devDependencies": {
     "supabase": "2.109.1"

@@ -276,6 +276,59 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_edit_leases: {
+        Row: {
+          acquired_at: string
+          consultation_id: string
+          device_label: string
+          expires_at: string
+          heartbeat_at: string
+          holder_user_id: string
+          invalidated_at: string | null
+          invalidation_reason: string | null
+          lease_version: number
+          purpose: string
+          takeover_count: number
+          token_verifier: string
+        }
+        Insert: {
+          acquired_at?: string
+          consultation_id: string
+          device_label: string
+          expires_at: string
+          heartbeat_at?: string
+          holder_user_id: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          lease_version?: number
+          purpose: string
+          takeover_count?: number
+          token_verifier: string
+        }
+        Update: {
+          acquired_at?: string
+          consultation_id?: string
+          device_label?: string
+          expires_at?: string
+          heartbeat_at?: string
+          holder_user_id?: string
+          invalidated_at?: string | null
+          invalidation_reason?: string | null
+          lease_version?: number
+          purpose?: string
+          takeover_count?: number
+          token_verifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_edit_leases_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: true
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultation_events: {
         Row: {
           actor_user_id: string | null
@@ -387,6 +440,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "consultation_items_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_save_receipts: {
+        Row: {
+          author_user_id: string
+          consultation_id: string
+          correlation_id: string
+          created_at: string
+          resulting_revision: number
+        }
+        Insert: {
+          author_user_id: string
+          consultation_id: string
+          correlation_id: string
+          created_at?: string
+          resulting_revision: number
+        }
+        Update: {
+          author_user_id?: string
+          consultation_id?: string
+          correlation_id?: string
+          created_at?: string
+          resulting_revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_save_receipts_consultation_id_fkey"
             columns: ["consultation_id"]
             isOneToOne: false
             referencedRelation: "professional_consultations"
@@ -1467,6 +1552,29 @@ export type Database = {
         Args: { invite_code: string }
         Returns: Json
       }
+      acquire_my_consultation_lease_v43: {
+        Args: {
+          target_consultation_id: string
+          target_device_label: string
+          target_purpose: string
+        }
+        Returns: Json
+      }
+      acquire_my_revoked_consultation_cleanup_lease_v43: {
+        Args: {
+          target_consultation_id: string
+          target_device_label: string
+          target_expected_draft_revision: number
+        }
+        Returns: Json
+      }
+      archive_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+        }
+        Returns: boolean
+      }
       archive_my_nutrition_template: {
         Args: { target_template_id: string }
         Returns: Json
@@ -1518,8 +1626,42 @@ export type Database = {
         }
         Returns: Json
       }
+      autosave_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_correlation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+          target_patch: Json
+        }
+        Returns: Json
+      }
+      cancel_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+          target_reason_category: string
+        }
+        Returns: number
+      }
+      cancel_my_finalized_consultation_v43: {
+        Args: { target_consultation_id: string; target_reason_category: string }
+        Returns: boolean
+      }
       cancel_trainer_invitation: {
         Args: { invitation_id: string }
+        Returns: boolean
+      }
+      cleanup_my_revoked_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+        }
         Returns: boolean
       }
       complete_my_initial_account_setup: {
@@ -1532,6 +1674,17 @@ export type Database = {
           target_full_name: string
         }
         Returns: Json
+      }
+      create_my_consultation_v43: {
+        Args: {
+          target_consultation_kind: string
+          target_predecessor_consultation_id: string
+          target_relationship_id: string
+          target_scheduled_start_at: string
+          target_scheduled_time_zone: string
+          target_scheduled_utc_offset_minutes: number
+        }
+        Returns: string
       }
       create_my_nutrition_template: {
         Args: {
@@ -1583,6 +1736,26 @@ export type Database = {
         Args: { target_professional_type: string }
         Returns: Json
       }
+      discard_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+          target_reason_category: string
+        }
+        Returns: boolean
+      }
+      finalize_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+        }
+        Returns: string
+      }
+      get_consultation_lifecycle_constants_v43: { Args: never; Returns: Json }
       get_current_access_context: { Args: never; Returns: Json }
       get_current_access_context_v41a: { Args: never; Returns: Json }
       get_my_account_modes: { Args: never; Returns: string[] }
@@ -1635,6 +1808,14 @@ export type Database = {
           target_user_id?: string
         }
         Returns: boolean
+      }
+      heartbeat_my_consultation_lease_v43: {
+        Args: {
+          target_consultation_id: string
+          target_lease_token: string
+          target_lease_version: number
+        }
+        Returns: Json
       }
       is_organization_member: {
         Args: { target_organization_id: string; target_user_id?: string }
@@ -1717,6 +1898,15 @@ export type Database = {
         Returns: Json
       }
       mark_all_my_notifications_read: { Args: never; Returns: number }
+      mark_my_consultation_no_show_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+        }
+        Returns: number
+      }
       mark_my_notification_read: {
         Args: { target_notification_id: string }
         Returns: Json
@@ -1741,6 +1931,15 @@ export type Database = {
         Args: { target_unit: string }
         Returns: boolean
       }
+      pause_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+        }
+        Returns: number
+      }
       preview_trainer_invitation: {
         Args: { invite_code: string }
         Returns: Json
@@ -1752,9 +1951,27 @@ export type Database = {
         }
         Returns: string
       }
+      reschedule_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_schedule_revision: number
+          target_scheduled_start_at: string
+          target_scheduled_time_zone: string
+          target_scheduled_utc_offset_minutes: number
+        }
+        Returns: number
+      }
       resolve_account_consultation_subject_v43: {
         Args: { target_relationship_id: string }
         Returns: string
+      }
+      resume_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_device_label: string
+          target_expected_draft_revision: number
+        }
+        Returns: Json
       }
       revoke_my_consultation_authorization_v43: {
         Args: {
@@ -1786,6 +2003,24 @@ export type Database = {
           target_relationship_id: string
         }
         Returns: boolean
+      }
+      start_my_consultation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+        }
+        Returns: number
+      }
+      takeover_my_consultation_lease_v43: {
+        Args: {
+          target_consultation_id: string
+          target_device_label: string
+          target_expected_draft_revision: number
+          target_purpose: string
+        }
+        Returns: Json
       }
       update_my_nutrition_template: {
         Args: {
