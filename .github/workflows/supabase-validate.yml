@@ -7,6 +7,7 @@ on:
       - "scripts/validate-supabase-migrations.mjs"
       - "scripts/test-consultation-authorization.mjs"
       - "scripts/test-consultation-lifecycle.mjs"
+      - "scripts/test-consultation-measurements.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/supabase-validate.yml"
@@ -80,6 +81,10 @@ jobs:
         id: consultation_lifecycle_source
         continue-on-error: true
         run: node scripts/test-consultation-lifecycle.mjs
+      - name: Run V4.3A.2D measurement source contract
+        id: consultation_measurements_source
+        continue-on-error: true
+        run: node scripts/test-consultation-measurements.mjs
       - name: Run focused V4.3A.2B authorization pgTAP
         id: consultation_authorization_pgtap
         continue-on-error: true
@@ -88,6 +93,10 @@ jobs:
         id: consultation_lifecycle_pgtap
         continue-on-error: true
         run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_lifecycle_test.sql
+      - name: Run focused V4.3A.2D measurements pgTAP
+        id: consultation_measurements_pgtap
+        continue-on-error: true
+        run: pnpm exec supabase test db --local supabase/tests/v43a2_consultation_measurements_test.sql
       - name: Run V4.3A.2C separate-session race matrix
         id: consultation_lifecycle_races
         continue-on-error: true
@@ -110,8 +119,10 @@ jobs:
           test "${{ steps.database_types_match.outcome }}" = "success"
           test "${{ steps.consultation_authorization_source.outcome }}" = "success"
           test "${{ steps.consultation_lifecycle_source.outcome }}" = "success"
+          test "${{ steps.consultation_measurements_source.outcome }}" = "success"
           test "${{ steps.consultation_authorization_pgtap.outcome }}" = "success"
           test "${{ steps.consultation_lifecycle_pgtap.outcome }}" = "success"
+          test "${{ steps.consultation_measurements_pgtap.outcome }}" = "success"
           test "${{ steps.consultation_lifecycle_races.outcome }}" = "success"
           test "${{ steps.complete_pgtap.outcome }}" = "success"
       - name: Stop local Supabase

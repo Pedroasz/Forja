@@ -17,8 +17,10 @@
     "test:consultation-schema": "node scripts/test-consultation-schema.mjs",
     "test:consultation-authorization": "node scripts/test-consultation-authorization.mjs",
     "test:consultation-lifecycle": "node scripts/test-consultation-lifecycle.mjs",
+    "test:consultation-measurements": "node scripts/test-consultation-measurements.mjs",
     "test:consultation-db": "supabase test db --local supabase/tests/v43a2_consultation_core_test.sql",
-    "test:consultation-lifecycle-db": "supabase test db --local supabase/tests/v43a2_consultation_lifecycle_test.sql"
+    "test:consultation-lifecycle-db": "supabase test db --local supabase/tests/v43a2_consultation_lifecycle_test.sql",
+    "test:consultation-measurements-db": "supabase test db --local supabase/tests/v43a2_consultation_measurements_test.sql"
   },
   "devDependencies": {
     "supabase": "2.109.1"
