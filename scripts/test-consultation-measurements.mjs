@@ -13,6 +13,9 @@ const workflow = readFileSync(workflowPath, 'utf8');
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
 const measurementMigrations = readdirSync(migrationsDir)
   .filter(file => /^\d{14}_consultation_measurements_v43\.sql$/.test(file));
+const migration = measurementMigrations.length === 1
+  ? readFileSync(resolve(migrationsDir, measurementMigrations[0]), 'utf8')
+  : '';
 
 const results = [];
 const check = (name, test) => {
@@ -24,12 +27,51 @@ const check = (name, test) => {
   }
 };
 
-check('RED checkpoint has no A.2D implementation migration', () => {
-  assert.deepEqual(
-    measurementMigrations,
-    [],
-    `RED must not contain *_consultation_measurements_v43.sql: ${measurementMigrations.join(', ')}`
+check('GREEN checkpoint has exactly one forward A.2D migration', () => {
+  assert.equal(
+    measurementMigrations.length,
+    1,
+    `expected one *_consultation_measurements_v43.sql: ${measurementMigrations.join(', ')}`
   );
+  assert.match(migration, /^begin;[\s\S]*commit;\s*$/i);
+  assert.doesNotMatch(migration, /--linked|supabase\s+(?:link|db push)|service_role/i);
+});
+
+check('GREEN migration implements the behavioral surface without formula scope', () => {
+  for (const contract of [
+    'consultation_measurement_definitions',
+    'consultation_measurement_sessions',
+    'consultation_measurements',
+    'consultation_measurement_readings',
+    'consultation_device_observations',
+    'save_my_consultation_measurement_v43',
+    'save_my_consultation_device_observation_v43',
+    'reduce_consultation_measurement_v43',
+    'normalize_consultation_measurement_unit_v43',
+    'consultation_measurements_are_comparable_v43',
+    'consultation_device_observations_are_comparable_v43',
+    'finalized_consultation_measurements_are_immutable',
+    'consultation_measurement_justification_required',
+    'measurement_corrected',
+    'canonical_payload'
+  ]) assert.match(migration, new RegExp(contract, 'i'), `${contract} is absent from migration`);
+  assert.doesNotMatch(migration, /formula_registry|calculation_method_definitions/i);
+});
+
+check('GREEN migration keeps measurement content RPC-only and RLS-forced', () => {
+  for (const table of [
+    'consultation_measurement_definitions',
+    'consultation_measurement_sessions',
+    'consultation_measurements',
+    'consultation_measurement_readings',
+    'consultation_device_observations'
+  ]) {
+    assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`, 'i'));
+    assert.match(migration, new RegExp(`alter table public\\.${table} force row level security`, 'i'));
+    assert.match(migration, new RegExp(`revoke all privileges on table public\\.${table}[\\s\\S]*?from public, anon, authenticated`, 'i'));
+  }
+  assert.match(migration, /security definer[\s\S]*set search_path = ''/i);
+  assert.match(migration, /grant execute on function[\s\S]*save_my_consultation_measurement_v43[\s\S]*to authenticated/i);
 });
 
 check('focused A.2D pgTAP is behavioral and synthetic', () => {
@@ -139,7 +181,7 @@ check('package exposes the focused A.2D source and database commands', () => {
   );
 });
 
-check('Supabase CI triggers, runs and enforces focused A.2D RED', () => {
+check('Supabase CI triggers, runs and enforces focused A.2D validation', () => {
   const lines = workflow.split(/\r?\n/).map(line => line.trim());
   assert.ok(lines.includes('- "scripts/test-consultation-measurements.mjs"'));
   assert.equal(
@@ -163,7 +205,7 @@ check('Supabase CI triggers, runs and enforces focused A.2D RED', () => {
   );
 });
 
-check('RED workflow remains runner-local and publishes no artifact', () => {
+check('GREEN workflow remains runner-local and publishes no artifact', () => {
   assert.doesNotMatch(workflow, /actions\/upload-artifact/i);
   assert.doesNotMatch(workflow, /supabase\s+(?:link|db push)|--linked/i);
   assert.match(workflow, /supabase\s+start/i);
