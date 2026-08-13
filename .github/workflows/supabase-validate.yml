@@ -52,8 +52,8 @@ jobs:
           SUPABASE_DB_PASSWORD: senha-remota-falsa
         run: |
           set -euo pipefail
-          generated_types="$(mktemp)"
-          trap 'rm -f "$generated_types"' EXIT
+          generated_types="$RUNNER_TEMP/generated-database.types.ts"
+          rm -f "$generated_types"
           env -u SUPABASE_ACCESS_TOKEN -u SUPABASE_DB_PASSWORD \
             pnpm exec supabase gen types --local --lang typescript --schema public \
             > "$generated_types"
@@ -64,7 +64,9 @@ jobs:
             echo "Secret scan failed for generated or committed database types."
             exit 1
           fi
+          echo "safe_to_publish=true" >> "$GITHUB_OUTPUT"
           if ! cmp -s "$generated_types" supabase/database.types.ts; then
+            echo "types_match=false" >> "$GITHUB_OUTPUT"
             echo "Committed database types do not match the local Supabase schema."
             diff -u \
               --label supabase/database.types.ts \
@@ -73,6 +75,15 @@ jobs:
               | head -n 200 || true
             exit 1
           fi
+          echo "types_match=true" >> "$GITHUB_OUTPUT"
+      - name: Upload generated database types
+        if: steps.database_types_match.outputs.safe_to_publish == 'true' && steps.database_types_match.outputs.types_match == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: v43a2d-generated-database-types
+          path: ${{ runner.temp }}/generated-database.types.ts
+          retention-days: 1
+          if-no-files-found: error
       - name: Run V4.3A.2B authorization source contract
         id: consultation_authorization_source
         continue-on-error: true
