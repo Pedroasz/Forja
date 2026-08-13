@@ -382,7 +382,7 @@ begin
   end if;
 
   result_text := target_value::text;
-  if pg_catalog.position('.' in result_text) > 0 then
+  if pg_catalog.strpos(result_text, '.') > 0 then
     result_text := pg_catalog.regexp_replace(result_text, '0+$', '');
     result_text := pg_catalog.regexp_replace(result_text, '\.$', '');
   end if;
