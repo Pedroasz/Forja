@@ -243,6 +243,74 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_device_observations: {
+        Row: {
+          conditions: Json
+          consultation_id: string
+          contemporaneous_mass_unit: string | null
+          contemporaneous_mass_value: number | null
+          created_at: string
+          device_settings: Json
+          electrode_layout: string | null
+          frequency: string | null
+          id: string
+          manufacturer: string
+          mode: string
+          model: string
+          observed_at: string
+          operator_user_id: string
+          original_metrics: Json
+          result_kind: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          consultation_id: string
+          contemporaneous_mass_unit?: string | null
+          contemporaneous_mass_value?: number | null
+          created_at?: string
+          device_settings?: Json
+          electrode_layout?: string | null
+          frequency?: string | null
+          id: string
+          manufacturer: string
+          mode: string
+          model: string
+          observed_at: string
+          operator_user_id: string
+          original_metrics: Json
+          result_kind?: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          consultation_id?: string
+          contemporaneous_mass_unit?: string | null
+          contemporaneous_mass_value?: number | null
+          created_at?: string
+          device_settings?: Json
+          electrode_layout?: string | null
+          frequency?: string | null
+          id?: string
+          manufacturer?: string
+          mode?: string
+          model?: string
+          observed_at?: string
+          operator_user_id?: string
+          original_metrics?: Json
+          result_kind?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_device_observations_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultation_discard_tombstones: {
         Row: {
           author_user_id: string
@@ -443,6 +511,263 @@ export type Database = {
             columns: ["consultation_id"]
             isOneToOne: false
             referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_measurement_definitions: {
+        Row: {
+          accepted_input_units: string[]
+          allowed_readings_max: number
+          allowed_readings_min: number
+          anatomical_point: string
+          canonical_unit: string
+          created_at: string
+          definition_key: string
+          definition_version: number
+          display_name: string
+          formula_eligible: boolean
+          id: string
+          instructions: string
+          is_active: boolean
+          position: string
+          protocol_id: string
+          protocol_version: string
+          reducer: string
+          source_reference: string
+          valid_range: Json
+          warning_rule: Json
+        }
+        Insert: {
+          accepted_input_units: string[]
+          allowed_readings_max: number
+          allowed_readings_min: number
+          anatomical_point: string
+          canonical_unit: string
+          created_at?: string
+          definition_key: string
+          definition_version: number
+          display_name: string
+          formula_eligible?: boolean
+          id?: string
+          instructions: string
+          is_active?: boolean
+          position: string
+          protocol_id: string
+          protocol_version: string
+          reducer: string
+          source_reference: string
+          valid_range?: Json
+          warning_rule?: Json
+        }
+        Update: {
+          accepted_input_units?: string[]
+          allowed_readings_max?: number
+          allowed_readings_min?: number
+          anatomical_point?: string
+          canonical_unit?: string
+          created_at?: string
+          definition_key?: string
+          definition_version?: number
+          display_name?: string
+          formula_eligible?: boolean
+          id?: string
+          instructions?: string
+          is_active?: boolean
+          position?: string
+          protocol_id?: string
+          protocol_version?: string
+          reducer?: string
+          source_reference?: string
+          valid_range?: Json
+          warning_rule?: Json
+        }
+        Relationships: []
+      }
+      consultation_measurement_readings: {
+        Row: {
+          canonical_unit: string
+          created_at: string
+          id: string
+          measurement_id: string
+          normalized_value: number
+          ordinal: number
+          raw_unit: string
+          raw_value: number
+        }
+        Insert: {
+          canonical_unit: string
+          created_at?: string
+          id?: string
+          measurement_id: string
+          normalized_value: number
+          ordinal: number
+          raw_unit: string
+          raw_value: number
+        }
+        Update: {
+          canonical_unit?: string
+          created_at?: string
+          id?: string
+          measurement_id?: string
+          normalized_value?: number
+          ordinal?: number
+          raw_unit?: string
+          raw_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_measurement_readings_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_measurement_sessions: {
+        Row: {
+          conditions: Json
+          consultation_id: string
+          created_at: string
+          id: string
+          observed_at: string
+          operator_user_id: string
+          protocol_id: string
+          protocol_version: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json
+          consultation_id: string
+          created_at?: string
+          id?: string
+          observed_at: string
+          operator_user_id: string
+          protocol_id: string
+          protocol_version: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json
+          consultation_id?: string
+          created_at?: string
+          id?: string
+          observed_at?: string
+          operator_user_id?: string
+          protocol_id?: string
+          protocol_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_measurement_sessions_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_measurements: {
+        Row: {
+          aggregate_display_value: number | null
+          aggregate_value: number | null
+          calculation_eligible: boolean
+          canonical_unit: string
+          consultation_id: string
+          correction_count: number
+          created_at: string
+          custom_label: string | null
+          definition_id: string | null
+          definition_key: string | null
+          definition_version: number | null
+          display_scale: number
+          formula_eligible: boolean
+          id: string
+          measurement_kind: string
+          observation_status: string
+          protocol_id: string
+          protocol_version: string
+          reducer: string
+          session_id: string
+          updated_at: string
+          warning_accepted: boolean
+          warning_code: string | null
+          warning_justification: string | null
+        }
+        Insert: {
+          aggregate_display_value?: number | null
+          aggregate_value?: number | null
+          calculation_eligible?: boolean
+          canonical_unit: string
+          consultation_id: string
+          correction_count?: number
+          created_at?: string
+          custom_label?: string | null
+          definition_id?: string | null
+          definition_key?: string | null
+          definition_version?: number | null
+          display_scale?: number
+          formula_eligible?: boolean
+          id: string
+          measurement_kind: string
+          observation_status: string
+          protocol_id: string
+          protocol_version: string
+          reducer: string
+          session_id: string
+          updated_at?: string
+          warning_accepted?: boolean
+          warning_code?: string | null
+          warning_justification?: string | null
+        }
+        Update: {
+          aggregate_display_value?: number | null
+          aggregate_value?: number | null
+          calculation_eligible?: boolean
+          canonical_unit?: string
+          consultation_id?: string
+          correction_count?: number
+          created_at?: string
+          custom_label?: string | null
+          definition_id?: string | null
+          definition_key?: string | null
+          definition_version?: number | null
+          display_scale?: number
+          formula_eligible?: boolean
+          id?: string
+          measurement_kind?: string
+          observation_status?: string
+          protocol_id?: string
+          protocol_version?: string
+          reducer?: string
+          session_id?: string
+          updated_at?: string
+          warning_accepted?: boolean
+          warning_code?: string | null
+          warning_justification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_measurements_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "professional_consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_measurements_definition_id_fkey"
+            columns: ["definition_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_measurement_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_measurements_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_measurement_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1986,6 +2311,28 @@ export type Database = {
       }
       revoke_my_student_workout_assignment: {
         Args: { target_assignment_id: string }
+        Returns: Json
+      }
+      save_my_consultation_device_observation_v43: {
+        Args: {
+          target_consultation_id: string
+          target_correlation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+          target_payload: Json
+        }
+        Returns: Json
+      }
+      save_my_consultation_measurement_v43: {
+        Args: {
+          target_consultation_id: string
+          target_correlation_id: string
+          target_expected_draft_revision: number
+          target_lease_token: string
+          target_lease_version: number
+          target_payload: Json
+        }
         Returns: Json
       }
       set_my_account_modes: {
