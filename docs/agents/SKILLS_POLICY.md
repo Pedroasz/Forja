@@ -10,6 +10,7 @@ O FORJA mantém skills em `.codex/skills/`:
 - `forja-supabase` — migrations, RLS, RPCs, types e concorrência.
 - `forja-final-security` — revisão final read-only no head exato.
 - `forja-release` — merge/deploy remoto somente após autorização explícita.
+- `forja-design` — arquitetura visual, UX, frontend, calendário/social/desafios e revisão anti-"cara de IA".
 
 Use a combinação mínima necessária.
 
@@ -18,6 +19,7 @@ Exemplos:
 - A.2E RED/GREEN de banco: `forja-checkpoint` + `forja-supabase`.
 - Security final: `forja-final-security`.
 - Release: `forja-release`.
+- Design/UI: `forja-design` + `brainstorming` quando houver criação visual/UX nova.
 
 ## Skills gerais disponíveis
 
