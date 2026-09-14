@@ -1,51 +1,87 @@
-# AGENTS.md - FORJA
+# AGENTS.md — FORJA
 
-## Google Drive e sincronização do FORJA
+Este arquivo é o ponto de entrada obrigatório para qualquer agente/Codex trabalhando no FORJA.
 
-- O projeto local e o Git são a fonte de trabalho. A pasta oficial no Google Drive (`1ssfoevDng13hI6Fhu3kt3cpRxbw1z1ou`) mantém cópias validadas e backups.
-- `index.html` é o arquivo principal. Arquivos de segurança, como `index.v33-working.html`, `index.before-video-ui.html` e backups datados, nunca devem ser sobrescritos automaticamente.
-- Antes de cada tarefa, compare a versão local com a do Drive. Não conclua qual é a mais recente apenas pelo nome: confira conteúdo, tamanho, data de modificação e, quando disponível, o histórico do Git.
-- Nunca sobrescreva o `index.html` do Drive antes de validar a versão local. Antes de substituí-lo, preserve a versão remota como `index.backup-AAAA-MM-DD-HHMM.html`.
-- Após uma alteração funcional aprovada, sincronize o `index.html` validado. Prefira atualizar o arquivo existente e preservar seu ID; se isso não for seguro, faça backup e substituição controlada.
-- Após qualquer envio, releia metadados ou liste a pasta para confirmar nome, ID, tamanho e data. Nunca afirme que houve sincronização sem confirmação do conector.
-- Não envie arquivos temporários, caches, logs, segredos ou credenciais. Não registre credenciais neste arquivo e não instale pacotes MCP desconhecidos.
-- Nunca exclua arquivos do Drive sem solicitação explícita. Em conflito entre versões, pare, compare e informe as diferenças antes de escrever.
-- Em mudanças pequenas, sincronize apenas os trechos necessários do `index.html` quando a ferramenta permitir, preservando IDs e todas as funcionalidades do app.
-- Teste antes de sincronizar. A validação mínima inclui sintaxe, erros JavaScript evidentes, IDs usados pelo código e carregamento básico da aplicação.
-- No resumo final, informe alterações locais, arquivos enviados ao Drive, testes executados e a verificação feita após o envio.
+## 1. Ordem de leitura
 
-## Procedimento obrigatório após cada tarefa
+Antes de qualquer alteração:
 
-1. Ler este `AGENTS.md` integralmente.
-2. Inspecionar o estado do Git, quando houver um repositório válido.
-3. Criar backup antes de alterações de alto risco.
-4. Fazer somente a edição necessária ao escopo.
-5. Validar sintaxe, JavaScript, IDs relevantes e carregamento básico.
-6. Resumir o que mudou e os testes executados.
-7. Atualizar o arquivo principal local validado.
-8. Criar backup da versão anterior do Drive.
-9. Atualizar o `index.html` existente no Drive, preservando seu ID sempre que possível.
-10. Confirmar o envio por releitura de metadados ou conteúdo.
-11. Não excluir versões históricas.
-12. Informar imediatamente erros ou conflitos; não ocultar falhas de sincronização.
+1. Leia `docs/agents/FORJA_RULES.md`.
+2. Leia `docs/agents/PROJECT_STATE.md`.
+3. Leia `docs/agents/SKILLS_POLICY.md`.
+4. Leia `docs/agents/CODEX_WORKFLOW.md`.
+5. Use a combinação mínima de skills locais em `.codex/skills/` que corresponda à tarefa.
+6. Leia somente os ADRs/specs/planos citados pelo checkpoint atual.
+7. Confirme `origin/main`, branch, PRs relacionados e worktree antes de editar.
 
-## Supabase CLI e migrations
+Não releia documentos não relacionados ao escopo apenas por precaução.
 
-- `supabase/migrations/` é a fonte oficial do esquema do banco. Scripts SQL fora dessa pasta são históricos e nunca devem ser executados automaticamente.
-- Toda alteração futura de banco deve começar pela inspeção do histórico e por `supabase migration new <nome>`, seguida da edição da migration gerada. Nunca invente manualmente o timestamp do arquivo.
-- Antes de qualquer alteração, execute `supabase --help` e a ajuda do subcomando para validar a sintaxe da versão instalada.
-- Antes do deploy, valide o SQL, execute testes locais quando Docker estiver disponível, rode advisors de segurança e desempenho e execute `db push --dry-run`.
-- O `db push` real só pode ocorrer pelo workflow de produção, após merge na `main` e depois de o dry-run passar.
-- Nunca execute `db reset --linked`.
-- Nunca use `service_role` no frontend. Todas as tabelas expostas devem ter RLS apropriada.
-- Policies não podem usar apenas `TO authenticated` sem validar propriedade ou autorização; policies de UPDATE devem possuir `USING` e `WITH CHECK`.
-- Depois da adoção das migrations, evite alterações remotas manuais pelo Table Editor ou SQL Editor.
-- Nunca registre secrets, senhas, tokens, chaves ou connection strings em logs, arquivos ou commits.
+## 2. Fonte de verdade
 
-## Uso das ferramentas do Google Drive
+- GitHub/`origin/main` é a fonte oficial do código aprovado.
+- `supabase/migrations/` é a fonte oficial do schema.
+- ADRs/specs/planos em `docs/` são a fonte oficial das decisões.
+- Supabase/Vercel representam o estado publicado.
+- Google Drive é backup/cópia validada; não substitui Git como fonte de verdade.
 
-- Use primeiro a integração Google Drive já conectada.
-- Localize a pasta pela URL ou pelo ID e confirme que o destino é a pasta oficial do FORJA antes de qualquer escrita.
-- Use operações do conector para pesquisar, ler, consultar metadados, atualizar e verificar arquivos.
-- Solicite aprovação apenas quando a própria ferramenta exigir autorização de escrita.
-- Não instale outro servidor MCP quando a integração atual estiver funcional e não use pacotes MCP de origem desconhecida.
+## 3. Regra de execução
+
+- Uma tarefa = um checkpoint/escopo claro.
+- TDD: RED → GREEN → CI → final Security → release.
+- Draft PR por padrão.
+- Subagents = 0 por padrão.
+- Codex para após push + início da CI; não espera Actions.
+- Nenhum merge, migration remota, SQL manual, produção ou deploy sem autorização separada.
+- Nunca acessar dados reais para validar feature.
+- Não ampliar escopo para “limpeza” ou refatoração não solicitada.
+
+## 4. Supabase
+
+- Toda mudança de schema usa migration forward-only.
+- Nunca editar migration já aplicada.
+- RLS/GRANTs/RPCs seguem `docs/agents/FORJA_RULES.md`.
+- Para trabalho Supabase, usar a skill local `forja-supabase` além da skill `forja-checkpoint`.
+- `service_role` nunca no frontend.
+- `database.types.ts` é gerado localmente e nunca escrito à mão.
+- `db push` real só após merge, dry-run e autorização de release.
+- Nunca `db reset --linked`.
+
+## 5. Frontend e módulos protegidos
+
+- `index.html` continua monolítico; não fazer refatoração ampla oportunista.
+- DIETA e PR #10 ficam fora do escopo até autorização explícita.
+- Preservar funcionalidades existentes.
+- Mudanças visuais grandes somente em checkpoint autorizado.
+
+## 6. Google Drive
+
+A pasta oficial do FORJA no Drive é backup/cópia validada.
+
+- Nunca sobrescrever automaticamente backups históricos.
+- Nunca enviar segredos, caches ou temporários.
+- Sincronizar Drive somente quando a tarefa pedir ou quando um release/checkpoint exigir cópia validada.
+- Confirmar qualquer escrita por releitura/metadados.
+- Nunca excluir arquivos sem solicitação explícita.
+
+## 7. Novo eixo de produto
+
+O roadmap agora inclui **Comunidade + Calendário + Competições**.
+
+Antes de implementar, ler:
+`docs/product/SOCIAL_CALENDAR_COMPETITIONS.md`
+
+Esse eixo não deve interromper checkpoints A.2E–A.2I sem uma decisão explícita de repriorização.
+
+Para qualquer trabalho visual/UX, usar a skill local `forja-design` e ler `docs/design/DESIGN_REFERENCES.md`.
+
+## 8. Final obrigatório
+
+Ao terminar, reporte:
+- checkpoint;
+- SHA/branch/PR;
+- arquivos alterados;
+- testes/CI;
+- ações remotas;
+- próximo gate.
+
+Nunca declarar sucesso sem evidência verificável.
