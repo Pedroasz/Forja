@@ -8,9 +8,11 @@ Antes de qualquer alteração:
 
 1. Leia `docs/agents/FORJA_RULES.md`.
 2. Leia `docs/agents/PROJECT_STATE.md`.
-3. Leia `docs/agents/CODEX_WORKFLOW.md`.
-4. Leia somente os ADRs/specs/planos citados pelo checkpoint atual.
-5. Confirme `origin/main`, branch, PRs relacionados e worktree antes de editar.
+3. Leia `docs/agents/SKILLS_POLICY.md`.
+4. Leia `docs/agents/CODEX_WORKFLOW.md`.
+5. Use a combinação mínima de skills locais em `.codex/skills/` que corresponda à tarefa.
+6. Leia somente os ADRs/specs/planos citados pelo checkpoint atual.
+7. Confirme `origin/main`, branch, PRs relacionados e worktree antes de editar.
 
 Não releia documentos não relacionados ao escopo apenas por precaução.
 
@@ -38,6 +40,7 @@ Não releia documentos não relacionados ao escopo apenas por precaução.
 - Toda mudança de schema usa migration forward-only.
 - Nunca editar migration já aplicada.
 - RLS/GRANTs/RPCs seguem `docs/agents/FORJA_RULES.md`.
+- Para trabalho Supabase, usar a skill local `forja-supabase` além da skill `forja-checkpoint`.
 - `service_role` nunca no frontend.
 - `database.types.ts` é gerado localmente e nunca escrito à mão.
 - `db push` real só após merge, dry-run e autorização de release.
