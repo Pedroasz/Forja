@@ -72,6 +72,8 @@ Antes de implementar, ler:
 
 Esse eixo não deve interromper checkpoints A.2E–A.2I sem uma decisão explícita de repriorização.
 
+Para qualquer trabalho visual/UX, usar a skill local `forja-design` e ler `docs/design/DESIGN_REFERENCES.md`.
+
 ## 8. Final obrigatório
 
 Ao terminar, reporte:
